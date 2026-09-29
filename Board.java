@@ -436,34 +436,40 @@ public class Board
 
         // debug menu
         if (!Settings.debugMenu) return;
-        System.out.println("---- bot ----");
-        if (Game.botPlayedLastMove) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
-        if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
-        if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
-        if (Settings.showBotSelfEval) 
+        if (Settings.showBotDebugMenu)
         {
-            if (!Game.botPlayedLastMove) System.out.println("bot self eval: N/A");
-            else
+            System.out.println("---- bot ----");
+            if (Game.botPlayedLastMove) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
+            if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
+            if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
+            if (Settings.showBotSelfEval) 
             {
-                int botSelfEval = Game.botMoveEval * (history.size() % 2 == 0? -1 : 1);   
-                if (Math.abs(botSelfEval) > Bot.MATE - 1000)
+                if (!Game.botPlayedLastMove) System.out.println("bot self eval: N/A");
+                else
                 {
-                    int movesTillMate = (Bot.MATE - Math.abs(botSelfEval) + 1) / 2;
-                    System.out.println("bot self eval: " + (botSelfEval > 0? "M" : "-M") + movesTillMate);
+                    int botSelfEval = Game.botMoveEval * (history.size() % 2 == 0? -1 : 1);   
+                    if (Math.abs(botSelfEval) > Bot.MATE - 1000)
+                    {
+                        int movesTillMate = (Bot.MATE - Math.abs(botSelfEval) + 1) / 2;
+                        System.out.println("bot self eval: " + (botSelfEval > 0? "M" : "-M") + movesTillMate);
+                    }
+                    else System.out.println("bot self eval: " + botSelfEval / 100.0);
                 }
-                else System.out.println("bot self eval: " + botSelfEval / 100.0);
             }
+            if (Settings.showBotDepthReached) System.out.println((Game.botPlayedLastMove)? "bot depth reached: " + Bot.depthReached : "bot depth reached: N/A");
+            if (Settings.showBotMovesAnalysed) System.out.println((Game.botPlayedLastMove)? "Moves analysed: " + Bot.movesAnalysed + "|" + Bot.quiescenceMovesAnalysed + "|" + Bot.movesAnalysed / Game.botMoveTimeMs + " moves per ms" : "Moves analysed: N/A");
         }
-        if (Settings.showBotDepthReached) System.out.println((Game.botPlayedLastMove)? "bot depth reached: " + Bot.depthReached : "bot depth reached: N/A");
-        if (Settings.showBotMovesAnalysed) System.out.println((Game.botPlayedLastMove)? "Moves analysed: " + Bot.movesAnalysed + "|" + Bot.quiescenceMovesAnalysed + "|" + Bot.movesAnalysed / Game.botMoveTimeMs + " moves per ms" : "Moves analysed: N/A");
-        System.out.println("\n----debug----");
+        if (Settings.showStandardDebugMenu)
+        {
+            System.out.println("\n----debug----");
         if (Settings.showEval) System.out.println("eval: " + Bot.evalBoard(this) / 100.0); // divide by 100 to convert centipawns into eval
         if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((history.size() % 2 == 0)? "WHITE" : "BLACK"));
         if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, true).size());
         if (Settings.showWhiteHasValidMoves) System.out.println("white has moves:" + !Moves.hasNoLegalMoves(this, true));
         if (Settings.showBlackHasValidMoves) System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
         if (Settings.showPieceLegalMoves) System.out.println((legalMoves == null)? "legal moves:null": "legal moves:" + legalMoves.size() + ":" + legalMoves);
-
+        }
+        
         System.out.println();
     }
     

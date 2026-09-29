@@ -43,22 +43,16 @@ public class Game
         boolean whiteBotToggle = false;
         boolean blackBotToggle = false;
         
-        /* reg settings *
-        boolean safeColors = false;
-        boolean bigNotation = false;
-        boolean quickStart = false;
-        boolean debug = false;
-        //*/
 
-        /* vscode testing 
-        boolean safeColors = true;
-        boolean bigNotation = false;
-        boolean quickStart = true;
-        boolean debug = true;
-        //*/
+        if(!Settings.useCustomStartOptions)
+        {
+            Settings.safeColors = false;
+            Settings.bigNotation = false;
+            Settings.quickStart = false;
+            Settings.debugMenu = false;
+        }
 
         // start up screen
-        // WIP
         UI.welcome();
         while (true)
         {
