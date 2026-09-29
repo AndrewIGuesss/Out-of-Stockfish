@@ -1,14 +1,21 @@
 /*
     ---TO DO---
-    done        Make add accept just w or b
+
+    ---QOL---
+    Add play against bot
+    Fix ui capture advantage to account for other sides captures
     Make debug & bot info easier to disable individual stats
     Make more quick start cmds
-    done        Add bot toggle
-    Add play against bot
     Shrink ui
-    Fix ui capture advantage to account for other sides captures
-    done        Fix king takes king bug
-    done        Save history on game end
+    
+    ---Bot---
+    *** Repetition detection (eval)
+    Killer moves (speed)
+    History heuristic (speed)
+    Transposition table + Zobrist (speed)
+    King attack awareness (eval)
+    Rooks on open and semi-open files (eval)
+    Knight outposts (eval)
 */
 
 import java.util.*;
