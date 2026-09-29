@@ -32,10 +32,6 @@ public class Game
     public static boolean botPlayedLastMove = false;
     public static String debugMsg = "";   
 
-    // bot controls
-    public static long botSearchTimeLimit = 2500;
-    public static int botMaxSearchDepth = 5;
-
     public static void main(String[] args)
     {
         Scanner reader = new Scanner(System.in);
