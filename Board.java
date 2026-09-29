@@ -85,6 +85,9 @@ public class Board
     public int[] getEnPassantSquare() { return enPassantSquare; }
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
     
+    // seters
+    public void addHistory(String s) {history.add(s);}
+
     // debug geters
     public ArrayList<String> getFakeMoves() { return fakeMoves; };
     public ArrayList<String> getLegalMoves() { return legalMoves; };
@@ -469,7 +472,7 @@ public class Board
         if (Settings.showBlackHasValidMoves) System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
         if (Settings.showPieceLegalMoves) System.out.println((legalMoves == null)? "legal moves:null": "legal moves:" + legalMoves.size() + ":" + legalMoves);
         }
-        
+
         System.out.println();
     }
     
@@ -515,5 +518,53 @@ public class Board
             }
         }
         return value;
+    }
+
+    public static String makePositionKey(Board board, boolean whiteTurn)
+    {
+        StringBuilder key = new StringBuilder();
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                Piece scanPiece = board.getPiece(row, col);
+                if (!scanPiece.isOccupied())
+                {
+                    key.append("-");
+                    continue;
+                }
+                if (scanPiece.isWhite()) key.append(Character.toUpperCase(scanPiece.getPiece()));
+                else key.append(Character.toLowerCase(scanPiece.getPiece()));
+            }
+        }
+
+        // whites turn    blacks turn
+        key.append(whiteTurn? "|WT" : "|BT"); 
+
+        // white can castle Long/Short
+        key.append("|WCC ");
+        if (!board.getPiece(findKing(board, true)).hasMoved())
+        {
+            // long castle
+            Piece scanPiece = board.getPiece(7, 0);
+            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("L");
+            // short castle
+            scanPiece = board.getPiece(7, 7);
+            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("S");
+        }
+
+        // black can castle Long/Short
+        key.append("|BCC ");
+        if (!board.getPiece(findKing(board, false)).hasMoved())
+        {
+            // long castle
+            Piece scanPiece = board.getPiece(0, 0);
+            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("L");
+            // short castle
+            scanPiece = board.getPiece(0, 7);
+            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("S");
+        }
+
+        return key.toString();
     }
 }

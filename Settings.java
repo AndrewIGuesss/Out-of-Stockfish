@@ -1,7 +1,7 @@
 public class Settings
 {
     // start options
-    public static boolean useCustomStartOptions = false;
+    public static boolean useCustomStartOptions = true;
 
     public static boolean quickStart = true;
     public static boolean debugMenu = true;

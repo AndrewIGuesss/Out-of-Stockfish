@@ -28,7 +28,9 @@ public class Game
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
     public static boolean botPlayedLastMove = false;
-    public static String debugMsg = "";   
+    public static String debugMsg = "";
+
+    public static ArrayList<String> positionKeys = new ArrayList<>();
 
     public static void main(String[] args)
     {
@@ -105,7 +107,8 @@ public class Game
         }
         
         Board board = new Board(Settings.safeColors, Settings.bigNotation);
-        
+        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+
         // game
         while (true)
         {
@@ -114,39 +117,49 @@ public class Game
             else if (!debugMsg.equals("")) { System.out.println(debugMsg); debugMsg = ""; }
             else clear();
             
+            if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
+            {
+                board.printBoard(null, -1, -1);
+                System.out.println("The game has ended in a draw by repetition!");
+                board.addHistory("1/2-1/2");
+                saveHistory(board);
+                return;
+            } 
+
             if (inCheck)
             {
                 if (Moves.hasNoLegalMoves(board, whiteTurn))
                 {
                     board.printBoard(null, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
+                    board.addHistory(whiteTurn? "0-1" : "1-0");
                     saveHistory(board);
                     return;
+                }
+                else
+                {
+                    board.printBoard(null, kingSquare[0], kingSquare[1]);
+                    System.out.print((whiteTurn? "White" : "Black") + " is in check!");
+                    System.out.print(" chose your piece: ");
                 }
             }
             else
             {
                 if (Moves.hasNoLegalMoves(board, whiteTurn))
                 {
-                    board.printBoard(null, kingSquare[0], kingSquare[1]);
+                    board.printBoard(null, -1, -1);
                     System.out.println("The game has ended in a stalemate!");
+                    board.addHistory("1/2-1/2");
                     saveHistory(board);
                     return;
                 }
-            }
-            
-            // prints board when in check
-            if (inCheck) 
-            {
-                board.printBoard(null, kingSquare[0], kingSquare[1]);
-                System.out.print((whiteTurn? "White" : "Black") + " is in check!"); //turn check
-                System.out.print(" chose your piece: ");
-            }
-            else 
-            {
-                board.printBoard(null, -1, -1);
-                System.out.print(whiteTurn? "White's turn" : "Black's turn"); //turn check
-                System.out.print(" chose your piece: ");
+                else
+                {
+                    board.printBoard(null, -1, -1);
+                    System.out.print(whiteTurn? "White's turn" : "Black's turn");
+                    System.out.print(" chose your piece: ");
+                }
+                
             }
             
             // bot moves
@@ -159,10 +172,13 @@ public class Game
                 // finish move sequence
                 whiteTurn = !whiteTurn;
     
+                // save position
+                positionKeys.add(Board.makePositionKey(board, whiteTurn));
                 // is in check finder
                 inCheck = false;
                 kingSquare = Board.findKing(board, whiteTurn);
                 if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                
                 continue;
             }
             
@@ -249,7 +265,12 @@ public class Game
                                 else valid = false;
                             }
                             
-                            if (valid) board.addPiece(customPiece, customLoc, customColor);
+                            if (valid) 
+                            {
+                                board.addPiece(customPiece, customLoc, customColor); 
+                                positionKeys.clear(); 
+                                positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                            }
                         }
                     }
                     
@@ -270,6 +291,9 @@ public class Game
                     board = new Board(Settings.safeColors, Settings.bigNotation);
                     whiteTurn = true;
 
+                    positionKeys.clear();
+                    // save position
+                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
                     // is in check finder
                     inCheck = false;
                     kingSquare = Board.findKing(board, whiteTurn);
@@ -288,6 +312,9 @@ public class Game
                         }
                     }
 
+                    positionKeys.clear();
+                    // save position
+                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
                     // is in check finder
                     inCheck = false;
                     kingSquare = Board.findKing(board, whiteTurn);
@@ -307,7 +334,8 @@ public class Game
                     System.out.println();
                     // finish move sequence
                     whiteTurn = !whiteTurn;
-        
+                    // save position
+                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
                     // is in check finder
                     inCheck = false;
                     kingSquare = Board.findKing(board, whiteTurn);
@@ -413,11 +441,13 @@ public class Game
             board.applyMove(piece, loc, false, promotionPiece);
             
             whiteTurn = !whiteTurn;
-            
+            // save position
+            positionKeys.add(Board.makePositionKey(board, whiteTurn));
             // is in check finder
             inCheck = false;
             kingSquare = Board.findKing(board, whiteTurn);
             if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+            
 
             // reset bot values to default / unreachable values
             botPlayedLastMove = false;
