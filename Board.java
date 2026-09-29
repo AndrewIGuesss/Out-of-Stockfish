@@ -442,7 +442,7 @@ public class Board
         if (Settings.showBotDebugMenu)
         {
             System.out.println("---- bot ----");
-            if (Game.botPlayedLastMove) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
+            if (Settings.showBotRootScores) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
             if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
             if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
             if (Settings.showBotSelfEval) 

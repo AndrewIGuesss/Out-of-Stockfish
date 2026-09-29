@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Bot 
 {
@@ -12,7 +13,9 @@ public class Bot
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
 
-    
+    // repetition check
+    public static String[] plyPathKeys = new String[64];
+
     static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
@@ -462,6 +465,17 @@ public class Bot
 
     public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply)
     {
+        if (ply > 0)
+        {
+            String currKey = Board.makePositionKey(board, whiteTurn);
+            if (Game.positionKeys.contains(currKey)) return 0;
+            for (int i = 0; i <= ply - 1; i++)
+            {
+                if (plyPathKeys[i].equals(currKey)) return 0;
+            }
+            plyPathKeys[ply] = currKey;
+        }
+
         if (System.currentTimeMillis() > deadline && timeCanBeUp)
         { 
             timeUp = true;
@@ -529,13 +543,15 @@ public class Bot
         int[] bestMoveSoFar = null;
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b), orderScore(board, a)));
+        plyPathKeys[0] = Board.makePositionKey(board, whiteTurn);
+
         for (int depth = 1; depth <= maxDepth; depth++)
         {
             bestScoreSoFar = -INFINITY;
             bestMoveSoFar = null;
             alpha = -INFINITY;
             beta = INFINITY;
-            StringBuilder depthScores = new StringBuilder(); // NEW
+            StringBuilder depthScores = new StringBuilder();
             
             for(int[] move : moves)
             {
