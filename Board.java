@@ -176,7 +176,7 @@ public class Board
         }
     
         // debug
-        if (!Game.debugMenu || test) return legal;
+        if (!Settings.debugMenu || test) return legal;
         legalMoves = new ArrayList<>();
         for (int row = 0; row < 8; row++)
         {   for (int col = 0; col < 8; col++)
@@ -201,7 +201,7 @@ public class Board
         if (pieceType == 'K') preValidMoves = Moves.kingMoves(this, square);
         
         // debug
-        if (!Game.debugMenu || test) return preValidMoves;
+        if (!Settings.debugMenu || test) return preValidMoves;
         fakeMoves = new ArrayList<>();
         for (int row = 0; row < 8; row++)
         {   for (int col = 0; col < 8; col++)
@@ -388,7 +388,7 @@ public class Board
     public void printBoard(boolean[][] validMoves, int checkRow, int checkCol)
     {
         // previous move
-        if (history.size() > 0) 
+        if (!history.isEmpty()) 
         {
             if (history.size() % 2 == 1) System.out.println("White Played: " + history.get(history.size() - 1));
             else System.out.println("Black Played: " + history.get(history.size() - 1));
@@ -434,13 +434,11 @@ public class Board
         
         System.out.println();
 
-        if(Game.eval) System.out.println("eval:" + (Bot.evalBoard(this) / 100.0) + "\n"); // divide by 100 to convert centipawns into eval
-        
         // debug menu
-        if (!Game.debugMenu) return;
+        if (!Settings.debugMenu) return;
         System.out.println("---- bot ----");
-        // if (Game.botPlayedLastMove) System.out.println(Bot.rootScores); debugging only prints every root and its eval
-        if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Game.botSearchTimeLimit  + "ms (" + (Game.botSearchTimeLimit / 1000.0) + "s)");
+        if (Game.botPlayedLastMove) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
+        if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
         if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
         if (Settings.showBotSelfEval) 
         {
@@ -463,7 +461,7 @@ public class Board
         if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((history.size() % 2 == 0)? "WHITE" : "BLACK"));
         if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, true).size());
         if (Settings.showWhiteHasValidMoves) System.out.println("white has moves:" + !Moves.hasNoLegalMoves(this, true));
-        if (Settings.showBlackHasValidMoves) // System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
+        if (Settings.showBlackHasValidMoves) System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
         if (Settings.showPieceLegalMoves) System.out.println((legalMoves == null)? "legal moves:null": "legal moves:" + legalMoves.size() + ":" + legalMoves);
 
         System.out.println();

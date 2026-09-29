@@ -18,15 +18,13 @@
     Knight outposts (eval)
 */
 
-import java.util.*;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.*;
 
 public class Game
 {
     // debugMenu WIP
-    public static boolean debugMenu;
-    public static boolean eval;
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
     public static boolean botPlayedLastMove = false;
@@ -52,7 +50,7 @@ public class Game
         boolean debug = false;
         //*/
 
-        /* vscode testing */
+        /* vscode testing 
         boolean safeColors = true;
         boolean bigNotation = false;
         boolean quickStart = true;
@@ -69,9 +67,9 @@ public class Game
             String input = reader.nextLine().toLowerCase(); // gets user input
                  if (input.equals("start")) break;
             else if (input.equals("help")) UI.help();
-            else if (input.equals("qs")) { quickStart = true; break; }
-            else if (input.equals("dqs")) { quickStart = true; debug = true; break; }
-            else if (input.equals("debug")) debug = !debug;
+            else if (input.equals("qs")) { Settings.quickStart = true; break; }
+            else if (input.equals("dqs")) { Settings.quickStart = true; Settings.debugMenu = true; break; }
+            else if (input.equals("debug")) Settings.debugMenu = !Settings.debugMenu;
             else if (input.equals("bot"))
             {
                 System.out.println("would you like to play as white or black");
@@ -85,35 +83,34 @@ public class Game
         }
         
         // pre game color screen
-        while (true && !quickStart)
+        while (true && !Settings.quickStart)
         {
             if (error) { System.out.println("Invalid input"); error = false; }
             else clear();
-            System.out.println("Console safe colors[" + (safeColors? "ON" : "OFF") + "]");
+            System.out.println("Console safe colors[" + (Settings.safeColors? "ON" : "OFF") + "]");
             UI.preGameColor();
             
             String input = reader.nextLine().toLowerCase(); // gets user input
-            if (input.equals("color")) safeColors =! safeColors;
+            if (input.equals("color")) Settings.safeColors =! Settings.safeColors;
             else if (input.equals("")) break;
             else error = true;
         }
         
         // pre game notation
-        while (true && !quickStart)
+        while (true && !Settings.quickStart)
         {
             if (error) { System.out.println("Invalid input"); error = false; }
             else clear();
-            System.out.println("Expanded notation[" + (bigNotation? "ON" : "OFF") + "]");
+            System.out.println("Expanded notation[" + (Settings.bigNotation? "ON" : "OFF") + "]");
             UI.preGameNotation();
             
             String input = reader.nextLine().toLowerCase(); // gets user input
-            if (input.equals("expand")) bigNotation =! bigNotation;
+            if (input.equals("expand")) Settings.bigNotation =! Settings.bigNotation;
             else if (input.equals("")) break;
             else error = true;
         }
         
-        Board board = new Board(safeColors, bigNotation);
-        debugMenu = debug;
+        Board board = new Board(Settings.safeColors, Settings.bigNotation);
         
         // game
         while (true)
@@ -178,7 +175,7 @@ public class Game
             String input = reader.nextLine().toLowerCase();
             
             // debug cmds
-            if (debug)
+            if (Settings.debugMenu)
             {
                 if (input.equals("history"))
                 {
@@ -266,8 +263,8 @@ public class Game
                 }
                 else if (input.equals("toggle"))
                 {
-                    debugMenu = !debugMenu;
-                    debugMsg = "Debug menu[" + (debugMenu? "ON" : "OFF") + "]";
+                    Settings.debugMenu = !Settings.debugMenu;
+                    debugMsg = "Debug menu[" + (Settings.debugMenu? "ON" : "OFF") + "]";
                 }
                 else if (input.equals("cmds"))
                 { 
@@ -276,7 +273,7 @@ public class Game
                 else if (input.equals("reset"))
                 {
                     debugMsg = "board reset";
-                    board = new Board(safeColors, bigNotation);
+                    board = new Board(Settings.safeColors, Settings.bigNotation);
                     whiteTurn = true;
 
                     // is in check finder
@@ -308,16 +305,6 @@ public class Game
                 {
                     saveHistory(board);
                 }
-                else if (input.equals("eval"))
-                {
-                    eval = true;
-                }
-                else if (input.equals("et"))
-                {
-                    eval = true;
-                    debugMenu = !debugMenu;
-                    debugMsg = "Debug menu[" + (debugMenu? "ON" : "OFF") + "]";
-                }
                 else if (input.equals("bot"))
                 {
                     botPlayedLastMove = true;
@@ -342,8 +329,8 @@ public class Game
                         int newDepth = Integer.parseInt(reader.nextLine().trim());
                         if (newDepth >= 1 && newDepth <= 7)
                         {
-                            botMaxSearchDepth = newDepth;
-                            debugMsg = "bot depth set to " + botMaxSearchDepth;
+                            Settings.botMaxSearchDepth = newDepth;
+                            debugMsg = "bot depth set to " + Settings.botMaxSearchDepth;
                         }
                         else debugMsg = "depth must be 1 - 7";
                     }
@@ -372,8 +359,8 @@ public class Game
                     try
                     {
                         System.out.println("type new bot search time limit (in ms)");
-                        botSearchTimeLimit = Long.parseLong(reader.nextLine().trim());
-                        debugMsg = "time limit set to:" + botSearchTimeLimit; 
+                        Settings.botSearchTimeLimit = Long.parseLong(reader.nextLine().trim());
+                        debugMsg = "time limit set to:" + Settings.botSearchTimeLimit; 
                     }
                     catch (NumberFormatException e)
                     {
@@ -450,7 +437,7 @@ public class Game
         thinking.start();
         try
         {
-            int[] botMove = Bot.bestMove(board, botMaxSearchDepth, whiteTurn);
+            int[] botMove = Bot.bestMove(board, Settings.botMaxSearchDepth, whiteTurn);
             if (botMove != null) board.applyMove(new int[]{botMove[0], botMove[1]}, new int[]{botMove[2], botMove[3]}, false, 'q');
             else return false;
         }

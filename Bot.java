@@ -13,7 +13,7 @@ public class Bot
     public static int depthReached = 0;
 
     
-    static long deadline = System.currentTimeMillis() + Game.botSearchTimeLimit;
+    static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
     
@@ -509,7 +509,7 @@ public class Bot
 
     public static int[] bestMove(Board board, int maxDepth, boolean whiteTurn)
     {
-        deadline = System.currentTimeMillis() + Game.botSearchTimeLimit;
+        deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
         timeCanBeUp = false;
         timeUp = false;
 
