@@ -2,8 +2,8 @@
     ---TO DO---
 
     ---QOL---
-    Add play against bot
-    Fix ui capture advantage to account for other sides captures
+    done    Add play against bot
+    done    Fix ui capture advantage to account for other sides captures
     Make debug & bot info easier to disable individual stats
     Make more quick start cmds
     Shrink ui
@@ -68,7 +68,7 @@ public class Game
         UI.welcome();
         while (true)
         {
-            if (error) { UI.error(); error = false; }
+            if (error) { clear(); UI.error(); error = false; }
             
             String input = reader.nextLine().toLowerCase(); // gets user input
                  if (input.equals("start")) break;
@@ -76,6 +76,15 @@ public class Game
             else if (input.equals("qs")) { quickStart = true; break; }
             else if (input.equals("dqs")) { quickStart = true; debug = true; break; }
             else if (input.equals("debug")) debug = !debug;
+            else if (input.equals("bot"))
+            {
+                System.out.println("would you like to play as white or black");
+                input = reader.nextLine().toLowerCase();
+                if (input.equals("white") || input.equals("w")) blackBotToggle = true;
+                else if (input.equals("black") || input.equals("b")) whiteBotToggle = true;
+                else {error = true; continue;}
+                break;
+            }
             else error = true;
         }
         

@@ -396,8 +396,7 @@ public class Board
         }
         else System.out.println("Good luck!\n");
         // black captures
-        if (blackCaptured.size() > 0) System.out.println("Black " + captureValue(blackCaptured) + " : " + captureList(blackCaptured)); 
-        else System.out.println("Black");
+        System.out.println("Black: " + (getBoardValue() < 0? "+" + Math.abs(getBoardValue()) : "") + " " + captureList(blackCaptured));
         
         // files
         System.out.println(RESET + "   a  b  c  d  e  f  g  h");
@@ -431,9 +430,10 @@ public class Board
         }
         
         // white captures
-        if (whiteCaptured.size() > 0) System.out.println("White " + captureValue(whiteCaptured) + " : " + captureList(whiteCaptured) + "\n");
-        else System.out.println("White\n");
+        System.out.println("White: " + (getBoardValue() > 0? "+" + getBoardValue() : "") + " " + captureList(whiteCaptured));
         
+        System.out.println();
+
         if(Game.eval) System.out.println("eval:" + (Bot.evalBoard(this) / 100.0) + "\n"); // divide by 100 to convert centipawns into eval
         
         // debug menu
@@ -494,5 +494,20 @@ public class Board
         if (Moves.inCheck(copy, king, p.isWhite())) return "Move leads to check";
     
         return null; // move is legal
+    }
+
+    public int getBoardValue()
+    {
+        int value = 0;
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                int pieceValue = Bot.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                if (getPiece(row, col).isWhite()) value += pieceValue;
+                else value -= pieceValue;
+            }
+        }
+        return value;
     }
 }
