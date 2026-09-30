@@ -49,13 +49,3 @@ Rough estimates only. Real numbers vary a lot by engine and position.
 | **Endgame tablebases** | Precomputed perfect play for positions with 7 or fewer pieces. | Perfect endgames | 3 |
 | **UCI protocol** | A standard text interface that lets the engine plug into chess GUIs and play other engines automatically. | Testing | 2 |
 | **Massive testing** | Every change gets tested over tens of thousands of games before it's accepted. | Why everything else works | Needs UCI first |
-
-## What's worth doing, in order
-
-1. **Transposition table**: the biggest win, and a prerequisite for lots of other stuff.
-2. **Null move pruning + LMR**: huge gains for fairly little code.
-3. **UCI**: lets me run automated tournaments of new version vs old version.
-4. **Make/unmake**: big raw speed, a medium refactor.
-5. **Tapered eval**: an easy fix for a real weakness in the eval.
-
-Bitboards and NNUE are rewrite-level projects. Save them for when the rest is done, or for a v2 engine.
