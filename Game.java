@@ -22,9 +22,12 @@
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class Game
 {
+    public static String gameResult = "*";
+    public static long gameStartTime;
     // debugMenu WIP
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
@@ -55,28 +58,40 @@ public class Game
             Settings.enableDebug = false;
         }
 
-        // start up screen
         UI.welcome();
-        while (true)
+        startUpScreenLoop: while (true)
         {
             if (error) { clear(); UI.error(); error = false; }
             
-            String input = reader.nextLine().toLowerCase(); // gets user input
-                 if (input.equals("start")) break;
-            else if (input.equals("help")) UI.help();
-            else if (input.equals("qs")) { Settings.quickStart = true; break; }
-            else if (input.equals("dqs")) { Settings.quickStart = true; Settings.enableDebug = true; break; }
-            else if (input.equals("debug")) Settings.enableDebug = !Settings.enableDebug;
-            else if (input.equals("bot"))
+            String input = reader.nextLine().toLowerCase();
+            switch (input) 
             {
-                System.out.println("would you like to play as white or black");
-                input = reader.nextLine().toLowerCase();
-                if (input.equals("white") || input.equals("w")) blackBotToggle = true;
-                else if (input.equals("black") || input.equals("b")) whiteBotToggle = true;
-                else {error = true; continue;}
-                break;
+                case "start": break startUpScreenLoop;
+                case "help": UI.help(); break;
+                case "qs": Settings.quickStart = true; break startUpScreenLoop; 
+                case "dqs": Settings.quickStart = true; Settings.enableDebug = true; break startUpScreenLoop;
+                case "debug": Settings.enableDebug = !Settings.enableDebug; break;
+                case "bot":
+                {
+                    System.out.println("would you like to play as white or black");
+                    input = reader.nextLine().toLowerCase();
+                    if (input.equals("white") || input.equals("w")) blackBotToggle = true;
+                    else if (input.equals("black") || input.equals("b")) whiteBotToggle = true;
+                    else {error = true; continue;}
+                    break startUpScreenLoop;
+                }
+                case "bot game":
+                {
+                    blackBotToggle = true;
+                    whiteBotToggle = true;
+                    break startUpScreenLoop;
+                }
+                default:
+                {
+                    error = true;
+                    break;
+                }
             }
-            else error = true;
         }
         
         // pre game color screen
@@ -87,7 +102,7 @@ public class Game
             System.out.println("Console safe colors[" + (Settings.safeColors? "ON" : "OFF") + "]");
             UI.preGameColor();
             
-            String input = reader.nextLine().toLowerCase(); // gets user input
+            String input = reader.nextLine().toLowerCase();
             if (input.equals("color")) Settings.safeColors =! Settings.safeColors;
             else if (input.equals("")) break;
             else error = true;
@@ -101,7 +116,7 @@ public class Game
             System.out.println("Expanded notation[" + (Settings.bigNotation? "ON" : "OFF") + "]");
             UI.preGameNotation();
             
-            String input = reader.nextLine().toLowerCase(); // gets user input
+            String input = reader.nextLine().toLowerCase();
             if (input.equals("expand")) Settings.bigNotation =! Settings.bigNotation;
             else if (input.equals("")) break;
             else error = true;
@@ -110,8 +125,9 @@ public class Game
         Board board = new Board(Settings.safeColors, Settings.bigNotation);
         positionKeys.add(Board.makePositionKey(board, whiteTurn));
 
-        // game
-        while (true)
+        
+        gameStartTime = System.currentTimeMillis();
+        gameLoop: while (true)
         {
             // clear console if no error
             if (error) error = false;
@@ -122,9 +138,9 @@ public class Game
             {
                 board.printBoard(null, -1, -1);
                 System.out.println("The game has ended in a draw by repetition!");
-                board.addHistory("1/2-1/2");
-                saveHistory(board);
-                return;
+                gameResult = "1/2-1/2";
+                saveHistory(board, whiteBotToggle, blackBotToggle);
+                break gameLoop;
             } 
 
             if (inCheck)
@@ -133,9 +149,9 @@ public class Game
                 {
                     board.printBoard(null, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
-                    board.addHistory(whiteTurn? "0-1" : "1-0");
-                    saveHistory(board);
-                    return;
+                    gameResult = whiteTurn? "0-1" : "1-0";
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    break gameLoop;
                 }
                 else
                 {
@@ -150,9 +166,9 @@ public class Game
                 {
                     board.printBoard(null, -1, -1);
                     System.out.println("The game has ended in a stalemate!");
-                    board.addHistory("1/2-1/2");
-                    saveHistory(board);
-                    return;
+                    gameResult = "1/2-1/2";
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    break gameLoop;
                 }
                 else
                 {
@@ -188,213 +204,227 @@ public class Game
             // debug cmds
             if (Settings.enableDebug)
             {
-                if (input.equals("history"))
+                switch (input)
                 {
-                    int counter = 1;
-                    debugMsg = "history:|";
-                    for (int i = 0; i < board.getHistory().size(); i += 2)
+                    case "history":
                     {
-                        if (i + 1  == board.getHistory().size()) 
-                        { debugMsg += (counter) + ". " + board.getHistory().get(i) + "|";}
-                        else
-                        { debugMsg += (counter) + ". " + board.getHistory().get(i) + "," + board.getHistory().get(i + 1) + "|"; }
-                        counter++;
-                    }
-                }
-                else if (input.equals("info"))
-                {
-                    int counter = 1;
-                    System.out.println("input square: ");
-                    Piece p;
-                    try { p = board.getPiece(Board.convertMove(reader.nextLine())); }
-                    catch (ArrayIndexOutOfBoundsException e) 
-                    { 
-                        debugMsg = "invalid string"; 
-                        clear(); 
-                        continue;
-                    }
-                    
-                    if (p == null) debugMsg = "invaild square location";
-                    else if (!p.isOccupied()) debugMsg = "square is empty";
-                    else
-                    {
-                        board.validMoves(new int[]{p.getX(), p.getY()}, false);
-                        debugMsg += 
-                        "Square: " + Board.convertMove(new int[]{p.getX(), p.getY()}) + " [" + p.getX() + ", " + p.getY() + "]" +
-                        "\nPiece: " + p.getPiece() +
-                        "\nColor: " + (p.isWhite()? "white" : "black") +
-                        "\nAll moves:" + board.getFakeMoves().size() + " " + board.getFakeMoves() +
-                        "\nLegal moves:" + board.getLegalMoves().size() + " " + board.getLegalMoves() +
-                        "\nHistory:" + p.getHistory().size() + " [";
-                        for(String s : p.getHistory())
+                        int counter = 1;
+                        debugMsg = "history:|";
+                        for (int i = 0; i < board.getHistory().size(); i += 2)
                         {
-                            debugMsg += counter + "." + s; 
-                            debugMsg += (counter != p.getHistory().size()? "|" : "]");
+                            if (i + 1  == board.getHistory().size()) 
+                            { debugMsg += (counter) + ". " + board.getHistory().get(i) + "|";}
+                            else
+                            { debugMsg += (counter) + ". " + board.getHistory().get(i) + "," + board.getHistory().get(i + 1) + "|"; }
                             counter++;
                         }
+                        break;
                     }
-                }
-                else if (input.equals("add"))
-                {
-                    boolean valid = true;
-                    
-                    System.out.println("type piece location: ");
-                    int[] customLoc = getSquare(reader.nextLine().toLowerCase()); // null if bad square
-                    if (customLoc == null) valid = false;
-                    
-                    if (valid)
+                    case "info":
                     {
-                        System.out.println("input one charictar piece type\n(enter a blank line to make an empty square): ");
-                        input = reader.nextLine();
+                        int counter = 1;
+                        System.out.println("input square: ");
+                        Piece p;
+                        try { p = board.getPiece(Board.convertMove(reader.nextLine())); }
+                        catch (ArrayIndexOutOfBoundsException e) 
+                        { 
+                            debugMsg = "invalid string"; 
+                            clear(); 
+                            continue;
+                        }
                         
-                        if (input.equals("")) // empty square path, stops here
+                        if (p == null) debugMsg = "invaild square location";
+                        else if (!p.isOccupied()) debugMsg = "square is empty";
+                        else
                         {
-                            board.addPiece(customLoc);
-                        }
-                        else // piece path
-                        {
-                            char customPiece = input.toUpperCase().charAt(0);
-                            if (customPiece != 'P' && customPiece != 'N' && customPiece != 'B' && customPiece != 'R' && customPiece != 'Q' && customPiece != 'K') valid = false;
-                            
-                            boolean customColor = false;
-                            if (valid) 
+                            board.validMoves(new int[]{p.getX(), p.getY()}, false);
+                            debugMsg += 
+                            "Square: " + Board.convertMove(new int[]{p.getX(), p.getY()}) + " [" + p.getX() + ", " + p.getY() + "]" +
+                            "\nPiece: " + p.getPiece() +
+                            "\nColor: " + (p.isWhite()? "white" : "black") +
+                            "\nAll moves:" + board.getFakeMoves().size() + " " + board.getFakeMoves() +
+                            "\nLegal moves:" + board.getLegalMoves().size() + " " + board.getLegalMoves() +
+                            "\nHistory:" + p.getHistory().size() + " [";
+                            for(String s : p.getHistory())
                             {
-                                System.out.println("type piece color: ");
-                                input = reader.nextLine().toLowerCase();
-                                if (input.equals("white") || input.equals("w")) customColor = true;
-                                else if (input.equals("black") || input.equals("b")) customColor = false;
-                                else valid = false;
-                            }
-                            
-                            if (valid) 
-                            {
-                                board.addPiece(customPiece, customLoc, customColor); 
-                                positionKeys.clear(); 
-                                positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                                debugMsg += counter + "." + s; 
+                                debugMsg += (counter != p.getHistory().size()? "|" : "]");
+                                counter++;
                             }
                         }
+                        break;
                     }
-                    
-                    debugMsg = valid? "added piece" : "could not add piece";
-                }
-                else if (input.equals("toggle"))
-                {
-                    Settings.debugMenu = !Settings.debugMenu;
-                    debugMsg = "Debug menu[" + (Settings.debugMenu? "ON" : "OFF") + "]";
-                }
-                else if (input.equals("cmds"))
-                { 
-                    debugMsg = UI.helpDebug(); 
-                }
-                else if (input.equals("reset"))
-                {
-                    debugMsg = "board reset";
-                    board = new Board(Settings.safeColors, Settings.bigNotation);
-                    whiteTurn = true;
-
-                    positionKeys.clear();
-                    // save position
-                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
-                    // is in check finder
-                    inCheck = false;
-                    kingSquare = Board.findKing(board, whiteTurn);
-                    if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
-                    
-                    continue;
-                }
-                else if (input.equals("clear"))
-                {
-                    debugMsg = "board cleared";
-                    for (int i = 0; i < 8; i++)
+                    case "add":
                     {
-                        for (int j = 0; j < 8; j++)
+                        boolean valid = true;
+                        
+                        System.out.println("type piece location: ");
+                        int[] customLoc = getSquare(reader.nextLine().toLowerCase()); // null if bad square
+                        if (customLoc == null) valid = false;
+                        
+                        if (valid)
                         {
-                            if (board.getPiece(i, j).getPiece() != 'K')board.addPiece(new int[]{i, j});
+                            System.out.println("input one charictar piece type\n(enter a blank line to make an empty square): ");
+                            input = reader.nextLine();
+                            
+                            if (input.equals("")) // empty square path, stops here
+                            {
+                                board.addPiece(customLoc);
+                            }
+                            else // piece path
+                            {
+                                char customPiece = input.toUpperCase().charAt(0);
+                                if (customPiece != 'P' && customPiece != 'N' && customPiece != 'B' && customPiece != 'R' && customPiece != 'Q' && customPiece != 'K') valid = false;
+                                
+                                boolean customColor = false;
+                                if (valid) 
+                                {
+                                    System.out.println("type piece color: ");
+                                    input = reader.nextLine().toLowerCase();
+                                    if (input.equals("white") || input.equals("w")) customColor = true;
+                                    else if (input.equals("black") || input.equals("b")) customColor = false;
+                                    else valid = false;
+                                }
+                                
+                                if (valid) 
+                                {
+                                    board.addPiece(customPiece, customLoc, customColor); 
+                                    positionKeys.clear(); 
+                                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                                }
+                            }
                         }
+                        
+                        debugMsg = valid? "added piece" : "could not add piece";
+                        break;
                     }
-
-                    positionKeys.clear();
-                    // save position
-                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
-                    // is in check finder
-                    inCheck = false;
-                    kingSquare = Board.findKing(board, whiteTurn);
-                    if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
-                    
-                    continue;
-                }
-                else if (input.equals("save history"))
-                {
-                    saveHistory(board);
-                    debugMsg = "history saved";
-                }
-                else if (input.equals("bot"))
-                {
-                    botPlayedLastMove = true;
-
-                    if (!playEngineMove(board, whiteTurn)) {debugMsg = "bot error"; continue;}
-                    System.out.println();
-                    // finish move sequence
-                    whiteTurn = !whiteTurn;
-                    // save position
-                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
-                    // is in check finder
-                    inCheck = false;
-                    kingSquare = Board.findKing(board, whiteTurn);
-                    if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
-                    
-                    continue;
-                }
-                else if (input.equals("bot depth"))
-                {
-                    System.out.println("please type the new bot depth: ");
-                    try
+                    case "toggle":
                     {
-                        int newDepth = Integer.parseInt(reader.nextLine().trim());
-                        if (newDepth >= 1 && newDepth <= 7)
+                        Settings.debugMenu = !Settings.debugMenu;
+                        debugMsg = "Debug menu[" + (Settings.debugMenu? "ON" : "OFF") + "]";
+                        break;
+                    }
+                    case "cmds":
+                    { 
+                        debugMsg = UI.helpDebug(); 
+                        break;
+                    }
+                    case "reset":
+                    {
+                        debugMsg = "board reset";
+                        board = new Board(Settings.safeColors, Settings.bigNotation);
+                        whiteTurn = true;
+
+                        positionKeys.clear();
+                        // save position
+                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        // is in check finder
+                        inCheck = false;
+                        kingSquare = Board.findKing(board, whiteTurn);
+                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        
+                        continue;
+                    }
+                    case "clear":
+                    {
+                        debugMsg = "board cleared";
+                        for (int i = 0; i < 8; i++)
                         {
-                            Settings.botMaxSearchDepth = newDepth;
-                            debugMsg = "bot depth set to " + Settings.botMaxSearchDepth;
+                            for (int j = 0; j < 8; j++)
+                            {
+                                if (board.getPiece(i, j).getPiece() != 'K')board.addPiece(new int[]{i, j});
+                            }
                         }
-                        else debugMsg = "depth must be 1 - 7";
+
+                        positionKeys.clear();
+                        // save position
+                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        // is in check finder
+                        inCheck = false;
+                        kingSquare = Board.findKing(board, whiteTurn);
+                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        
+                        continue;
                     }
-                    catch (NumberFormatException e)
+                    case "save history":
                     {
-                        debugMsg = "invalid depth";
+                        saveHistory(board, whiteBotToggle, blackBotToggle);
+                        debugMsg = "history saved";
+                        break;
                     }
-                }
-                else if (input.equals("bot toggle"))
-                {
-                    System.out.println("chose side: ");
-                    
-                    input = reader.nextLine().toLowerCase();
-                    if (input.equals("white") || input.equals("w")) {whiteBotToggle = !whiteBotToggle; debugMsg = "white plays engine moves: " + whiteBotToggle;}
-                    else if (input.equals("black") || input.equals("b")) { blackBotToggle = !blackBotToggle; debugMsg = "black plays engine moves: " + blackBotToggle;}
-                    else debugMsg = "error"; 
-                }
-                else if (input.equals("bot game"))
-                {
-                    whiteBotToggle = true;
-                    blackBotToggle = true;
-                    debugMsg = "bots now playing eachother";
-                }
-                else if (input.equals("bot time limit"))
-                {
-                    try
+                    case "bot":
                     {
-                        System.out.println("type new bot search time limit (in ms)");
-                        Settings.botSearchTimeLimit = Long.parseLong(reader.nextLine().trim());
-                        debugMsg = "time limit set to:" + Settings.botSearchTimeLimit; 
+                        botPlayedLastMove = true;
+
+                        if (!playEngineMove(board, whiteTurn)) {debugMsg = "bot error"; continue;}
+                        System.out.println();
+                        // finish move sequence
+                        whiteTurn = !whiteTurn;
+                        // save position
+                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        // is in check finder
+                        inCheck = false;
+                        kingSquare = Board.findKing(board, whiteTurn);
+                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        
+                        continue;
                     }
-                    catch (NumberFormatException e)
+                    case "bot depth":
                     {
-                        debugMsg = "invalid time limit";
+                        System.out.println("please type the new bot depth: ");
+                        try
+                        {
+                            int newDepth = Integer.parseInt(reader.nextLine().trim());
+                            if (newDepth >= 1 && newDepth <= 7)
+                            {
+                                Settings.botMaxSearchDepth = newDepth;
+                                debugMsg = "bot depth set to " + Settings.botMaxSearchDepth;
+                            }
+                            else debugMsg = "depth must be 1 - 7";
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            debugMsg = "invalid depth";
+                        }
+                        break;
                     }
-                }
-                else if (input.equals("bot roots"))
-                {
-                    Settings.showBotRootScores = !Settings.showBotRootScores;
-                    debugMsg = "bots roots [" + (Settings.showBotRootScores? "shown]" : "hidden]");
+                    case "bot toggle":
+                    {
+                        System.out.println("chose side: ");
+                        
+                        input = reader.nextLine().toLowerCase();
+                        if (input.equals("white") || input.equals("w")) {whiteBotToggle = !whiteBotToggle; debugMsg = "white plays engine moves: " + whiteBotToggle;}
+                        else if (input.equals("black") || input.equals("b")) { blackBotToggle = !blackBotToggle; debugMsg = "black plays engine moves: " + blackBotToggle;}
+                        else debugMsg = "error"; 
+                        break;
+                    }
+                    case "bot game":
+                    {
+                        whiteBotToggle = true;
+                        blackBotToggle = true;
+                        debugMsg = "bots now playing eachother";
+                        break;
+                    }
+                    case "bot time limit":
+                    {
+                        try
+                        {
+                            System.out.println("type new bot search time limit (in ms)");
+                            Settings.botSearchTimeLimit = Long.parseLong(reader.nextLine().trim());
+                            debugMsg = "time limit set to:" + Settings.botSearchTimeLimit; 
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            debugMsg = "invalid time limit";
+                        }
+                        break;
+                    }
+                    case "bot roots":
+                    {
+                        Settings.showBotRootScores = !Settings.showBotRootScores;
+                        debugMsg = "bots roots [" + (Settings.showBotRootScores? "shown]" : "hidden]");
+                        break;
+                    }
                 }
                 if (!debugMsg.equals("")) { clear(); continue; }
             }
@@ -501,16 +531,36 @@ public class Game
         return square;
     }
     
-    public static void saveHistory(Board board)
+    public static void saveHistory(Board board, boolean whiteBotToggle, boolean blackBotToggle)
     {
         Path filePath = Paths.get("History.txt");
         ArrayList<String> gameHistory = board.getHistory();
         StringBuilder historySB = new StringBuilder();
-        
-        for (int i = 1; i <= gameHistory.size(); i++)
+        Date now = new Date();
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy.MM.dd");
+
+        historySB.append("[Event \"" + Settings.eventPGN + "\"]" + System.lineSeparator());
+        historySB.append("[Date \"" + (dateFormatter.format(now)) + "\"]" + System.lineSeparator());
+        historySB.append("[Round \"1\"]" + System.lineSeparator());
+        historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
+        historySB.append("[Black \"" + (blackBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
+        historySB.append("[Result \"" + Game.gameResult + "\"]" + System.lineSeparator());
+        if (blackBotToggle || whiteBotToggle) 
         {
-            historySB.append(i + ". " + gameHistory.get(i - 1) + System.lineSeparator());
+            historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
+            historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
         }
+        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}" + System.lineSeparator());
+        historySB.append(System.lineSeparator());
+
+        int counter = 1;
+        for (int i = 0; i < gameHistory.size(); i += 2)
+        {
+            if (i + 1  == gameHistory.size()) historySB.append(counter + ". " + gameHistory.get(i) + " ");
+            else historySB.append(counter + ". " + gameHistory.get(i) + " " + board.getHistory().get(i + 1) + " ");
+            counter++;
+        }
+        historySB.append(gameResult + System.lineSeparator());
         try 
         {
             Files.writeString(filePath, historySB.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
@@ -522,6 +572,20 @@ public class Game
         }
     }
     
+    public static String convertMs(long ms)
+    {
+        int hours, mins, seconds, milliseconds;
+        if (ms >= 3600000) hours = (int)(ms / 3600000); else hours = -1;
+        if (ms >= 60000) mins = (int)((ms / 60000) % 60); else mins = -1;
+        if (ms >= 1000) seconds = (int)((ms / 1000) % 60); else seconds = -1;
+        milliseconds = (int)(ms % 1000);
+
+        if (hours > -1) return String.format("%d:%02d:%02d.%03d", hours, mins, seconds, milliseconds);
+        if (mins > -1) return String.format("%d:%02d.%03d", mins, seconds, milliseconds);
+        if (seconds > -1) return String.format("%d.%03d", seconds, milliseconds);
+        return String.format("0.%03d", milliseconds);
+    }
+
     public static void clear()
     {
         System.out.print("\033[H\033[2J");
