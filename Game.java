@@ -326,6 +326,7 @@ public class Game
                 else if (input.equals("save history"))
                 {
                     saveHistory(board);
+                    debugMsg = "history saved";
                 }
                 else if (input.equals("bot"))
                 {
@@ -389,6 +390,11 @@ public class Game
                     {
                         debugMsg = "invalid time limit";
                     }
+                }
+                else if (input.equals("bot roots"))
+                {
+                    Settings.showBotRootScores = !Settings.showBotRootScores;
+                    debugMsg = "bots roots [" + (Settings.showBotRootScores? "shown]" : "hidden]");
                 }
                 if (!debugMsg.equals("")) { clear(); continue; }
             }
