@@ -2,6 +2,7 @@
     ---TO DO---
 
     ---QOL---
+    done    stopable bot
     done    Add play against bot
     done    Fix ui capture advantage to account for other sides captures
     done    Make debug & bot info easier to disable individual stats
@@ -10,7 +11,7 @@
     
     ---Bot---
     done    Repetition detection (eval)
-    ***Killer moves (speed)
+    done    Killer moves (speed)
     History heuristic (speed)
     Transposition table + Zobrist (speed)
     King attack awareness (eval)
@@ -458,6 +459,8 @@ public class Game
     {
         UI.stillThinking = true;
         Thread thinking = new Thread(UI.thinkingAnimation);
+
+        System.out.println("press enter to cancel");
         thinking.start();
         try
         {

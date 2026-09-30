@@ -1,3 +1,5 @@
+import java.io.IOException;
+
 public class UI 
 {
     public static void welcome()
@@ -101,6 +103,9 @@ public class UI
         
         while (stillThinking)
         {
+            // tell bot to stop thinking when user inputs a new line
+            try { if (System.in.available() > 0) Bot.stopThinking = true; } catch (IOException e) {}
+
             System.out.print(thinkingAnimationFrames[frameNumber % 4]);
             frameNumber++;
             try {Thread.sleep(200);} catch (Exception e) {}

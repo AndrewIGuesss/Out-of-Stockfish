@@ -3,6 +3,8 @@ import java.util.Arrays;
 
 public class Bot 
 {
+    public static volatile boolean stopThinking = false;
+
     public static final int MATE = 123456789;
     private static final int INFINITY = 1234567890;
     private static final int MAX_DEPTH_EXTENTION = 20;
@@ -485,7 +487,7 @@ public class Bot
             plyPathKeys[ply] = currKey;
         }
 
-        if (System.currentTimeMillis() > deadline && timeCanBeUp)
+        if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking)
         { 
             timeUp = true;
             return 0;
@@ -543,6 +545,8 @@ public class Bot
 
     public static int[] bestMove(Board board, int maxDepth, boolean whiteTurn)
     {
+        stopThinking = false;
+
         deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
         timeCanBeUp = false;
         timeUp = false;
