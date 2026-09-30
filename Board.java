@@ -488,7 +488,7 @@ public class Board
                 }
             }
             if (Settings.showBotDepthReached) System.out.println((Game.botPlayedLastMove)? "bot depth reached: " + Bot.depthReached : "bot depth reached: N/A");
-            if (Settings.showBotMovesAnalysed) System.out.println((Game.botPlayedLastMove)? "Moves analysed: " + Bot.movesAnalysed + "|" + Bot.quiescenceMovesAnalysed + "|" + Bot.movesAnalysed / Game.botMoveTimeMs + " moves per ms" : "Moves analysed: N/A");
+            if (Settings.showBotMovesAnalysed) System.out.println((Game.botPlayedLastMove)? "Moves analysed: " + Bot.movesAnalysed + "|" + Bot.quiescenceMovesAnalysed + "|" + Bot.movesAnalysed / Math.max(1,Game.botMoveTimeMs) + " moves per ms" : "Moves analysed: N/A");
         }
         if (Settings.showStandardDebugMenu)
         {
@@ -547,6 +547,38 @@ public class Board
             }
         }
         return value;
+    }
+
+    public int getBoardValue(boolean isWhite)
+    {
+        int value = 0;
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                if (getPiece(row, col).isOccupied() && getPiece(row, col).isWhite() == isWhite)
+                {
+                    value += Bot.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                }
+            }
+        }
+        return value;
+    }
+
+    public int getBoardPawnCound(boolean isWhite)
+    {
+        int pawns = 0;
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                if (getPiece(row, col).isOccupied() && getPiece(row, col).getPiece() == 'P' && getPiece(row, col).isWhite() == isWhite)
+                {
+                    pawns++;
+                }
+            }
+        }
+        return pawns;
     }
 
     public static String makePositionKey(Board board, boolean whiteTurn)

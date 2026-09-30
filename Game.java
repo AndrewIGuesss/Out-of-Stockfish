@@ -132,16 +132,31 @@ public class Game
             // clear console if no error
             if (error) error = false;
             else if (!debugMsg.equals("")) { System.out.println(debugMsg); debugMsg = ""; }
-            else clear();
-            
-            if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
+            else 
             {
-                board.printBoard(null, -1, -1);
-                System.out.println("The game has ended in a draw by repetition!");
-                gameResult = "1/2-1/2";
-                saveHistory(board, whiteBotToggle, blackBotToggle);
-                break gameLoop;
-            } 
+                clear();
+                // insufficient material check(-10 for king)
+                if (board.getBoardValue(true) - 10 <= 3 && board.getBoardValue(false) - 10 <= 3)
+                {
+                    if (board.getBoardPawnCound(true) + board.getBoardPawnCound(false) == 0)
+                    {
+                        board.printBoard(null, -1, -1);
+                        System.out.println("The game has ended in a draw by insufficient material!");
+                        gameResult = "1/2-1/2";
+                        saveHistory(board, whiteBotToggle, blackBotToggle);
+                        break gameLoop;
+                    }
+                }
+                // repetition check
+                if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
+                {
+                    board.printBoard(null, -1, -1);
+                    System.out.println("The game has ended in a draw by repetition!");
+                    gameResult = "1/2-1/2";
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    break gameLoop;
+                }
+            }
 
             if (inCheck)
             {
