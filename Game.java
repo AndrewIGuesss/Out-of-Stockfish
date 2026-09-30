@@ -511,8 +511,7 @@ public class Game
         Date now = new Date();
         SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy.MM.dd");
 
-        historySB.append("[Event \"test\"]" + System.lineSeparator());
-        historySB.append("[Site \"command line\"]" + System.lineSeparator());
+        historySB.append("[Event \"" + Settings.eventPGN + "\"]" + System.lineSeparator());
         historySB.append("[Date \"" + (dateFormatter.format(now)) + "\"]" + System.lineSeparator());
         historySB.append("[Round \"1\"]" + System.lineSeparator());
         historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
@@ -524,7 +523,7 @@ public class Game
             historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
         }
         historySB.append(System.lineSeparator());
-        
+
         int counter = 1;
         for (int i = 0; i < gameHistory.size(); i += 2)
         {

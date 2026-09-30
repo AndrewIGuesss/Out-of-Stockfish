@@ -1,5 +1,8 @@
 public class Settings
 {
+    // history/PGN vars
+    public static String eventPGN = "long bot test";
+
     // start options
     public static boolean useCustomStartOptions = true;
 
@@ -27,11 +30,12 @@ public class Settings
         public static boolean showEval = false;
         public static boolean showTurnIndicator = false;
         public static boolean showLegalMoves = true;
+        public static boolean showGameLength = true;
         public static boolean showBlackHasValidMoves = false;
         public static boolean showWhiteHasValidMoves = false;
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 1000;
-    public static int botMaxSearchDepth = 5;
+    public static long botSearchTimeLimit = 300000;
+    public static int botMaxSearchDepth = 8;
 }
