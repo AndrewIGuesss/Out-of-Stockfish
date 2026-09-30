@@ -22,9 +22,11 @@
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class Game
 {
+    public static String gameResult;
     // debugMenu WIP
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
@@ -122,8 +124,8 @@ public class Game
             {
                 board.printBoard(null, -1, -1);
                 System.out.println("The game has ended in a draw by repetition!");
-                board.addHistory("1/2-1/2");
-                saveHistory(board);
+                gameResult = "1/2-1/2";
+                saveHistory(board, whiteBotToggle, blackBotToggle);
                 return;
             } 
 
@@ -133,8 +135,8 @@ public class Game
                 {
                     board.printBoard(null, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
-                    board.addHistory(whiteTurn? "0-1" : "1-0");
-                    saveHistory(board);
+                    gameResult = whiteTurn? "0-1" : "1-0";
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
                     return;
                 }
                 else
@@ -150,8 +152,8 @@ public class Game
                 {
                     board.printBoard(null, -1, -1);
                     System.out.println("The game has ended in a stalemate!");
-                    board.addHistory("1/2-1/2");
-                    saveHistory(board);
+                    gameResult = "1/2-1/2";
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
                     return;
                 }
                 else
@@ -325,7 +327,7 @@ public class Game
                 }
                 else if (input.equals("save history"))
                 {
-                    saveHistory(board);
+                    saveHistory(board, whiteBotToggle, blackBotToggle);
                     debugMsg = "history saved";
                 }
                 else if (input.equals("bot"))
@@ -501,16 +503,36 @@ public class Game
         return square;
     }
     
-    public static void saveHistory(Board board)
+    public static void saveHistory(Board board, boolean whiteBotToggle, boolean blackBotToggle)
     {
         Path filePath = Paths.get("History.txt");
         ArrayList<String> gameHistory = board.getHistory();
         StringBuilder historySB = new StringBuilder();
-        
-        for (int i = 1; i <= gameHistory.size(); i++)
+        Date now = new Date();
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy.MM.dd");
+
+        historySB.append("[Event \"test\"]" + System.lineSeparator());
+        historySB.append("[Site \"command line\"]" + System.lineSeparator());
+        historySB.append("[Date \"" + (dateFormatter.format(now)) + "\"]" + System.lineSeparator());
+        historySB.append("[Round \"1\"]" + System.lineSeparator());
+        historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
+        historySB.append("[Black \"" + (blackBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
+        historySB.append("[Result \"" + Game.gameResult + "\"]" + System.lineSeparator());
+        if (blackBotToggle || whiteBotToggle) 
         {
-            historySB.append(i + ". " + gameHistory.get(i - 1) + System.lineSeparator());
+            historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
+            historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
         }
+        historySB.append(System.lineSeparator());
+        
+        int counter = 1;
+        for (int i = 0; i < gameHistory.size(); i += 2)
+        {
+            if (i + 1  == gameHistory.size()) historySB.append(counter + ". " + gameHistory.get(i) + " ");
+            else historySB.append(counter + ". " + gameHistory.get(i) + " " + board.getHistory().get(i + 1) + " ");
+            counter++;
+        }
+        historySB.append(gameResult + System.lineSeparator());
         try 
         {
             Files.writeString(filePath, historySB.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);

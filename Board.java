@@ -226,10 +226,39 @@ public class Board
         // makes temp piece and adds to its history
         Piece temp = playerBoard[start[0]][start[1]];
         
-        playerBoard[start[0]][start[1]] = Piece.blankSquare; //clears the space
-        
-        if (temp.getPiece() != 'P') move.append(temp.getPiece());
+        if (temp.getPiece() != 'P' && !test)
+        {
+            move.append(temp.getPiece());
 
+            boolean disambiguateCol = false;
+            boolean disambiguateRow = false;
+
+            ArrayList<int[]> rivals = new ArrayList<int[]>();
+            ArrayList<int[]> pMoves = Moves.pseudoMoves(this, temp.isWhite());
+            for (int[] pMove : pMoves)
+            {
+                if ((pMove[2] == end[0] && pMove[3] == end[1]) && (pMove[0] != start[0] || pMove[1] != start[1]))
+                {
+                    if (temp.getPiece() == getPiece(pMove[0], pMove[1]).getPiece())
+                    {
+                        boolean[][] pValidMoves = validMoves(new int[]{pMove[0], pMove[1]}, true);
+                        if (pValidMoves[pMove[2]][pMove[3]]) rivals.add(pMove);
+                    }
+                }
+            }
+            for (int[] rival : rivals)
+            {
+                if (rival[0] == start[0]) disambiguateRow = true;
+                else if (rival[1] == start[1]) disambiguateCol = true;
+            }
+            if (rivals.size() > 0 && !disambiguateCol) disambiguateRow = true;
+            if (disambiguateRow) move.append(convertMove(start).charAt(0));
+            if (disambiguateCol) move.append(convertMove(start).charAt(1));
+        }
+
+        playerBoard[start[0]][start[1]] = Piece.blankSquare; //clears the space
+
+        
         if (playerBoard[end[0]][end[1]].isOccupied()) //capture check
         {
             if (playerBoard[end[0]][end[1]].isWhite()) blackCaptured.add(playerBoard[end[0]][end[1]]);

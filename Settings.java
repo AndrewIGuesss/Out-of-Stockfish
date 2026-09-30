@@ -15,7 +15,7 @@ public class Settings
         public static boolean showBotDebugMenu = true;
 
         public static boolean showBotRootScores = false;
-        public static boolean showBotTimeLimit = true;
+        public static boolean showBotTimeLimit = false;
         public static boolean showBotMoveTime = true;
         public static boolean showBotSelfEval = true;
         public static boolean showBotDepthReached = true;
@@ -32,6 +32,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = Integer.MAX_VALUE;
-    public static int botMaxSearchDepth = 7;
+    public static long botSearchTimeLimit = 1000;
+    public static int botMaxSearchDepth = 5;
 }
