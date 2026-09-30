@@ -4,13 +4,13 @@
     ---QOL---
     done    Add play against bot
     done    Fix ui capture advantage to account for other sides captures
-    Make debug & bot info easier to disable individual stats
+    done    Make debug & bot info easier to disable individual stats
     Make more quick start cmds
     Shrink ui
     
     ---Bot---
-    *** Repetition detection (eval)
-    Killer moves (speed)
+    done    Repetition detection (eval)
+    ***Killer moves (speed)
     History heuristic (speed)
     Transposition table + Zobrist (speed)
     King attack awareness (eval)
@@ -51,7 +51,7 @@ public class Game
             Settings.safeColors = false;
             Settings.bigNotation = false;
             Settings.quickStart = false;
-            Settings.debugMenu = false;
+            Settings.enableDebug = false;
         }
 
         // start up screen
@@ -64,8 +64,8 @@ public class Game
                  if (input.equals("start")) break;
             else if (input.equals("help")) UI.help();
             else if (input.equals("qs")) { Settings.quickStart = true; break; }
-            else if (input.equals("dqs")) { Settings.quickStart = true; Settings.debugMenu = true; break; }
-            else if (input.equals("debug")) Settings.debugMenu = !Settings.debugMenu;
+            else if (input.equals("dqs")) { Settings.quickStart = true; Settings.enableDebug = true; break; }
+            else if (input.equals("debug")) Settings.enableDebug = !Settings.enableDebug;
             else if (input.equals("bot"))
             {
                 System.out.println("would you like to play as white or black");
@@ -185,7 +185,7 @@ public class Game
             String input = reader.nextLine().toLowerCase();
             
             // debug cmds
-            if (Settings.debugMenu)
+            if (Settings.enableDebug)
             {
                 if (input.equals("history"))
                 {

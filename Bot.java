@@ -13,6 +13,8 @@ public class Bot
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
 
+    public static int[][][] killerMoves = new int[64][2][];
+
     // repetition check
     public static String[] plyPathKeys = new String[64];
 
@@ -409,16 +411,23 @@ public class Bot
         return bonus * ((whiteWinning)? 1 : -1);
     }
 
-    public static int orderScore (Board board, int[] move)
+    public static int orderScore (Board board, int[] move, int ply)
     {
         int victimValue;
         int attackerValue = getPieceValue(board.getPiece(move[0], move[1]).getPiece());
         if (board.getPiece(move[0], move[1]).getPiece() == 'K') attackerValue = 50;
 
-        if (board.getPiece(move[2], move[3]).isOccupied()) victimValue = getPieceValue(board.getPiece(move[2], move[3]).getPiece());
+        if (board.getPiece(move[2], move[3]).isOccupied()) 
+        {
+            victimValue = getPieceValue(board.getPiece(move[2], move[3]).getPiece());
+            return victimValue * 10 - attackerValue; 
+        }
+
+        if (ply == -1) return 0;
+
+        if (Arrays.equals(killerMoves[ply][0], move)) return 90;
+        else if (Arrays.equals(killerMoves[ply][1], move)) return 80;
         else return 0;
-        
-        return victimValue * 10 - attackerValue; 
     }
 
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
@@ -442,9 +451,9 @@ public class Bot
         
         for (int[] move : moves)
         {
-            if (orderScore(board, move) != 0) captures.add(move);
+            if (orderScore(board, move, -1) != 0) captures.add(move);
         }
-        captures.sort((a, b) -> Integer.compare(orderScore(board, b), orderScore(board, a)));
+        captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
         
         for (int[] capture : captures)
         {
@@ -493,7 +502,7 @@ public class Bot
         
         int best = -MATE; // extremly low place holder value
 
-        moves.sort((a, b) -> Integer.compare(orderScore(board, b), orderScore(board, a)));
+        moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
         int validMoves = 0;
         
@@ -512,7 +521,18 @@ public class Bot
                 best = score;
                 alpha = Math.max(alpha, score);
             }
-            if (alpha >= beta) break;
+            if (alpha >= beta)
+            {
+                if (!board.getPiece(move[2], move[3]).isOccupied())
+                {
+                    if (!Arrays.equals(killerMoves[ply][0], move))
+                    {
+                        killerMoves[ply][1] = killerMoves[ply][0];
+                        killerMoves[ply][0] = move;
+                    }
+                }
+                break;
+            }
         }
         
         if (validMoves > 0) return best;
@@ -526,6 +546,7 @@ public class Bot
         deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
         timeCanBeUp = false;
         timeUp = false;
+        killerMoves = new int[64][2][];
 
         depthReached = 0;
 
@@ -533,8 +554,10 @@ public class Bot
         quiescenceMovesAnalysed = 0;
 
         double startTime = System.currentTimeMillis();
+
         // startRow, startCol, endRow, endCol
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+
         int bestScore = -INFINITY;
         int bestScoreSoFar = -INFINITY;
         int alpha = -INFINITY;
@@ -542,7 +565,7 @@ public class Bot
         int[] bestMove = null;
         int[] bestMoveSoFar = null;
 
-        moves.sort((a, b) -> Integer.compare(orderScore(board, b), orderScore(board, a)));
+        moves.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
         plyPathKeys[0] = Board.makePositionKey(board, whiteTurn);
 
         for (int depth = 1; depth <= maxDepth; depth++)
