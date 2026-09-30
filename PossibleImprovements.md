@@ -1,3 +1,5 @@
+# Added Features #
+
 # What Stockfish Has That My Engine Doesn't
 
 Rough estimates only. Real numbers vary a lot by engine and position.
