@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 public class Game
 {
     public static String gameResult;
+    public static long gameStartTime;
     // debugMenu WIP
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
@@ -113,6 +114,7 @@ public class Game
         positionKeys.add(Board.makePositionKey(board, whiteTurn));
 
         // game
+        gameStartTime = System.currentTimeMillis();
         while (true)
         {
             // clear console if no error
@@ -522,6 +524,7 @@ public class Game
             historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
             historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
         }
+        historySB.append("{game took: " + (System.currentTimeMillis() - gameStartTime) + "}" + System.lineSeparator());
         historySB.append(System.lineSeparator());
 
         int counter = 1;
