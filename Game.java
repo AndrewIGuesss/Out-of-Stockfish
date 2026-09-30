@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat;
 
 public class Game
 {
-    public static String gameResult;
+    public static String gameResult = "*";
     public static long gameStartTime;
     // debugMenu WIP
     public static int botMoveTimeMs = -1;
@@ -77,6 +77,12 @@ public class Game
                 if (input.equals("white") || input.equals("w")) blackBotToggle = true;
                 else if (input.equals("black") || input.equals("b")) whiteBotToggle = true;
                 else {error = true; continue;}
+                break;
+            }
+            else if (input.equals("bot game"))
+            {
+                blackBotToggle = true;
+                whiteBotToggle = true;
                 break;
             }
             else error = true;
@@ -524,7 +530,7 @@ public class Game
             historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
             historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
         }
-        historySB.append("{game took: " + (System.currentTimeMillis() - gameStartTime) + "}" + System.lineSeparator());
+        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}" + System.lineSeparator());
         historySB.append(System.lineSeparator());
 
         int counter = 1;
@@ -546,6 +552,20 @@ public class Game
         }
     }
     
+    public static String convertMs(long ms)
+    {
+        int hours, mins, seconds, milliseconds;
+        if (ms >= 3600000) hours = (int)(ms / 3600000); else hours = -1;
+        if (ms >= 60000) mins = (int)((ms / 60000) % 60); else mins = -1;
+        if (ms >= 1000) seconds = (int)((ms / 1000) % 60); else seconds = -1;
+        milliseconds = (int)(ms % 1000);
+
+        if (hours > -1) return String.format("%d:%02d:%02d.%03d", hours, mins, seconds, milliseconds);
+        if (mins > -1) return String.format("%d:%02d.%03d", mins, seconds, milliseconds);
+        if (seconds > -1) return String.format("%d.%03d", seconds, milliseconds);
+        return String.format("0.%03d", milliseconds);
+    }
+
     public static void clear()
     {
         System.out.print("\033[H\033[2J");

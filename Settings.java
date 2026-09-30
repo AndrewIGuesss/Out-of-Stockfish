@@ -1,7 +1,7 @@
 public class Settings
 {
     // history/PGN vars
-    public static String eventPGN = "long bot test";
+    public static String eventPGN = "bot test";
 
     // start options
     public static boolean useCustomStartOptions = true;
