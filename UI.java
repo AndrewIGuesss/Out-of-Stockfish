@@ -63,6 +63,8 @@ public class UI
         System.out.println("qs - starts & skips pre game menus");
         System.out.println("dqs - starts & skips pre game menus with debug enabled");
         System.out.println("debug - toggles the debug menu");
+        System.out.println("bot - starts a game against a bot");
+        System.out.println("bot game - starts a game of 2 bots");
         System.out.println();
         
         System.out.println(helpDebug());
@@ -80,8 +82,6 @@ public class UI
         "clear - clears all pieces but the kings off the board\n" +
         "add - adds a user difined piece to the board\n" +
         "cmds - shows all debug commands\n" +
-        "eval - adds a seperate eval varabile outside of the debug menu\n" +
-        "et - activates eval and toggle command at the same time\n" +
         "save history - saves the game's history to History.txt\n" +
         "\n" +
         "list of all bot commands\n" +
@@ -90,7 +90,8 @@ public class UI
         "bot depth - changes the depth the bot searches at\n" +
         "bot toggle - makes the bot to play for a selected side\n" +
         "bot game - makes the bot play both sides\n" +
-        "bot time limit - changes how long the bot can think per move (in ms)";
+        "bot time limit - changes how long the bot can think per move (in ms)\n" + 
+        "bot roots - shows the evaluation for all of the previous root moves";
     }
     
 
