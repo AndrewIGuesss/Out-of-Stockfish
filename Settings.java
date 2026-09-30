@@ -36,6 +36,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 300000;
-    public static int botMaxSearchDepth = 8;
+    public static long botSearchTimeLimit = 3000;
+    public static int botMaxSearchDepth = 5;
 }

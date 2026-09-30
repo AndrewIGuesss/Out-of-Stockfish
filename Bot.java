@@ -16,6 +16,7 @@ public class Bot
     public static int depthReached = 0;
 
     public static int[][][] killerMoves = new int[64][2][];
+    public static int[][] historyTable = new int[64][64];
 
     // repetition check
     public static String[] plyPathKeys = new String[64];
@@ -422,14 +423,14 @@ public class Bot
         if (board.getPiece(move[2], move[3]).isOccupied()) 
         {
             victimValue = getPieceValue(board.getPiece(move[2], move[3]).getPiece());
-            return victimValue * 10 - attackerValue; 
+            return 1000000 + victimValue * 10 - attackerValue; 
         }
 
         if (ply == -1) return 0;
 
-        if (Arrays.equals(killerMoves[ply][0], move)) return 90;
-        else if (Arrays.equals(killerMoves[ply][1], move)) return 80;
-        else return 0;
+        if (Arrays.equals(killerMoves[ply][0], move)) return 900000;
+        else if (Arrays.equals(killerMoves[ply][1], move)) return 800000;
+        else return Math.min(historyTable[move[0] * 8 + move[1]][move[2] * 8 + move[3]], 799999);
     }
 
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
@@ -487,7 +488,7 @@ public class Bot
             plyPathKeys[ply] = currKey;
         }
 
-        if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking)
+        if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking && timeCanBeUp)
         { 
             timeUp = true;
             return 0;
@@ -532,6 +533,9 @@ public class Bot
                         killerMoves[ply][1] = killerMoves[ply][0];
                         killerMoves[ply][0] = move;
                     }
+                    int from = move[0] * 8 + move[1];
+                    int to = move[2] * 8 + move[3];
+                    historyTable[from][to] += maxDepth * maxDepth;
                 }
                 break;
             }
@@ -551,6 +555,7 @@ public class Bot
         timeCanBeUp = false;
         timeUp = false;
         killerMoves = new int[64][2][];
+        historyTable = new int[64][64];
 
         depthReached = 0;
 
