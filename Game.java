@@ -466,7 +466,7 @@ public class Game
         UI.stillThinking = true;
         Thread thinking = new Thread(UI.thinkingAnimation);
 
-        System.out.println("press enter to cancel");
+        System.out.println("\npress enter to cancel");
         thinking.start();
         try
         {
