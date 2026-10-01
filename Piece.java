@@ -32,7 +32,6 @@ public class Piece
         occupied = true;
     }
 
-
     public Piece()
     {
         occupied = false;
@@ -57,4 +56,20 @@ public class Piece
     public void addHistory(String move) {if (occupied) history.add(move);}
     public void setHasMoved(boolean hasMoved) {if (occupied) this.hasMoved = hasMoved;}
     public void setHasCastled(boolean hasCastled) {if (occupied) this.hasCastled = hasCastled;}
+
+    public int pieceToIndex()
+    {
+        int index = 0;
+        switch (getPiece()) 
+        {
+            case 'P': index = 0; break;
+            case 'N': index = 1; break;
+            case 'B': index = 2; break;
+            case 'R': index = 3; break;
+            case 'Q': index = 4; break;
+            case 'K': index = 5; break;
+        }
+        if (!isWhite()) index += 6;
+        return index;
+    }
 }

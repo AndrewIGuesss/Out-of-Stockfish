@@ -34,7 +34,7 @@ public class Game
     public static boolean botPlayedLastMove = false;
     public static String debugMsg = "";
 
-    public static ArrayList<String> positionKeys = new ArrayList<>();
+    public static ArrayList<Long> positionKeys = new ArrayList<>();
 
     public static void main(String[] args)
     {
@@ -123,7 +123,7 @@ public class Game
         }
         
         Board board = new Board(Settings.safeColors, Settings.bigNotation);
-        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
 
         
         gameStartTime = System.currentTimeMillis();
@@ -205,7 +205,7 @@ public class Game
                 whiteTurn = !whiteTurn;
     
                 // save position
-                positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                 // is in check finder
                 inCheck = false;
                 kingSquare = Board.findKing(board, whiteTurn);
@@ -305,7 +305,7 @@ public class Game
                                 {
                                     board.addPiece(customPiece, customLoc, customColor); 
                                     positionKeys.clear(); 
-                                    positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                                    positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                                 }
                             }
                         }
@@ -332,7 +332,7 @@ public class Game
 
                         positionKeys.clear();
                         // save position
-                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                         // is in check finder
                         inCheck = false;
                         kingSquare = Board.findKing(board, whiteTurn);
@@ -353,7 +353,7 @@ public class Game
 
                         positionKeys.clear();
                         // save position
-                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                         // is in check finder
                         inCheck = false;
                         kingSquare = Board.findKing(board, whiteTurn);
@@ -376,7 +376,7 @@ public class Game
                         // finish move sequence
                         whiteTurn = !whiteTurn;
                         // save position
-                        positionKeys.add(Board.makePositionKey(board, whiteTurn));
+                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                         // is in check finder
                         inCheck = false;
                         kingSquare = Board.findKing(board, whiteTurn);
@@ -494,7 +494,7 @@ public class Game
             
             whiteTurn = !whiteTurn;
             // save position
-            positionKeys.add(Board.makePositionKey(board, whiteTurn));
+            positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
             // is in check finder
             inCheck = false;
             kingSquare = Board.findKing(board, whiteTurn);

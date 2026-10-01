@@ -19,7 +19,7 @@ public class Bot
     public static int[][] historyTable = new int[64][64];
 
     // repetition check
-    public static String[] plyPathKeys = new String[64];
+    public static long[] plyPathKeys = new long[64];
 
     static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
     static boolean timeUp = false;
@@ -479,11 +479,11 @@ public class Bot
     {
         if (ply > 0)
         {
-            String currKey = Board.makePositionKey(board, whiteTurn);
+            long currKey = Zobrist.makeZobristHash(board, whiteTurn);
             if (Game.positionKeys.contains(currKey)) return 0;
             for (int i = 0; i <= ply - 1; i++)
             {
-                if (plyPathKeys[i].equals(currKey)) return 0;
+                if (plyPathKeys[i] == currKey) return 0;
             }
             plyPathKeys[ply] = currKey;
         }
@@ -575,7 +575,7 @@ public class Bot
         int[] bestMoveSoFar = null;
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
-        plyPathKeys[0] = Board.makePositionKey(board, whiteTurn);
+        plyPathKeys[0] = Zobrist.makeZobristHash(board, whiteTurn);
 
         for (int depth = 1; depth <= maxDepth; depth++)
         {
