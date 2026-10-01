@@ -1,5 +1,8 @@
 public class Settings
 {
+    // misc settings
+    public static boolean highlightPreviousMove = true;
+
     // history/PGN vars
     public static String eventPGN = "bot test";
     public static boolean restartTimerOnBotGame = true;

@@ -721,6 +721,13 @@ public class Bot
             depthReached++;
         }
         
+        if (Settings.highlightPreviousMove)
+        {
+            Game.previousMove = new boolean[8][8];
+            Game.previousMove[bestMove[0]][bestMove[1]] = true;
+            Game.previousMove[bestMove[2]][bestMove[3]] = true;
+        }
+
         // results for the debug menu
         Game.botMoveTimeMs = (int)(System.currentTimeMillis() - startTime);
         Game.botMoveEval = bestScore;

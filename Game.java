@@ -31,6 +31,8 @@ public class Game
     public static long gameStartTime;
     public static String importedFEN = "";
 
+    public static boolean[][] previousMove = new boolean[8][8];
+
     // debugMenu
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
@@ -132,6 +134,8 @@ public class Game
         gameStartTime = System.currentTimeMillis();
         gameLoop: while (true)
         {
+            if (!Settings.highlightPreviousMove) previousMove = null;
+
             // clear console if no error
             if (error) error = false;
             else if (!debugMsg.equals("")) { System.out.println(debugMsg); debugMsg = ""; }
@@ -143,7 +147,7 @@ public class Game
                 {
                     if (board.getBoardPawnCount(true) + board.getBoardPawnCount(false) == 0)
                     {
-                        board.printBoard(null, -1, -1);
+                        board.printBoard(previousMove, -1, -1);
                         System.out.println("The game has ended in a draw by insufficient material!");
                         gameResult = "1/2-1/2";
                         saveHistory(board, whiteBotToggle, blackBotToggle);
@@ -153,7 +157,7 @@ public class Game
                 // repetition check
                 if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
                 {
-                    board.printBoard(null, -1, -1);
+                    board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a draw by repetition!");
                     gameResult = "1/2-1/2";
                     saveHistory(board, whiteBotToggle, blackBotToggle);
@@ -165,7 +169,7 @@ public class Game
             {
                 if (Moves.hasNoLegalMoves(board, whiteTurn))
                 {
-                    board.printBoard(null, kingSquare[0], kingSquare[1]);
+                    board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
                     gameResult = whiteTurn? "0-1" : "1-0";
                     saveHistory(board, whiteBotToggle, blackBotToggle);
@@ -173,7 +177,7 @@ public class Game
                 }
                 else
                 {
-                    board.printBoard(null, kingSquare[0], kingSquare[1]);
+                    board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "White" : "Black") + " is in check!");
                     System.out.print(" chose your piece: ");
                 }
@@ -182,7 +186,7 @@ public class Game
             {
                 if (Moves.hasNoLegalMoves(board, whiteTurn))
                 {
-                    board.printBoard(null, -1, -1);
+                    board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a stalemate!");
                     gameResult = "1/2-1/2";
                     saveHistory(board, whiteBotToggle, blackBotToggle);
@@ -190,7 +194,7 @@ public class Game
                 }
                 else
                 {
-                    board.printBoard(null, -1, -1);
+                    board.printBoard(previousMove, -1, -1);
                     System.out.print(whiteTurn? "White's turn" : "Black's turn");
                     System.out.print(" chose your piece: ");
                 }
@@ -333,6 +337,7 @@ public class Game
                         board = new Board(Settings.safeColors, Settings.bigNotation);
                         whiteTurn = true;
 
+                        previousMove = null;
                         positionKeys.clear();
                         // save position
                         positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
@@ -354,6 +359,7 @@ public class Game
                             }
                         }
 
+                        previousMove = null;
                         positionKeys.clear();
                         // save position
                         positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
@@ -373,6 +379,7 @@ public class Game
                             Board newBoard = new Board(Settings.safeColors, Settings.bigNotation);
                             whiteTurn = newBoard.importFEN(input);
 
+                            previousMove = null;
                             positionKeys.clear();
                             // save position
                             positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
@@ -535,7 +542,12 @@ public class Game
             }
 
             board.applyMove(piece, loc, false, promotionPiece);
-            
+            if (Settings.highlightPreviousMove)
+            {
+                previousMove = new boolean[8][8];
+                previousMove[loc[0]][loc[1]] = true;
+                previousMove[piece[0]][piece[1]] = true;
+            }
             whiteTurn = !whiteTurn;
             // save position
             positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
