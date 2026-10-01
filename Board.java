@@ -652,4 +652,57 @@ public class Board
 
         return whiteTurn;
     }
+
+    public String makeFEN(boolean whiteTurn)
+    {
+        StringBuilder fen = new StringBuilder();
+        
+        // Piece placement
+        int emptySquareCounter = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if(!getPiece(i, j).isOccupied()) emptySquareCounter++;
+                else
+                {
+                    if(emptySquareCounter > 0) { fen.append(emptySquareCounter); emptySquareCounter = 0; }
+                    if (getPiece(i, j).isWhite()) fen.append(Character.toUpperCase(getPiece(i, j).getPiece()));
+                    else fen.append(Character.toLowerCase(getPiece(i, j).getPiece()));
+                }
+            }
+            if(emptySquareCounter > 0) fen.append(emptySquareCounter);
+            emptySquareCounter = 0;
+            if (i + 1 < 8) fen.append("/");
+        }
+        fen.append(" ");
+
+        // Side to move
+        if(whiteTurn) fen.append("w");
+        else fen.append("b");
+        fen.append(" ");
+
+        // Castling rights
+        Piece whiteKing = getPiece(findKing(this, true));
+        Piece blackKing = getPiece(findKing(this, false));
+        boolean someoneCanCastle = false;
+        if (!whiteKing.hasCastled() && !whiteKing.hasMoved())
+        {
+            if (getPiece(7, 7).getPiece() == 'R' && !getPiece(7, 7).hasMoved()) fen.append("K"); { someoneCanCastle = true; }
+            if (getPiece(7, 0).getPiece() == 'R' && !getPiece(7, 0).hasMoved()) fen.append("Q"); { someoneCanCastle = true; }
+        }
+        if (!blackKing.hasCastled() && !blackKing.hasMoved())
+        {
+            if (getPiece(0, 7).getPiece() == 'R' && !getPiece(0, 7).hasMoved()) fen.append("k"); { someoneCanCastle = true; }
+            if (getPiece(0, 0).getPiece() == 'R' && !getPiece(0, 0).hasMoved()) fen.append("q"); { someoneCanCastle = true; }
+        }
+        if (!someoneCanCastle) fen.append("-");
+        fen.append(" ");
+
+        // En passant
+        if(enPassantSquare == null) fen.append("-");
+        else fen.append(convertMove(enPassantSquare));
+
+        return fen.toString();
+    }
 }

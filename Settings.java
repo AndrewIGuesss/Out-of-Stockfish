@@ -3,6 +3,7 @@ public class Settings
     // history/PGN vars
     public static String eventPGN = "bot test";
     public static boolean restartTimerOnBotGame = true;
+    public static boolean addSavedFenInHistory = true;
 
     // start options
     public static boolean useCustomStartOptions = true;
@@ -37,6 +38,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 9999999;
-    public static int botMaxSearchDepth = 15;
+    public static long botSearchTimeLimit = 1000;
+    public static int botMaxSearchDepth = 7;
 }

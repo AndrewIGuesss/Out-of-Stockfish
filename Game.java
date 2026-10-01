@@ -388,6 +388,22 @@ public class Game
                         catch (Exception e) { debugMsg = "error importing FEN"; }
                         break;
                     }
+                    case "make fen":
+                    {
+                        try
+                        {
+                            String fen = board.makeFEN(whiteTurn);
+                            debugMsg = "FEN created\n" + fen;
+                            if (Settings.addSavedFenInHistory)
+                            {
+                                Path filePath = Paths.get("History.txt");
+                                Files.writeString(filePath, "saved FEN: " + fen, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                                Files.writeString(filePath, "\n-------------------\n\n", StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                            }
+                        }
+                        catch (Exception e) { debugMsg = "error making FEN"; }
+                        break;
+                    }
                     case "save history":
                     {
                         saveHistory(board, whiteBotToggle, blackBotToggle);
@@ -578,28 +594,26 @@ public class Game
     {
         Path filePath = Paths.get("History.txt");
         ArrayList<String> gameHistory = board.getHistory();
-        StringBuilder historySB = new StringBuilder();
-        Date now = new Date();
+        StringBuilder historySB = new StringBuilder(); Date now = new Date();
         SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy.MM.dd");
 
-        historySB.append("[Event \"" + Settings.eventPGN + "\"]" + System.lineSeparator());
-        historySB.append("[Date \"" + (dateFormatter.format(now)) + "\"]" + System.lineSeparator());
-        historySB.append("[Round \"1\"]" + System.lineSeparator());
-        historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
-        historySB.append("[Black \"" + (blackBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
-        historySB.append("[Result \"" + Game.gameResult + "\"]" + System.lineSeparator());
+        historySB.append("[Event \"" + Settings.eventPGN + "\"]\n");
+        historySB.append("[Date \"" + (dateFormatter.format(now)) + "\"]\n");
+        historySB.append("[Round \"1\"]\n");
+        historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]\n");
+        historySB.append("[Black \"" + (blackBotToggle? "bot" : "player") + "\"]\n");
+        historySB.append("[Result \"" + Game.gameResult + "\"]\n");
         if (!Game.importedFEN.equals(""))
         {
-            historySB.append("[SetUp \"1\"]" + System.lineSeparator());
-            historySB.append("[FEN \"" + Game.importedFEN + "\"]" + System.lineSeparator());
+            historySB.append("[SetUp \"1\"]\n");
+            historySB.append("[FEN \"" + Game.importedFEN + "\"]\n");
         }
         if (blackBotToggle || whiteBotToggle) 
         {
-            historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
-            historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}" + System.lineSeparator());
+            historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}\n");
+            historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}\n");
         }
-        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}" + System.lineSeparator());
-        historySB.append(System.lineSeparator());
+        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}\n\n");
 
         int counter = 1;
         for (int i = 0; i < gameHistory.size(); i += 2)
@@ -608,11 +622,11 @@ public class Game
             else historySB.append(counter + ". " + gameHistory.get(i) + " " + board.getHistory().get(i + 1) + " ");
             counter++;
         }
-        historySB.append(gameResult + System.lineSeparator());
+        historySB.append(gameResult + "\n");
         try 
         {
             Files.writeString(filePath, historySB.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            Files.writeString(filePath, System.lineSeparator() + "-------------------" + System.lineSeparator() + System.lineSeparator(), StandardOpenOption.APPEND);
+            Files.writeString(filePath,"\n-------------------\n\n", StandardOpenOption.APPEND);
         }
         catch (IOException e)
         {
