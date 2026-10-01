@@ -8,14 +8,14 @@ public class Board
     // colors
     private static final String RESET = "\033[0m";
     private static final String BOLD = "\033[1m";
-    private static final String RED_BG  = "\033[41m";
-    private static final String LIGHT_MOVE_SQ = "\033[46m";
-    private static final String DARK_MOVE_SQ  = "\033[44m";
+    private static final String RED_BG  = "\033[48;2;205;0;0m";
+    private static final String LIGHT_MOVE_SQ = "\033[48;2;20;160;165m";
+    private static final String DARK_MOVE_SQ  = "\033[48;2;20;75;160m";
     
-    private static final String DEFAULT_WHITE = "\033[39m";
-    private static final String DEFAULT_BLACK = "\033[38;5;16m";
-    private static final String DEFAULT_LIGHT_SQ = "\033[48;5;250m";  
-    private static final String DEFAULT_DARK_SQ  = "\033[48;5;240m";
+    private static final String DEFAULT_WHITE = "\033[38;2;255;255;255m";
+    private static final String DEFAULT_BLACK = "\033[38;2;0;0;0m";
+    private static final String DEFAULT_LIGHT_SQ = "\033[48;2;188;188;188m";  
+    private static final String DEFAULT_DARK_SQ  = "\033[48;2;88;88;88m";
 
     private static final String SAFE_WHITE = "\033[34m";
     private static final String SAFE_BLACK = "\033[35m";
@@ -431,7 +431,8 @@ public class Board
         System.out.println("Black: " + (getBoardValue() < 0? "+" + Math.abs(getBoardValue()) : "") + " " + captureList(blackCaptured));
         
         // files
-        System.out.println(RESET + "   a  b  c  d  e  f  g  h");
+        if (Settings.usePieceIcons) System.out.println(RESET + "    a   b   c   d   e   f   g   h");
+        else System.out.println(RESET + "   a  b  c  d  e  f  g  h");
         for (int row = 0; row < 8; row++)
         {
             // ranks
@@ -450,15 +451,17 @@ public class Board
                 {
                     // if piece is white change color to white else change color to black
                     String color = playerBoard[row][col].isWhite()? WHITE : BLACK;
-                    System.out.print(BOLD + color + bg + " " + playerBoard[row][col].getPiece()+ " " + RESET);
+                    if (Settings.usePieceIcons) System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].toIcon() + "  ");
+                    else System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].getPiece() + " ");
                 }
                 // empty squares
                 else
                 {
-                    System.out.print(bg + "   " + RESET);
+                    if (Settings.usePieceIcons) System.out.print(RESET + bg + "    ");
+                    else System.out.print(RESET + bg + "   ");
                 }
             }
-            System.out.println();
+            System.out.println(RESET);
         }
         
         // white captures
@@ -505,7 +508,7 @@ public class Board
 
         System.out.println();
     }
-    
+
     public String getIllegalReason(int[] start, int[] end)
     {
         boolean whiteTurn = history.size() % 2 == 0;

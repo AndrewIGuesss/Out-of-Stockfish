@@ -228,6 +228,12 @@ public class Game
             {
                 switch (input)
                 {
+                    case "icons":
+                    {
+                        Settings.usePieceIcons = !Settings.usePieceIcons;
+                        debugMsg = "showing pieces as " + (Settings.usePieceIcons? "icons" : "characters");
+                        break;
+                    }
                     case "history":
                     {
                         int counter = 1;

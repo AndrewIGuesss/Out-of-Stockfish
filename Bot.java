@@ -9,7 +9,7 @@ public class Bot
     private static final int INFINITY = 1234567890;
     private static final int MAX_DEPTH_EXTENTION = 20;
     public static String rootScores = "";
-    public static boolean exactRootScores = false; // true = exact root score (slower)
+    public static boolean exactRootScores = true; // true = exact root score (slower)
 
     public static int movesAnalysed = 0;
     public static int quiescenceMovesAnalysed = 0;

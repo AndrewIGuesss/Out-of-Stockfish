@@ -72,4 +72,18 @@ public class Piece
         if (!isWhite()) index += 6;
         return index;
     }
+
+    public String toIcon()
+    {
+        switch (getPiece())
+        {
+            case 'K': return "\u2654";
+            case 'Q': return "\u2655";
+            case 'R': return "\u2656";
+            case 'B': return "\u2657";
+            case 'N': return "\u2658";
+            case 'P': return "\u2659";
+        }
+        return "";
+    }
 }

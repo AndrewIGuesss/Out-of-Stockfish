@@ -2,6 +2,7 @@ public class Settings
 {
     // misc settings
     public static boolean highlightPreviousMove = true;
+    public static boolean usePieceIcons = true; // uglier but little bit easier to read
 
     // history/PGN vars
     public static String eventPGN = "bot test";
@@ -15,7 +16,7 @@ public class Settings
     
     public static boolean debugMenu = true;
     public static boolean quickStart = true;
-    public static boolean safeColors = true;
+    public static boolean safeColors = false; // terminal.integrated.minimumContrastRatio 1
     public static boolean bigNotation = false;
 
     // debug menu setings
@@ -41,6 +42,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 1000;
+    public static long botSearchTimeLimit = 1000000;
     public static int botMaxSearchDepth = 7;
 }
