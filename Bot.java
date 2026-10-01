@@ -435,20 +435,24 @@ public class Bot
 
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
     {
+        // time limit check
         if (System.currentTimeMillis() > deadline && timeCanBeUp)
         { 
             timeUp = true;
             return 0;
         }
 
+        // node counters
         movesAnalysed++;
         quiescenceMovesAnalysed++;
+        // stand pat (eval if we stop capturing here)
         int standPat = evalBoard(board) * (whiteTurn? 1 : -1);
         if (standPat >= beta) return standPat;
         
         alpha = Math.max(alpha, standPat);
         int best = standPat;
 
+        // captures only (MVV-LVA ordered)
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
         ArrayList<int[]> captures = new ArrayList<>();
         
@@ -458,6 +462,7 @@ public class Bot
         }
         captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
         
+        // search captures
         for (int[] capture : captures)
         {
             Board copy = new Board(board);
@@ -477,9 +482,11 @@ public class Bot
 
     public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply, boolean isNullMove)
     {
+        // TT store info
         int originalAlpha = alpha;
         int[] bestMoveHere = null;
 
+        // zobrist hash + repetition detection
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)
         {
@@ -491,6 +498,7 @@ public class Bot
             plyPathKeys[ply] = currKey;
         }
 
+        // time limit / stop thinking check
         if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking && timeCanBeUp)
         { 
             timeUp = true;
@@ -498,9 +506,11 @@ public class Bot
         }
 
         movesAnalysed++;
+        // check extension
         boolean inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
         if (inCheck && ply < MAX_DEPTH_EXTENTION) maxDepth++;
 
+        // TT probe (transposition table)
         int[] ttMove = null;
         int index = (int)(currKey & (TTEntry.TT_SIZE - 1));
         TTEntry entry = TTEntry.ttTable[index];
@@ -525,8 +535,10 @@ public class Bot
             }
         }
 
+        // quiescence at the leaves
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
+        // null move pruning
         if (ply != 0 && maxDepth >= 4 && !isNullMove && !inCheck)
         {
             // - 10 for king
@@ -541,6 +553,7 @@ public class Bot
             }
         }
 
+        // move generation + ordering (MVV-LVA, killers, history)
         // startRow, startCol, endRow, endCol
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
         
@@ -548,6 +561,7 @@ public class Bot
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
+        // TT move first
         if (ttMove != null)
         {
             for (int [] move : moves)
@@ -561,6 +575,7 @@ public class Bot
             }
         }
 
+        // main search loop
         int validMoves = 0;
         
         for (int[] move : moves)
@@ -579,6 +594,7 @@ public class Bot
                 best = score;
                 alpha = Math.max(alpha, score);
             }
+            // beta cutoff: save killer + history for quiet moves
             if (alpha >= beta)
             {
                 if (!board.getPiece(move[2], move[3]).isOccupied())
@@ -596,6 +612,7 @@ public class Bot
             }
         }
         
+        // TT store (mate scores made relative to this node)
         if (!timeUp && validMoves > 0)
         {
             int flag;
@@ -611,6 +628,7 @@ public class Bot
             TTEntry.ttTable[index] = new TTEntry(currKey, maxDepth, storedScore, flag, bestMoveHere);
         }
 
+        // checkmate / stalemate
         if (validMoves > 0) return best;
         
         if (inCheck) return -MATE + ply;
@@ -619,6 +637,7 @@ public class Bot
 
     public static int[] bestMove(Board board, int maxDepth, boolean whiteTurn)
     {
+        // reset search state (stop flag, time limit, killers, history)
         stopThinking = false;
 
         deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
@@ -627,6 +646,7 @@ public class Bot
         killerMoves = new int[64][2][];
         historyTable = new int[64][64];
 
+        // stats
         depthReached = 0;
 
         movesAnalysed = 0;
@@ -634,6 +654,7 @@ public class Bot
 
         double startTime = System.currentTimeMillis();
 
+        // root move generation + ordering
         // startRow, startCol, endRow, endCol
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
 
@@ -645,8 +666,10 @@ public class Bot
         int[] bestMoveSoFar = null;
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
+        // root position key for repetition detection
         plyPathKeys[0] = Zobrist.makeZobristHash(board, whiteTurn);
 
+        // iterative deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
             bestScoreSoFar = -INFINITY;
@@ -655,6 +678,7 @@ public class Bot
             beta = INFINITY;
             StringBuilder depthScores = new StringBuilder();
             
+            // root search loop
             for(int[] move : moves)
             {
                 Board copy = new Board(board);
@@ -667,6 +691,7 @@ public class Bot
                 
                 if (timeUp) break;
                 
+                // root scores display
                 depthScores.append(Board.convertMove(new int[]{move[0], move[1]}) + Board.convertMove(new int[]{move[2], move[3]}));
                 depthScores.append((!exactRootScores && score <= alpha && bestMoveSoFar != move)? " <= " : " = ");
                 depthScores.append(score / 100.0 + "\n");
@@ -679,6 +704,7 @@ public class Bot
             }
             if (timeUp) break;
             
+            // depth finished: save results, best move first for next depth
             rootScores = "root scores (depth " + depth + "):\n" + depthScores;
 
             moves.remove(bestMoveSoFar);
@@ -691,6 +717,7 @@ public class Bot
             depthReached++;
         }
         
+        // results for the debug menu
         Game.botMoveTimeMs = (int)(System.currentTimeMillis() - startTime);
         Game.botMoveEval = bestScore;
         return bestMove;
