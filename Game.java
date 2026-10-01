@@ -3,20 +3,21 @@
     
     ---QOL---
     make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
+    add the ability to add a pre set up position (FEN)
 
     ---Bot---
-    Null move pruning (speed)
-    Late move reductions / LMR (speed)
-    Principal variation search / PVS (speed)
-    Tempo bonus (eval)
-    Tapered eval (eval)
-    Delta pruning in quiescence (speed)
-    Aspiration windows (speed)
-    UCI (testing)
-    King safety upgrade (eval)
-    Time management (eval)
-    Make/unmake + incremental Zobrist (speed)
-    Lazy SMP (speed)
+    done    Null move pruning (speed)
+    Late move reductions / LMR (speed) ~1-1.5 hours
+    Principal variation search / PVS (speed) ~1 hour
+    Tempo bonus (eval) ~10 minutes
+    Tapered eval (eval) ~1.5-2 hours
+    Delta pruning in quiescence (speed) ~20-30 minutes
+    Aspiration windows (speed) ~45 minutes-1 hour
+    UCI (testing) ~3-4 hours, plus setting up a GUI or match runner
+    King safety upgrade (eval) ~1.5-2 hours
+    Time management (eval) ~1 hour for a basic version
+    Make/unmake + incremental Zobrist (speed) ~6-10 hours, spread over a few sessions
+    Lazy SMP (speed) ~4-6 hours, mostly untangling the static variables
 */
 
 import java.io.IOException;
@@ -360,6 +361,28 @@ public class Game
                         if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
                         
                         continue;
+                    }
+                    case "fen":
+                    {
+                        System.out.println("please input your fen");
+                        input = reader.nextLine();
+                        try
+                        {
+                            Board newBoard = new Board(Settings.safeColors, Settings.bigNotation);
+                            whiteTurn = newBoard.importFEN(input);
+                            board = newBoard;
+                            
+                            positionKeys.clear();
+                            // save position
+                            positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
+                            // is in check finder
+                            inCheck = false;
+                            kingSquare = Board.findKing(newBoard, whiteTurn);
+                            if (Moves.inCheck(newBoard, kingSquare, whiteTurn)) inCheck = true;
+                            debugMsg = "FEN imported";
+                        }
+                        catch (Exception e) { debugMsg = "error importing FEN"; }
+                        break;
                     }
                     case "save history":
                     {

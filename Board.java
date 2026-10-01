@@ -582,51 +582,74 @@ public class Board
         return pawns;
     }
 
-    public static String makePositionKey(Board board, boolean whiteTurn)
+    public boolean importFEN (String fen)
     {
-        StringBuilder key = new StringBuilder();
-        for (int row = 0; row < 8; row++)
+        boolean whiteTurn;
+        String[] splitFEN = fen.split(" ");
+        int col = 0;
+        int row = 0;
+
+        for (int i = 0; i < 8; i++)
         {
-            for (int col = 0; col < 8; col++)
+            for (int j = 0; j < 8; j++)
             {
-                Piece scanPiece = board.getPiece(row, col);
-                if (!scanPiece.isOccupied())
-                {
-                    key.append("-");
-                    continue;
-                }
-                if (scanPiece.isWhite()) key.append(Character.toUpperCase(scanPiece.getPiece()));
-                else key.append(Character.toLowerCase(scanPiece.getPiece()));
+                addPiece(new int[]{i, j});
             }
         }
 
-        // whites turn    blacks turn
-        key.append(whiteTurn? "|WT" : "|BT"); 
-
-        // white can castle Long/Short
-        key.append("|WCC ");
-        if (!board.getPiece(findKing(board, true)).hasMoved())
+        // Piece placement
+        for (char currChar : splitFEN[0].toCharArray())
         {
-            // long castle
-            Piece scanPiece = board.getPiece(7, 0);
-            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("L");
-            // short castle
-            scanPiece = board.getPiece(7, 7);
-            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("S");
+            if (currChar == '/') {row++; col = 0;}
+            else if (Character.isDigit(currChar))
+            {
+                col += currChar - '0';
+            }
+            else 
+            {
+                addPiece(Character.toUpperCase(currChar), new int[]{row, col}, Character.isUpperCase(currChar));
+                col++;
+            }
         }
 
-        // black can castle Long/Short
-        key.append("|BCC ");
-        if (!board.getPiece(findKing(board, false)).hasMoved())
+        // Side to move
+        if (splitFEN[1].equals("w")) whiteTurn = true;
+        else whiteTurn = false;
+
+        // Castling rights
+        for (int i = 0; i < 8; i++)
         {
-            // long castle
-            Piece scanPiece = board.getPiece(0, 0);
-            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("L");
-            // short castle
-            scanPiece = board.getPiece(0, 7);
-            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) key.append("S");
+            for (int j = 0; j < 8; j++)
+            {
+                if (getPiece(i, j).getPiece() == 'K' || getPiece(i, j).getPiece() == 'R')
+                {
+                    getPiece(i, j).setHasMoved(true);
+                    if (getPiece(i, j).getPiece() == 'K')
+                    {
+                             if (i == 0 && j == 2) getPiece(i, j).setHasCastled(true);
+                        else if (i == 0 && j == 6) getPiece(i, j).setHasCastled(true);
+                        else if (i == 7 && j == 2) getPiece(i, j).setHasCastled(true);
+                        else if (i == 7 && j == 6) getPiece(i, j).setHasCastled(true);
+                    }
+                }
+            }
         }
 
-        return key.toString();
+        for (char currChar : splitFEN[2].toCharArray())
+        {
+            switch (currChar)
+            {
+                case 'K': getPiece(7, 4).setHasMoved(false); getPiece(7, 7).setHasMoved(false); break;
+                case 'Q': getPiece(7, 4).setHasMoved(false); getPiece(7, 0).setHasMoved(false); break;
+                case 'k': getPiece(0, 4).setHasMoved(false); getPiece(0, 7).setHasMoved(false); break;
+                case 'q': getPiece(0, 4).setHasMoved(false); getPiece(0, 0).setHasMoved(false); break;
+            }
+        }
+
+        // En passant
+        if (splitFEN[3].equals("-")) setEnPassantSquare(null);
+        else setEnPassantSquare(convertMove(splitFEN[3]));
+
+        return whiteTurn;
     }
 }

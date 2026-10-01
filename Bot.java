@@ -416,6 +416,7 @@ public class Bot
 
     public static int orderScore (Board board, int[] move, int ply)
     {
+        // MVV-LVA = most valuable victim, least valuable attacker
         int victimValue;
         int attackerValue = getPieceValue(board.getPiece(move[0], move[1]).getPiece());
         if (board.getPiece(move[0], move[1]).getPiece() == 'K') attackerValue = 50;
@@ -445,6 +446,7 @@ public class Bot
         // node counters
         movesAnalysed++;
         quiescenceMovesAnalysed++;
+
         // stand pat (eval if we stop capturing here)
         int standPat = evalBoard(board) * (whiteTurn? 1 : -1);
         if (standPat >= beta) return standPat;
@@ -482,7 +484,7 @@ public class Bot
 
     public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply, boolean isNullMove)
     {
-        // TT store info
+        // transposition table save (remember this position's result)
         int originalAlpha = alpha;
         int[] bestMoveHere = null;
 
@@ -505,12 +507,14 @@ public class Bot
             return 0;
         }
 
+        // node counter
         movesAnalysed++;
-        // check extension
+
+        // check depth extension
         boolean inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
         if (inCheck && ply < MAX_DEPTH_EXTENTION) maxDepth++;
 
-        // TT probe (transposition table)
+        // transposition table lookup (check if we've seen this position before)
         int[] ttMove = null;
         int index = (int)(currKey & (TTEntry.TT_SIZE - 1));
         TTEntry entry = TTEntry.ttTable[index];
@@ -535,7 +539,7 @@ public class Bot
             }
         }
 
-        // quiescence at the leaves
+        // quiescence at the leaves (last search until we reach the max depth)
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
         // null move pruning
@@ -561,7 +565,7 @@ public class Bot
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
-        // TT move first
+        // try TT move first
         if (ttMove != null)
         {
             for (int [] move : moves)
@@ -612,7 +616,7 @@ public class Bot
             }
         }
         
-        // TT store (mate scores made relative to this node)
+        // TT save (mate scores made relative to this node)
         if (!timeUp && validMoves > 0)
         {
             int flag;
