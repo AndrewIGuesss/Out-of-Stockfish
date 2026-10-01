@@ -1,22 +1,22 @@
 /*
     ---TO DO---
-
-    ---QOL---
-    done    stopable bot
-    done    Add play against bot
-    done    Fix ui capture advantage to account for other sides captures
-    done    Make debug & bot info easier to disable individual stats
-    Make more quick start cmds
-    Shrink ui
     
+    ---QOL---
+    make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
+
     ---Bot---
-    done    Repetition detection (eval)
-    done    Killer moves (speed)
-    History heuristic (speed)
-    Transposition table + Zobrist (speed)
-    King attack awareness (eval)
-    Rooks on open and semi-open files (eval)
-    Knight outposts (eval)
+    Null move pruning (speed)
+    Late move reductions / LMR (speed)
+    Principal variation search / PVS (speed)
+    Tempo bonus (eval)
+    Tapered eval (eval)
+    Delta pruning in quiescence (speed)
+    Aspiration windows (speed)
+    UCI (testing)
+    King safety upgrade (eval)
+    Time management (eval)
+    Make/unmake + incremental Zobrist (speed)
+    Lazy SMP (speed)
 */
 
 import java.io.IOException;
@@ -138,7 +138,7 @@ public class Game
                 // insufficient material check(-10 for king)
                 if (board.getBoardValue(true) - 10 <= 3 && board.getBoardValue(false) - 10 <= 3)
                 {
-                    if (board.getBoardPawnCound(true) + board.getBoardPawnCound(false) == 0)
+                    if (board.getBoardPawnCount(true) + board.getBoardPawnCount(false) == 0)
                     {
                         board.printBoard(null, -1, -1);
                         System.out.println("The game has ended in a draw by insufficient material!");

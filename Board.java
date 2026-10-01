@@ -87,6 +87,7 @@ public class Board
     
     // seters
     public void addHistory(String s) {history.add(s);}
+    public void setEnPassantSquare(int[] cords) {enPassantSquare = cords;}
 
     // debug geters
     public ArrayList<String> getFakeMoves() { return fakeMoves; };
@@ -565,7 +566,7 @@ public class Board
         return value;
     }
 
-    public int getBoardPawnCound(boolean isWhite)
+    public int getBoardPawnCount(boolean isWhite)
     {
         int pawns = 0;
         for (int row = 0; row < 8; row++)

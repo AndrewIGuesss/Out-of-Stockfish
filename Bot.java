@@ -475,7 +475,7 @@ public class Bot
         return best;
     }
 
-    public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply)
+    public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply, boolean isNullMove)
     {
         int originalAlpha = alpha;
         int[] bestMoveHere = null;
@@ -527,6 +527,20 @@ public class Bot
 
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
+        if (ply != 0 && maxDepth >= 4 && !isNullMove && !inCheck)
+        {
+            // - 10 for king
+            if (board.getBoardValue(whiteTurn) - 10 != board.getBoardPawnCount(whiteTurn))
+            {
+                int reduction = 2;
+                Board nullCopy = new Board(board);
+                nullCopy.setEnPassantSquare(null);
+                int score = -negamax(nullCopy, maxDepth - 1 - reduction, !whiteTurn, -beta, -beta + 1, ply + 1, true);
+                
+                if (score >= beta) return beta;
+            }
+        }
+
         // startRow, startCol, endRow, endCol
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
         
@@ -558,7 +572,7 @@ public class Bot
             
             validMoves++;
             
-            int score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1);
+            int score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
             if (score > best)
             {
                 bestMoveHere = move;
@@ -649,7 +663,7 @@ public class Bot
                 
                 if (bestMoveSoFar == null) bestMoveSoFar = move;
                 
-                int score = -negamax(copy, depth - 1, !whiteTurn, -beta, -alpha, 1);
+                int score = -negamax(copy, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
                 
                 if (timeUp) break;
                 
