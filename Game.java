@@ -3,7 +3,7 @@
     
     ---QOL---
     make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
-    add the ability to add a pre set up position (FEN)
+    add tests
 
     ---Bot---
     done    Null move pruning (speed)
@@ -29,7 +29,9 @@ public class Game
 {
     public static String gameResult = "*";
     public static long gameStartTime;
-    // debugMenu WIP
+    public static String importedFEN = "";
+
+    // debugMenu
     public static int botMoveTimeMs = -1;
     public static int botMoveEval = 123123123;
     public static boolean botPlayedLastMove = false;
@@ -370,8 +372,7 @@ public class Game
                         {
                             Board newBoard = new Board(Settings.safeColors, Settings.bigNotation);
                             whiteTurn = newBoard.importFEN(input);
-                            board = newBoard;
-                            
+
                             positionKeys.clear();
                             // save position
                             positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
@@ -379,7 +380,10 @@ public class Game
                             inCheck = false;
                             kingSquare = Board.findKing(newBoard, whiteTurn);
                             if (Moves.inCheck(newBoard, kingSquare, whiteTurn)) inCheck = true;
+
+                            board = newBoard;
                             debugMsg = "FEN imported";
+                            Game.importedFEN = input;
                         }
                         catch (Exception e) { debugMsg = "error importing FEN"; }
                         break;
@@ -438,6 +442,7 @@ public class Game
                     }
                     case "bot game":
                     {
+                        if (Settings.restartTimerOnBotGame) gameStartTime = System.currentTimeMillis();
                         whiteBotToggle = true;
                         blackBotToggle = true;
                         debugMsg = "bots now playing eachother";
@@ -583,6 +588,11 @@ public class Game
         historySB.append("[White \"" + (whiteBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
         historySB.append("[Black \"" + (blackBotToggle? "bot" : "player") + "\"]" + System.lineSeparator());
         historySB.append("[Result \"" + Game.gameResult + "\"]" + System.lineSeparator());
+        if (!Game.importedFEN.equals(""))
+        {
+            historySB.append("[SetUp \"1\"]" + System.lineSeparator());
+            historySB.append("[FEN \"" + Game.importedFEN + "\"]" + System.lineSeparator());
+        }
         if (blackBotToggle || whiteBotToggle) 
         {
             historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}" + System.lineSeparator());
@@ -602,7 +612,7 @@ public class Game
         try 
         {
             Files.writeString(filePath, historySB.toString(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            Files.writeString(filePath, "-------------------" + System.lineSeparator(), StandardOpenOption.APPEND);
+            Files.writeString(filePath, System.lineSeparator() + "-------------------" + System.lineSeparator() + System.lineSeparator(), StandardOpenOption.APPEND);
         }
         catch (IOException e)
         {
