@@ -477,9 +477,12 @@ public class Bot
 
     public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply)
     {
+        int originalAlpha = alpha;
+        int[] bestMoveHere = null;
+
+        long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)
         {
-            long currKey = Zobrist.makeZobristHash(board, whiteTurn);
             if (Game.positionKeys.contains(currKey)) return 0;
             for (int i = 0; i <= ply - 1; i++)
             {
@@ -498,6 +501,30 @@ public class Bot
         boolean inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
         if (inCheck && ply < MAX_DEPTH_EXTENTION) maxDepth++;
 
+        int[] ttMove = null;
+        int index = (int)(currKey & (TTEntry.TT_SIZE - 1));
+        TTEntry entry = TTEntry.ttTable[index];
+        if (entry != null && entry.key == currKey)
+        {
+            ttMove = entry.bestmove;
+            if (entry.depth >= maxDepth)
+            {
+                int ttScore = entry.score;
+                if (ttScore > MATE - 1000) ttScore -= ply;
+                if (ttScore < -(MATE - 1000)) ttScore += ply;
+                switch (entry.flag) 
+                {
+                    case TTEntry.EXACT: return ttScore;
+                    case TTEntry.LOWER: 
+                        if (ttScore >= beta) return ttScore;
+                        else break;
+                    case TTEntry.UPPER:
+                        if (ttScore <= alpha) return ttScore;
+                        else break;
+                }
+            }
+        }
+
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
         // startRow, startCol, endRow, endCol
@@ -507,6 +534,19 @@ public class Bot
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
+        if (ttMove != null)
+        {
+            for (int [] move : moves)
+            {
+                if (Arrays.equals(ttMove, move))
+                {
+                    moves.remove(move);
+                    moves.add(0, move);
+                    break;
+                }
+            }
+        }
+
         int validMoves = 0;
         
         for (int[] move : moves)
@@ -521,6 +561,7 @@ public class Bot
             int score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1);
             if (score > best)
             {
+                bestMoveHere = move;
                 best = score;
                 alpha = Math.max(alpha, score);
             }
@@ -541,6 +582,21 @@ public class Bot
             }
         }
         
+        if (!timeUp && validMoves > 0)
+        {
+            int flag;
+            if (best <= originalAlpha) flag = TTEntry.UPPER;
+            else if (best >= beta) flag = TTEntry.LOWER;
+            else flag = TTEntry.EXACT;
+
+            int storedScore;
+            if (best > MATE - 1000) storedScore = best + ply;
+            else if (best < -(MATE - 1000)) storedScore = best - ply;
+            else storedScore = best;
+
+            TTEntry.ttTable[index] = new TTEntry(currKey, maxDepth, storedScore, flag, bestMoveHere);
+        }
+
         if (validMoves > 0) return best;
         
         if (inCheck) return -MATE + ply;

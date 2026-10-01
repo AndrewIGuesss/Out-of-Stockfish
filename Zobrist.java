@@ -33,10 +33,10 @@ public class Zobrist
                 Piece scanPiece = board.getPiece(row, col);
                 if (!scanPiece.isOccupied()) continue;
                 else zobristHash ^= zobristPieceKeys[scanPiece.pieceToIndex()][(row * 8) + col];
-
-                if (!whiteTurn) zobristHash ^= zobristWhiteTurn;
             }
         }
+
+        if (!whiteTurn) zobristHash ^= zobristWhiteTurn;
 
         // whiet castling rights
         if (!board.getPiece(Board.findKing(board, true)).hasMoved())
