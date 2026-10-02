@@ -8,7 +8,7 @@ public class Board
     // colors
     private static final String RESET = "\033[0m";
     private static final String BOLD = "\033[1m";
-    private static final String RED_BG  = "\033[48;2;205;0;0m";
+    private static final String RED_BG  = "\033[48;2;255;100;100m";
     private static final String LIGHT_MOVE_SQ = "\033[48;2;20;160;165m";
     private static final String DARK_MOVE_SQ  = "\033[48;2;20;75;160m";
     
@@ -442,31 +442,39 @@ public class Board
         // black captures
         System.out.println("Black: " + (getBoardValue() < 0? "+" + Math.abs(getBoardValue()) : "") + " " + captureList(blackCaptured));
         
+        
+        int firstRow = 0;
+        int lastRow = 8;
+        int firstCol = 0;
+        int lastCol = 8;
+        char[] file = new char[]{'a','b','c','d','e','f','g','h'};
+        if (Settings.blackOnBottom)
+        {
+            firstRow = 7;
+            lastRow = -1;
+            firstCol = 7;
+            lastCol = -1;
+            file = new char[]{'h','g','f','e','d','c','b','a'};
+        }
         // files
-        if (Settings.usePieceIcons) System.out.println(RESET + "    a   b   c   d   e   f   g   h");
-        else System.out.println(RESET + "   a  b  c  d  e  f  g  h");
-        for (int row = 0; row < 8; row++)
+        if (Settings.usePieceIcons) System.out.printf(RESET + "   %c    %c   %c   %c   %c   %c   %c   %c%n", file[0], file[1], file[2], file[3], file[4], file[5], file[6], file[7]);
+        else System.out.printf(RESET + "   %c  %c  %c  %c  %c  %c  %c  %c%n", file[0], file[1], file[2], file[3], file[4], file[5], file[6], file[7]);
+        for (int row = firstRow; row != lastRow; row += (Settings.blackOnBottom? -1 : 1))
         {
             // ranks
             System.out.print(RESET + (8 - row) + " ");
-            for (int col = 0; col < 8; col++)
+            for (int col = firstCol; col != lastCol; col += (Settings.blackOnBottom? -1 : 1))
             {
-                // bg reset
                 String bg = (col + row) % 2 == 0? LIGHT_SQ : DARK_SQ;
-                // piece selection check & valid moves for it
                 if (validMoves != null && validMoves[row][col]) bg = (col + row) % 2 == 0? LIGHT_MOVE_SQ : DARK_MOVE_SQ;
-                // if king in check
                 if (checkRow == row && checkCol == col) bg = RED_BG;
     
-                // if piece is there
                 if (playerBoard[row][col].isOccupied())
                 {
-                    // if piece is white change color to white else change color to black
                     String color = playerBoard[row][col].isWhite()? WHITE : BLACK;
                     if (Settings.usePieceIcons) System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].toIcon() + "  ");
                     else System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].getPiece() + " ");
                 }
-                // empty squares
                 else
                 {
                     if (Settings.usePieceIcons) System.out.print(RESET + bg + "    ");

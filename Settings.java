@@ -2,10 +2,11 @@ public class Settings
 {
     // misc settings
     public static boolean highlightPreviousMove = true;
-    public static boolean usePieceIcons = true; // uglier but little bit easier to read
+    public static boolean usePieceIcons = false; // uglier but little bit easier to read
+    public static boolean blackOnBottom = false;
 
     // history/PGN vars
-    public static String eventPGN = "bot test";
+    public static String eventPGN = "bot long test";
     public static boolean restartTimerOnBotGame = true;
     public static boolean addSavedFenInHistory = true;
 
@@ -42,6 +43,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 3000;
+    public static long botSearchTimeLimit = 100;
     public static int botMaxSearchDepth = 8;
 }

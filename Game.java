@@ -7,7 +7,7 @@
     add tests
     Undo / takeback (~30 min)
     PGN import (~1-2 hrs)
-    Flip the board (~20 min)
+    done    Flip the board (~20 min)
     Show the principal variation / PV (~45 min)
     Eval breakdown command (~45 min)
     Hint command (~10 min)
@@ -15,6 +15,8 @@
     Perft command
     Bench command (~20 min)
     Small opening book (~1 hr)
+    done    ff
+    add setting to show eval, depth, time after each bot move in PGNs
 
     ---Bot---
     done    Null move pruning (speed)
@@ -170,7 +172,7 @@ public class Game
                         board.printBoard(previousMove, -1, -1);
                         System.out.println("The game has ended in a draw by insufficient material!");
                         gameResult = "1/2-1/2";
-                        saveHistory(board, whiteBotToggle, blackBotToggle);
+                        makePGN(board, whiteBotToggle, blackBotToggle);
                         break gameLoop;
                     }
                 }
@@ -180,7 +182,7 @@ public class Game
                     board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a draw by repetition!");
                     gameResult = "1/2-1/2";
-                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    makePGN(board, whiteBotToggle, blackBotToggle);
                     break gameLoop;
                 }
             }
@@ -192,7 +194,7 @@ public class Game
                     board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
                     System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
                     gameResult = whiteTurn? "0-1" : "1-0";
-                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    makePGN(board, whiteBotToggle, blackBotToggle);
                     break gameLoop;
                 }
                 else
@@ -209,7 +211,7 @@ public class Game
                     board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a stalemate!");
                     gameResult = "1/2-1/2";
-                    saveHistory(board, whiteBotToggle, blackBotToggle);
+                    makePGN(board, whiteBotToggle, blackBotToggle);
                     break gameLoop;
                 }
                 else
@@ -248,6 +250,24 @@ public class Game
             {
                 switch (input)
                 {
+                    case "ff":
+                    {
+                        kingSquare = Board.findKing(board, whiteTurn);
+
+                        clear();
+                        board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
+                        
+                        System.out.println((whiteTurn? "Black" : "White") + " has won by resignation");
+                        gameResult = whiteTurn? "0-1" : "1-0";
+                        makePGN(board, whiteBotToggle, blackBotToggle);
+                        break gameLoop;
+                    }
+                    case "flip":
+                    {
+                        Settings.blackOnBottom = !Settings.blackOnBottom;
+                        debugMsg = (Settings.blackOnBottom? "Black" : "White") + "'s pieces are now on the bottom";
+                        break;
+                    }
                     case "icons":
                     {
                         Settings.usePieceIcons = !Settings.usePieceIcons;
@@ -450,7 +470,7 @@ public class Game
                     }
                     case "save history":
                     {
-                        saveHistory(board, whiteBotToggle, blackBotToggle);
+                        makePGN(board, whiteBotToggle, blackBotToggle);
                         debugMsg = "history saved";
                         break;
                     }
@@ -649,7 +669,7 @@ public class Game
         return square;
     }
     
-    public static void saveHistory(Board board, boolean whiteBotToggle, boolean blackBotToggle)
+    public static void makePGN(Board board, boolean whiteBotToggle, boolean blackBotToggle)
     {
         Path filePath = Paths.get("History.txt");
         ArrayList<String> gameHistory = board.getHistory();
