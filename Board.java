@@ -36,6 +36,8 @@ public class Board
 
     private boolean safeColor;
     private boolean bigNotation;
+
+    private boolean blackStarted = false;
     
     // debug vars
     private ArrayList<String> fakeMoves;
@@ -81,13 +83,16 @@ public class Board
     public Piece[][] getBoard(){ return playerBoard; }
     public Piece getPiece(int[] cords) { return playerBoard[cords[0]][cords[1]]; }
     public Piece getPiece(int row, int col) { return playerBoard[row][col]; }
+    public boolean getBlackStarted() { return blackStarted; }
     public ArrayList<String> getHistory() { return history; }
     public int[] getEnPassantSquare() { return enPassantSquare; }
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
     
     // seters
     public void addHistory(String s) {history.add(s);}
+    public void setHistory(ArrayList<String> history) {this.history = history;}
     public void setEnPassantSquare(int[] cords) {enPassantSquare = cords;}
+    public void setBlackStarted(boolean blackStarted) {this.blackStarted = blackStarted;}
 
     // debug geters
     public ArrayList<String> getFakeMoves() { return fakeMoves; };
@@ -140,6 +145,13 @@ public class Board
             DARK_SQ = DEFAULT_DARK_SQ;
             LIGHT_SQ = DEFAULT_LIGHT_SQ;
         }
+    }
+
+    public boolean isWhiteTurn()
+    {
+        int historySize = history.size() + (blackStarted? 1 : 0);
+        if (historySize % 2 == 0) return true;
+        else return false;
     }
     
     public static String captureValue(ArrayList<Piece> captures)
@@ -422,7 +434,7 @@ public class Board
         // previous move
         if (!history.isEmpty()) 
         {
-            if (history.size() % 2 == 1) System.out.println("White Played: " + history.get(history.size() - 1));
+            if (!isWhiteTurn()) System.out.println("White Played: " + history.get(history.size() - 1));
             else System.out.println("Black Played: " + history.get(history.size() - 1));
             System.out.println();
         }
@@ -482,7 +494,7 @@ public class Board
                 if (!Game.botPlayedLastMove) System.out.println("bot self eval: N/A");
                 else
                 {
-                    int botSelfEval = Game.botMoveEval * (history.size() % 2 == 0? -1 : 1);   
+                    int botSelfEval = Game.botMoveEval * (isWhiteTurn()? -1 : 1);   
                     if (Math.abs(botSelfEval) > Bot.MATE - 1000)
                     {
                         int movesTillMate = (Bot.MATE - Math.abs(botSelfEval) + 1) / 2;
@@ -498,9 +510,9 @@ public class Board
         {
             System.out.println("\n----debug----");
         if (Settings.showEval) System.out.println("eval: " + Bot.evalBoard(this) / 100.0); // divide by 100 to convert centipawns into eval
-        if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((history.size() % 2 == 0)? "WHITE" : "BLACK"));
-        if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, true).size());
-        if (Settings.showGameLength) System.out.println("game length: move " + (history.size() + 1) / 2 + " | ply " + history.size());
+        if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((isWhiteTurn())? "WHITE" : "BLACK"));
+        if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, isWhiteTurn()).size());
+        if (Settings.showGameLength) System.out.println("game length: move " + (history.size() + (isWhiteTurn()? 1 : 2)) / 2 + " | ply " + history.size());
         if (Settings.showWhiteHasValidMoves) System.out.println("white has moves:" + !Moves.hasNoLegalMoves(this, true));
         if (Settings.showBlackHasValidMoves) System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
         if (Settings.showPieceLegalMoves) System.out.println((legalMoves == null)? "legal moves:null": "legal moves:" + legalMoves.size() + ":" + legalMoves);
@@ -511,7 +523,7 @@ public class Board
 
     public String getIllegalReason(int[] start, int[] end)
     {
-        boolean whiteTurn = history.size() % 2 == 0;
+        boolean whiteTurn = isWhiteTurn();
 
         Piece p;
         try { p = getPiece(end); }
@@ -618,6 +630,7 @@ public class Board
         // Side to move
         if (splitFEN[1].equals("w")) whiteTurn = true;
         else whiteTurn = false;
+        if (!whiteTurn) blackStarted = true;
 
         // Castling rights
         for (int i = 0; i < 8; i++)
@@ -691,13 +704,13 @@ public class Board
         boolean someoneCanCastle = false;
         if (!whiteKing.hasCastled() && !whiteKing.hasMoved())
         {
-            if (getPiece(7, 7).getPiece() == 'R' && !getPiece(7, 7).hasMoved()) fen.append("K"); { someoneCanCastle = true; }
-            if (getPiece(7, 0).getPiece() == 'R' && !getPiece(7, 0).hasMoved()) fen.append("Q"); { someoneCanCastle = true; }
+            if (getPiece(7, 7).getPiece() == 'R' && !getPiece(7, 7).hasMoved()) { fen.append("K"); someoneCanCastle = true; }
+            if (getPiece(7, 0).getPiece() == 'R' && !getPiece(7, 0).hasMoved()) { fen.append("Q"); someoneCanCastle = true; }
         }
         if (!blackKing.hasCastled() && !blackKing.hasMoved())
         {
-            if (getPiece(0, 7).getPiece() == 'R' && !getPiece(0, 7).hasMoved()) fen.append("k"); { someoneCanCastle = true; }
-            if (getPiece(0, 0).getPiece() == 'R' && !getPiece(0, 0).hasMoved()) fen.append("q"); { someoneCanCastle = true; }
+            if (getPiece(0, 7).getPiece() == 'R' && !getPiece(0, 7).hasMoved()) { fen.append("k"); someoneCanCastle = true; }
+            if (getPiece(0, 0).getPiece() == 'R' && !getPiece(0, 0).hasMoved()) { fen.append("q"); someoneCanCastle = true; }
         }
         if (!someoneCanCastle) fen.append("-");
         fen.append(" ");

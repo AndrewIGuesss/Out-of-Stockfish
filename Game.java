@@ -1,6 +1,7 @@
 /*
     ---TO DO---
-    
+    50 move rule
+
     ---QOL---
     make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
     add tests
@@ -255,35 +256,31 @@ public class Game
                     }
                     case "history":
                     {
-                        int counter = 1;
                         debugMsg = "history:|";
-                        for (int i = 0; i < board.getHistory().size(); i += 2)
+                        int offset = board.getBlackStarted()? 1 : 0;
+                        for (int i = 0; i < board.getHistory().size(); i++)
                         {
-                            if (i + 1  == board.getHistory().size()) 
-                            { debugMsg += (counter) + ". " + board.getHistory().get(i) + "|";}
-                            else
-                            { debugMsg += (counter) + ". " + board.getHistory().get(i) + "," + board.getHistory().get(i + 1) + "|"; }
-                            counter++;
+                            int moveNumber = (i + offset) / 2 + 1;
+                            if ((i + offset) % 2 == 0) debugMsg += moveNumber + ". " + board.getHistory().get(i);
+                            else if (i == 0) debugMsg += moveNumber + "... " + board.getHistory().get(i) + "|";
+                            else debugMsg += "," + board.getHistory().get(i) + "|";
                         }
+                        // close off the last pair if white moved last
+                        if (board.getHistory().size() > 0 && (board.getHistory().size() + offset) % 2 == 1) debugMsg += "|";
                         break;
                     }
                     case "info":
                     {
                         int counter = 1;
                         System.out.println("input square: ");
-                        Piece p;
-                        try { p = board.getPiece(Board.convertMove(reader.nextLine())); }
-                        catch (ArrayIndexOutOfBoundsException e) 
-                        { 
-                            debugMsg = "invalid string"; 
-                            clear(); 
-                            continue;
-                        }
+                        int[] piece = getSquare(reader.nextLine());
                         
-                        if (p == null) debugMsg = "invaild square location";
-                        else if (!p.isOccupied()) debugMsg = "square is empty";
+                        
+                        if (piece == null) debugMsg = "invaild square location";
+                        else if (!board.getPiece(piece).isOccupied()) debugMsg = "square is empty";
                         else
                         {
+                            Piece p = board.getPiece(piece); 
                             board.validMoves(new int[]{p.getX(), p.getY()}, false);
                             debugMsg += 
                             "Square: " + Board.convertMove(new int[]{p.getX(), p.getY()}) + " [" + p.getX() + ", " + p.getY() + "]" +
@@ -306,7 +303,7 @@ public class Game
                         boolean valid = true;
                         
                         System.out.println("type piece location: ");
-                        int[] customLoc = getSquare(reader.nextLine().toLowerCase()); // null if bad square
+                        int[] customLoc = getSquare(reader.nextLine()); // null if bad square
                         if (customLoc == null) valid = false;
                         
                         if (valid)
@@ -316,7 +313,12 @@ public class Game
                             
                             if (input.equals("")) // empty square path, stops here
                             {
-                                board.addPiece(customLoc);
+                                board.setHistory(new ArrayList<>());
+                                board.setBlackStarted(!whiteTurn);
+                                board.addPiece(customLoc); 
+                                importedFEN = board.makeFEN(whiteTurn);
+                                positionKeys.clear(); 
+                                positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                             }
                             else // piece path
                             {
@@ -335,7 +337,10 @@ public class Game
                                 
                                 if (valid) 
                                 {
+                                    board.setHistory(new ArrayList<>());
+                                    board.setBlackStarted(!whiteTurn);
                                     board.addPiece(customPiece, customLoc, customColor); 
+                                    importedFEN = board.makeFEN(whiteTurn);
                                     positionKeys.clear(); 
                                     positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                                 }
@@ -362,8 +367,10 @@ public class Game
                         board = new Board(Settings.safeColors, Settings.bigNotation);
                         whiteTurn = true;
 
+                        importedFEN = "";
                         previousMove = null;
                         positionKeys.clear();
+                        TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                         // save position
                         positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
                         // is in check finder
@@ -384,6 +391,10 @@ public class Game
                             }
                         }
 
+                        board.setHistory(new ArrayList<>());
+                        board.setBlackStarted(!whiteTurn);
+                        board.setEnPassantSquare(null);
+                        importedFEN = board.makeFEN(whiteTurn);
                         previousMove = null;
                         positionKeys.clear();
                         // save position
@@ -406,6 +417,7 @@ public class Game
 
                             previousMove = null;
                             positionKeys.clear();
+                            TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                             // save position
                             positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
                             // is in check finder
@@ -465,12 +477,12 @@ public class Game
                         try
                         {
                             int newDepth = Integer.parseInt(reader.nextLine().trim());
-                            if (newDepth >= 1 && newDepth <= 7)
+                            if (newDepth > 0 && newDepth < 30)
                             {
                                 Settings.botMaxSearchDepth = newDepth;
                                 debugMsg = "bot depth set to " + Settings.botMaxSearchDepth;
                             }
-                            else debugMsg = "depth must be 1 - 7";
+                            else debugMsg = "invalid depth";
                         }
                         catch (NumberFormatException e)
                         {
@@ -537,7 +549,7 @@ public class Game
             board.printBoard(validMoves, -1, -1); //shows valid moves
             System.out.print("chose your destination: "); // ask for end spot
             
-            int[] loc = getSquare(reader.nextLine()); // get users end spot
+            int[] loc = getSquare(reader.nextLine().toLowerCase()); // get users end spot
             if (loc == null || !validMoves[loc[0]][loc[1]]) // bad square & invaild move check
             {  
                 clear();
@@ -603,13 +615,23 @@ public class Game
         finally
         {
             UI.stillThinking = false;
-            try {thinking.join();} catch (Exception e) {}
+            try 
+            {
+                thinking.interrupt();
+                thinking.join();
+                while (System.in.available() > 0)
+                {
+                    System.in.read();
+                }
+            } 
+            catch (Exception e) {}
         }
         return true;
     }
     
     public static int[] getSquare(String input)
     {
+        input = input.toLowerCase();
         if (input.length() != 2) return null; // crash prevention
         
         char file = input.charAt(0);
@@ -645,19 +667,21 @@ public class Game
             historySB.append("[SetUp \"1\"]\n");
             historySB.append("[FEN \"" + Game.importedFEN + "\"]\n");
         }
+        historySB.append("\n");
         if (blackBotToggle || whiteBotToggle) 
         {
             historySB.append("{bot search time limit: " + Settings.botSearchTimeLimit + "}\n");
             historySB.append("{bot max depth: " + Settings.botMaxSearchDepth + "}\n");
         }
-        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}\n\n");
+        historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}\n");
 
-        int counter = 1;
-        for (int i = 0; i < gameHistory.size(); i += 2)
+        int offset = board.getBlackStarted()? 1 : 0;
+        for (int i = 0; i < gameHistory.size(); i++)
         {
-            if (i + 1  == gameHistory.size()) historySB.append(counter + ". " + gameHistory.get(i) + " ");
-            else historySB.append(counter + ". " + gameHistory.get(i) + " " + board.getHistory().get(i + 1) + " ");
-            counter++;
+            int moveNumber = (i + offset) / 2 + 1;
+            if ((i + offset) % 2 == 0) historySB.append(moveNumber + ". " + gameHistory.get(i) + " "); // white move
+            else if (i == 0) historySB.append(moveNumber + "... " + gameHistory.get(i) + " "); // black moved first
+            else historySB.append(gameHistory.get(i) + " "); // black move
         }
         historySB.append(gameResult + "\n");
         try 

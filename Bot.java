@@ -11,7 +11,7 @@ public class Bot
     private static final int LMR_REDUCTION = 1;
     private static final int NULL_MOVE_REDUCTION = 2;
     public static String rootScores = "";
-    public static boolean exactRootScores = true; // true = exact root score (slower)
+    public static boolean exactRootScores = false; // true = exact root score (slower)
 
     public static int movesAnalysed = 0;
     public static int quiescenceMovesAnalysed = 0;
@@ -722,7 +722,7 @@ public class Bot
                 if (score > bestScoreSoFar) 
                 {
                     bestScoreSoFar = score; bestMoveSoFar = move;
-                    alpha = Math.max(alpha, score);
+                    if (!exactRootScores) alpha = Math.max(alpha, score);
                 }
             }
             if (timeUp) break;
