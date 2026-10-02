@@ -4,10 +4,20 @@
     ---QOL---
     make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
     add tests
+    Undo / takeback (~30 min)
+    PGN import (~1-2 hrs)
+    Flip the board (~20 min)
+    Show the principal variation / PV (~45 min)
+    Eval breakdown command (~45 min)
+    Hint command (~10 min)
+    Analysis mode (~30 min)
+    Perft command
+    Bench command (~20 min)
+    Small opening book (~1 hr)
 
     ---Bot---
     done    Null move pruning (speed)
-    Late move reductions / LMR (speed) ~1-1.5 hours
+    done    Late move reductions / LMR (speed) ~1-1.5 hours
     Principal variation search / PVS (speed) ~1 hour
     Tempo bonus (eval) ~10 minutes
     Tapered eval (eval) ~1.5-2 hours
@@ -131,7 +141,16 @@ public class Game
         positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
 
         
+
+
+
+
+
+
+
+
         gameStartTime = System.currentTimeMillis();
+
         gameLoop: while (true)
         {
             if (!Settings.highlightPreviousMove) previousMove = null;

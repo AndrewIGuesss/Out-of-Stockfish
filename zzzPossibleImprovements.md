@@ -1,7 +1,9 @@
 # Added Features #
+| Feature | What it is | Gain | Difficulty |
 |---|---|---|---|
 | **Transposition table** | Remember positions already searched. | 2-4×, 10×+ in endgames | 3 |
 | **Null move pruning** | "If I skip my turn and I'm *still* winning, this position is so good I can cut it off early." | ~2-3×, one of the biggest | 2 |
+
 # What Stockfish Has That My Engine Doesn't
 
 Rough estimates only. Real numbers vary a lot by engine and position.

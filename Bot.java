@@ -8,6 +8,8 @@ public class Bot
     public static final int MATE = 123456789;
     private static final int INFINITY = 1234567890;
     private static final int MAX_DEPTH_EXTENTION = 20;
+    private static final int LMR_REDUCTION = 1;
+    private static final int NULL_MOVE_REDUCTION = 2;
     public static String rootScores = "";
     public static boolean exactRootScores = true; // true = exact root score (slower)
 
@@ -548,10 +550,9 @@ public class Bot
             // - 10 for king
             if (board.getBoardValue(whiteTurn) - 10 != board.getBoardPawnCount(whiteTurn))
             {
-                int reduction = 2;
                 Board nullCopy = new Board(board);
                 nullCopy.setEnPassantSquare(null);
-                int score = -negamax(nullCopy, maxDepth - 1 - reduction, !whiteTurn, -beta, -beta + 1, ply + 1, true);
+                int score = -negamax(nullCopy, maxDepth - 1 - NULL_MOVE_REDUCTION, !whiteTurn, -beta, -beta + 1, ply + 1, true);
                 
                 if (score >= beta) return beta;
             }
@@ -591,7 +592,25 @@ public class Bot
             
             validMoves++;
             
-            int score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+            // LMR (late move reductions)
+            boolean searched = false;
+            int score = 0;
+            boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
+            if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !board.getPiece(move[2], move[3]).isOccupied() )
+            {
+                if (!Moves.inCheck(copy, Board.findKing(copy, !whiteTurn), !whiteTurn) && !promoting)
+                {
+                    searched = true;
+                    score = -negamax(copy, maxDepth - 1 - LMR_REDUCTION, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                    if (score > alpha)
+                    {
+                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                    }
+                }
+            }
+
+            if (!searched) score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+
             if (score > best)
             {
                 bestMoveHere = move;
