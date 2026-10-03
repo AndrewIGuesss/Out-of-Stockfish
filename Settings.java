@@ -4,6 +4,7 @@ public class Settings
     public static boolean highlightPreviousMove = true;
     public static boolean usePieceIcons = false; // uglier but little bit easier to read
     public static boolean blackOnBottom = false;
+    public static boolean showBotStatsInHistory = true;
 
     // history/PGN vars
     public static String eventPGN = "bot long test";
@@ -43,6 +44,6 @@ public class Settings
         public static boolean showPieceLegalMoves = false;
 
     // bot controls
-    public static long botSearchTimeLimit = 100;
+    public static long botSearchTimeLimit = 2500;
     public static int botMaxSearchDepth = 8;
 }

@@ -243,7 +243,8 @@ public class Game
                 continue;
             }
             
-            String input = reader.nextLine().toLowerCase();
+            String rawInput = reader.nextLine();
+            String input = rawInput.toLowerCase();
             
             // debug cmds
             if (Settings.enableDebug)
@@ -553,35 +554,80 @@ public class Game
             }
             
             
-            int[] piece = getSquare(input); // get users piece
-            
-            // bad square & empty square & correct color check
-            if (piece == null || !board.getPiece(piece).isOccupied() || board.getPiece(piece).isWhite() != whiteTurn) 
-            {  
+            int[] piece = getSquare(input);
+            int promotionRow = whiteTurn? 0 : 7;
+            char promotionPiece = 'z'; // z = not picked yet
+            boolean[][] validMoves = new boolean[8][8];
+            int[] loc = new int[2];
+
+            // two step move (e2 then e4)
+            if (piece != null && board.getPiece(piece).isOccupied() && board.getPiece(piece).isWhite() == whiteTurn)
+            {
                 clear();
-                System.out.println(board.getIllegalReason(piece, new int[2]));
-                error = true; 
-                continue;
-            } 
-            clear();
-            
-            boolean[][] validMoves = board.validMoves(piece, false); // finds valid moves
-            board.printBoard(validMoves, -1, -1); //shows valid moves
-            System.out.print("chose your destination: "); // ask for end spot
-            
-            int[] loc = getSquare(reader.nextLine().toLowerCase()); // get users end spot
-            if (loc == null || !validMoves[loc[0]][loc[1]]) // bad square & invaild move check
-            {  
-                clear();
-                System.out.println(board.getIllegalReason(piece, loc));
-                error = true; 
-                continue;
+                validMoves = board.validMoves(piece, false);
+                board.printBoard(validMoves, -1, -1);
+                System.out.print("chose your destination: ");
+
+                loc = getSquare(reader.nextLine().toLowerCase());
+                if (loc == null || !validMoves[loc[0]][loc[1]])
+                {  
+                    clear();
+                    System.out.println(board.getIllegalReason(piece, loc));
+                    error = true; 
+                    continue;
+                }
+            }
+            // notation move (Nf3)
+            else
+            {
+                String cleanInput = rawInput.trim().replaceAll("[+#!?x]", "").replace('0', 'O'); // 0-0 works as O-O
+                boolean hasPromotion = cleanInput.indexOf("=") != -1;
+                char[] promotionPieceList = {'q', 'r', 'n', 'b'};
+                int matches = 0;
+                boolean exactMatch = false;
+
+                for (int[] move : Moves.allMoves(board, whiteTurn))
+                {
+                    boolean isPromotion = board.getPiece(move[0], move[1]).getPiece() == 'P' && move[2] == promotionRow;
+                    int tries = (isPromotion && hasPromotion)? 4 : 1;
+
+                    for (int i = 0; i < tries; i++)
+                    {
+                        Board copyBoard = new Board(board); // fresh copy every try
+                        copyBoard.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, false, promotionPieceList[i]);
+                        String sanMove = copyBoard.getHistory().get(0).replaceAll("[+#!?x]", "");
+                        if (isPromotion && !hasPromotion) sanMove = sanMove.substring(0, sanMove.indexOf("=")); // e8 matches e8=Q then asks later
+
+                        if (!cleanInput.equalsIgnoreCase(sanMove)) continue;
+
+                        // exact case beats ignore case (bxc4 = pawn, Bxc4 = bishop)
+                        boolean exact = cleanInput.equals(sanMove);
+                        if (exactMatch && !exact) continue;
+                        if (exact && !exactMatch) matches = 0;
+                        exactMatch = exact;
+                        matches++;
+
+                        piece = new int[]{move[0], move[1]};
+                        loc = new int[]{move[2], move[3]};
+                        promotionPiece = (isPromotion && hasPromotion)? promotionPieceList[i] : 'z';
+                    }
+                }
+
+                if (matches != 1)
+                {
+                    clear();
+                    if (matches > 1) System.out.println("ambiguous move, use a capital B for bishop moves");
+                    else if (piece != null) System.out.println(board.getIllegalReason(piece, new int[2])); // typed a square that isnt your piece
+                    else System.out.println("illegal move or unknown command");
+                    error = true;
+                    continue;
+                }
             }
 
+            clear();
             // promotion check
-            int promotionRow = whiteTurn? 0 : 7;
-            char promotionPiece = 'q';
-            if (board.getPiece(piece).getPiece() == 'P' && loc[0] == promotionRow)
+            
+            if (board.getPiece(piece).getPiece() == 'P' && loc[0] == promotionRow && promotionPiece == 'z')
             {
                 while (true)
                 {

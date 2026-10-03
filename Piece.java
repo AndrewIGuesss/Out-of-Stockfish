@@ -53,7 +53,7 @@ public class Piece
     public void setY(int y) {if (occupied) this.y = y;}
     public void setXY(int x, int y) {if (occupied) this.x = x; if (occupied) this.y = y;}
     public void setPiece(char piece) {if (occupied) this.piece = piece;}
-    public void addHistory(String move) {if (occupied) history.add(move);}
+    public void addHistory(String move) {if (occupied && history != null) history.add(move);}
     public void setHasMoved(boolean hasMoved) {if (occupied) this.hasMoved = hasMoved;}
     public void setHasCastled(boolean hasCastled) {if (occupied) this.hasCastled = hasCastled;}
 
