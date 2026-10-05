@@ -348,6 +348,8 @@ public class Bot
             if (blackMaterialValue - (blackPawnCount * 100) <= 300 && whiteMaterialValue - (whitePawnCount * 100) <= 300) return 0;
         }
 
+
+
         //mop up check
         if (whiteMaterialValue - blackMaterialValue > 500 && blackMaterialValue < 300) totalCentipawns += evalMopup(blackKingLoc, whiteKingLoc, true);
         else if (blackMaterialValue - whiteMaterialValue > 500 && whiteMaterialValue < 300) totalCentipawns += evalMopup(whiteKingLoc, blackKingLoc, false);
@@ -489,6 +491,9 @@ public class Bot
         // transposition table save (remember this position's result)
         int originalAlpha = alpha;
         int[] bestMoveHere = null;
+
+        // 50 move rule
+        if (board.getTimeSinceCaptureOrPawnPush() == 100) return 0;
 
         // zobrist hash + repetition detection
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);

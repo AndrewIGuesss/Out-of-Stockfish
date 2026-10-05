@@ -1,7 +1,4 @@
 /*
-    ---TO DO---
-    50 move rule
-
     ---QOL---
     make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
     add tests
@@ -181,6 +178,15 @@ public class Game
                 {
                     board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a draw by repetition!");
+                    gameResult = "1/2-1/2";
+                    makePGN(board, whiteBotToggle, blackBotToggle);
+                    break gameLoop;
+                }
+                // 50 move rule
+                if (board.getTimeSinceCaptureOrPawnPush() == 100 )
+                {
+                    board.printBoard(previousMove, -1, -1);
+                    System.out.println("The game has ended in a draw by the 50 move rule!");
                     gameResult = "1/2-1/2";
                     makePGN(board, whiteBotToggle, blackBotToggle);
                     break gameLoop;

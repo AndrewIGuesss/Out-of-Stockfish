@@ -39,6 +39,9 @@ public class Board
 
     private boolean blackStarted = false;
     
+    // 50 move rule
+    private int timeSinceCaptureOrPawnPush;
+
     // debug vars
     private ArrayList<String> fakeMoves;
     private ArrayList<String> legalMoves;
@@ -70,7 +73,8 @@ public class Board
                 else playerBoard[row][col] = Piece.blankSquare;
             }
         }
-        
+        timeSinceCaptureOrPawnPush = board.getTimeSinceCaptureOrPawnPush();
+
         //needed for no crash
         whiteCaptured = new ArrayList<>();
         blackCaptured = new ArrayList<>();
@@ -87,6 +91,7 @@ public class Board
     public ArrayList<String> getHistory() { return history; }
     public int[] getEnPassantSquare() { return enPassantSquare; }
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
+    public int getTimeSinceCaptureOrPawnPush() { return timeSinceCaptureOrPawnPush; }
     
     // seters
     public void addHistory(String s) {history.add(s);}
@@ -238,7 +243,11 @@ public class Board
         
         // makes temp piece and adds to its history
         Piece temp = playerBoard[start[0]][start[1]];
-        
+
+        if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
+        else timeSinceCaptureOrPawnPush++;
+
+
         if (temp.getPiece() != 'P' && !test)
         {
             move.append(temp.getPiece());
@@ -674,6 +683,8 @@ public class Board
         if (splitFEN[3].equals("-")) setEnPassantSquare(null);
         else setEnPassantSquare(convertMove(splitFEN[3]));
 
+        // 50 move rule
+        timeSinceCaptureOrPawnPush = Integer.parseInt(splitFEN[4]);
         return whiteTurn;
     }
 
@@ -726,6 +737,10 @@ public class Board
         // En passant
         if(enPassantSquare == null) fen.append("-");
         else fen.append(convertMove(enPassantSquare));
+        fen.append(" ");
+
+        // 50 move rule
+        fen.append(timeSinceCaptureOrPawnPush);
 
         return fen.toString();
     }
