@@ -747,10 +747,10 @@ public class Game
         }
         historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}\n");
 
-        int offset = board.getBlackStarted()? 1 : 0;
+        int offset = (board.getBlackStarted()? 1 : 0) + board.getMoveOffSet();
         for (int i = 0; i < gameHistory.size(); i++)
         {
-            int moveNumber = (i + offset) / 2 + 1;
+            int moveNumber = (i + offset) / 2;
             if ((i + offset) % 2 == 0) historySB.append(moveNumber + ". " + gameHistory.get(i) + " "); // white move
             else if (i == 0) historySB.append(moveNumber + "... " + gameHistory.get(i) + " "); // black moved first
             else historySB.append(gameHistory.get(i) + " "); // black move

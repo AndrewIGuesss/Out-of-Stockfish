@@ -37,6 +37,7 @@ public class Board
     private boolean safeColor;
     private boolean bigNotation;
 
+    private int moveOffSet = 1;
     private boolean blackStarted = false;
     
     // 50 move rule
@@ -92,6 +93,7 @@ public class Board
     public int[] getEnPassantSquare() { return enPassantSquare; }
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
     public int getTimeSinceCaptureOrPawnPush() { return timeSinceCaptureOrPawnPush; }
+    public int getMoveOffSet() { return moveOffSet; }
     
     // seters
     public void addHistory(String s) {history.add(s);}
@@ -364,7 +366,7 @@ public class Board
             else if (promotionPiece == 'b') { temp.setPiece('B'); move.append("=B"); }
             else                            { temp.setPiece('Q'); move.append("=Q"); }
         }
-        
+
         // finishing move notation
         
         playerBoard[end[0]][end[1]] = temp;
@@ -617,7 +619,26 @@ public class Board
     public boolean importFEN (String fen)
     {
         boolean whiteTurn;
-        String[] splitFEN = fen.split(" ");
+        String[] preSplitFEN = fen.split(" ");
+        String[] splitFEN = new String[6];
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (preSplitFEN.length > i) splitFEN[i] = preSplitFEN[i];
+            else
+            {
+                switch (i) 
+                {
+                    case 0: splitFEN[0] = fen;
+                    case 1: splitFEN[1] = "w";
+                    case 2: splitFEN[2] = "-";
+                    case 3: splitFEN[3] = "-";
+                    case 4: splitFEN[4] = "0";
+                    case 5: splitFEN[5] = "1";
+                }
+                break;
+            }
+        }
         int col = 0;
         int row = 0;
 
@@ -685,6 +706,9 @@ public class Board
 
         // 50 move rule
         timeSinceCaptureOrPawnPush = Integer.parseInt(splitFEN[4]);
+
+        // move offset / full moves
+        moveOffSet = Integer.parseInt(splitFEN[5]);
         return whiteTurn;
     }
 
@@ -741,6 +765,10 @@ public class Board
 
         // 50 move rule
         fen.append(timeSinceCaptureOrPawnPush);
+        fen.append(" ");
+
+        // move offset / full moves
+        fen.append(history.size() + (isWhiteTurn()? 0 : 1) + moveOffSet);
 
         return fen.toString();
     }
