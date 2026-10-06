@@ -458,10 +458,10 @@ public class Board
     }
 
 
-    // if no selected piece validmoves should equal null
-    // check row and col are for if king in check otherwise type -1 -1
 
-    public void printBoard(boolean[][] validMoves, int checkRow, int checkCol)
+
+
+    public void printBoard(boolean[][] validMoves, int[]checkSquare)
     {
         // previous move
         if (!history.isEmpty()) 
@@ -499,7 +499,7 @@ public class Board
             {
                 String bg = (col + row) % 2 == 0? LIGHT_SQ : DARK_SQ;
                 if (validMoves != null && validMoves[row][col]) bg = (col + row) % 2 == 0? LIGHT_MOVE_SQ : DARK_MOVE_SQ;
-                if (checkRow == row && checkCol == col) bg = RED_BG;
+                if (checkSquare != null && checkSquare[0] == row && checkSquare[1] == col) bg = RED_BG;
     
                 if (playerBoard[row][col].isOccupied())
                 {
@@ -782,7 +782,7 @@ public class Board
         fen.append(" ");
 
         // move offset / full moves
-        fen.append(history.size() + (isWhiteTurn()? 0 : 1) + moveOffSet);
+        fen.append(((history.size() + (blackStarted? 0 : 1)) / 2) + moveOffSet);
 
         return fen.toString();
     }

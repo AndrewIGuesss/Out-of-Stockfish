@@ -50,16 +50,16 @@ public class Game
     public static String debugMsg = "";
 
     public static ArrayList<Long> positionKeys = new ArrayList<>();
-
+    private static Board board;
+    private static boolean whiteTurn = true;
+    private static boolean inCheck = false;
+    private static boolean setUp = false;
+    
     public static void main(String[] args)
     {
         Scanner reader = new Scanner(System.in);
         
         boolean error = false;
-        
-        boolean whiteTurn = true;
-        boolean inCheck = false;
-        int[] kingSquare = new int[2];
         
         boolean whiteBotToggle = false;
         boolean blackBotToggle = false;
@@ -137,10 +137,8 @@ public class Game
             else error = true;
         }
         
-        Board board = new Board(Settings.safeColors, Settings.bigNotation);
+        board = new Board(Settings.safeColors, Settings.bigNotation);
         positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-
-        
 
 
 
@@ -157,76 +155,32 @@ public class Game
 
             // clear console if no error
             if (error) error = false;
-            else if (!debugMsg.equals("")) { System.out.println(debugMsg); debugMsg = ""; }
-            else 
-            {
-                clear();
-                // insufficient material check(-10 for king)
-                if (board.getBoardValue(true) - 10 <= 3 && board.getBoardValue(false) - 10 <= 3)
-                {
-                    if (board.getBoardPawnCount(true) + board.getBoardPawnCount(false) == 0)
-                    {
-                        board.printBoard(previousMove, -1, -1);
-                        System.out.println("The game has ended in a draw by insufficient material!");
-                        gameResult = "1/2-1/2";
-                        makePGN(board, whiteBotToggle, blackBotToggle);
-                        break gameLoop;
-                    }
-                }
-                // repetition check
-                if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
-                {
-                    board.printBoard(previousMove, -1, -1);
-                    System.out.println("The game has ended in a draw by repetition!");
-                    gameResult = "1/2-1/2";
-                    makePGN(board, whiteBotToggle, blackBotToggle);
-                    break gameLoop;
-                }
-                // 50 move rule
-                if (board.getTimeSinceCaptureOrPawnPush() >= 100 )
-                {
-                    board.printBoard(previousMove, -1, -1);
-                    System.out.println("The game has ended in a draw by the 50 move rule!");
-                    gameResult = "1/2-1/2";
-                    makePGN(board, whiteBotToggle, blackBotToggle);
-                    break gameLoop;
-                }
-            }
+            else clear();
 
-            if (inCheck)
+            if (!debugMsg.equals("")) { System.out.println(debugMsg); debugMsg = ""; }
+
+            String endMessage = gameOverCheck();
+            if (endMessage != null)
             {
-                if (Moves.hasNoLegalMoves(board, whiteTurn))
-                {
-                    board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
-                    System.out.print((whiteTurn? "Black" : "White") + " has won by checkmate!");
-                    gameResult = whiteTurn? "0-1" : "1-0";
-                    makePGN(board, whiteBotToggle, blackBotToggle);
-                    break gameLoop;
-                }
-                else
-                {
-                    board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
-                    System.out.print((whiteTurn? "White" : "Black") + " is in check!");
-                    System.out.print(" chose your piece: ");
-                }
+                if (inCheck) board.printBoard(previousMove, Board.findKing(board, whiteTurn));
+                else board.printBoard(previousMove, null);
+                System.out.print(endMessage);
+                makePGN(board, whiteBotToggle, blackBotToggle);
+                break gameLoop;
             }
             else
             {
-                if (Moves.hasNoLegalMoves(board, whiteTurn))
+                if (inCheck)
                 {
-                    board.printBoard(previousMove, -1, -1);
-                    System.out.println("The game has ended in a stalemate!");
-                    gameResult = "1/2-1/2";
-                    makePGN(board, whiteBotToggle, blackBotToggle);
-                    break gameLoop;
+                    board.printBoard(previousMove, Board.findKing(board, whiteTurn));
+                    System.out.print((whiteTurn? "White" : "Black") + " is in check!");
                 }
                 else
                 {
-                    board.printBoard(previousMove, -1, -1);
+                    board.printBoard(previousMove, null);
                     System.out.print(whiteTurn? "White's turn" : "Black's turn");
-                    System.out.print(" chose your piece: ");
                 }
-                
+                System.out.print(" chose your piece: ");
             }
             
             // bot moves
@@ -236,15 +190,8 @@ public class Game
 
                 if (!playEngineMove(board, whiteTurn)) {debugMsg = "bot error"; continue;}
                 System.out.println();
-                // finish move sequence
-                whiteTurn = !whiteTurn;
-    
-                // save position
-                positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-                // is in check finder
-                inCheck = false;
-                kingSquare = Board.findKing(board, whiteTurn);
-                if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+
+                afterAMove("move", board);
                 
                 continue;
             }
@@ -259,10 +206,8 @@ public class Game
                 {
                     case "ff":
                     {
-                        kingSquare = Board.findKing(board, whiteTurn);
-
                         clear();
-                        board.printBoard(previousMove, kingSquare[0], kingSquare[1]);
+                        board.printBoard(previousMove, Board.findKing(board, whiteTurn));
                         
                         System.out.println((whiteTurn? "Black" : "White") + " has won by resignation");
                         gameResult = whiteTurn? "0-1" : "1-0";
@@ -330,15 +275,10 @@ public class Game
                             System.out.println("input one charictar piece type\n(enter a blank line to make an empty square): ");
                             input = reader.nextLine();
                             
-                            if (input.equals("")) // empty square path, stops here
+                            if (input.equals("")) 
                             {
-                                board.updateCastlingRights();
-                                board.setHistory(new ArrayList<>());
-                                board.setBlackStarted(!whiteTurn);
-                                board.addPiece(customLoc); 
-                                importedFEN = board.makeFEN(whiteTurn);
-                                positionKeys.clear(); 
-                                positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
+                                board.addPiece(customLoc);
+                                afterAMove("add", board);
                             }
                             else // piece path
                             {
@@ -355,15 +295,10 @@ public class Game
                                     else valid = false;
                                 }
                                 
-                                if (valid) 
+                                if (valid)
                                 {
-                                    board.updateCastlingRights();
-                                    board.setHistory(new ArrayList<>());
-                                    board.setBlackStarted(!whiteTurn);
-                                    board.addPiece(customPiece, customLoc, customColor); 
-                                    importedFEN = board.makeFEN(whiteTurn);
-                                    positionKeys.clear(); 
-                                    positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
+                                    board.addPiece(customPiece, customLoc, customColor);
+                                    afterAMove("add", board);
                                 }
                             }
                         }
@@ -388,16 +323,7 @@ public class Game
                         board = new Board(Settings.safeColors, Settings.bigNotation);
                         whiteTurn = true;
 
-                        importedFEN = "";
-                        previousMove = null;
-                        positionKeys.clear();
-                        TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                        // save position
-                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-                        // is in check finder
-                        inCheck = false;
-                        kingSquare = Board.findKing(board, whiteTurn);
-                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        afterAMove("reset", board);
                         
                         continue;
                     }
@@ -412,19 +338,7 @@ public class Game
                             }
                         }
 
-                        board.setHistory(new ArrayList<>());
-                        board.setBlackStarted(!whiteTurn);
-                        board.setEnPassantSquare(null);
-                        importedFEN = board.makeFEN(whiteTurn);
-                        board.updateCastlingRights();
-                        previousMove = null;
-                        positionKeys.clear();
-                        // save position
-                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-                        // is in check finder
-                        inCheck = false;
-                        kingSquare = Board.findKing(board, whiteTurn);
-                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        afterAMove("clear", board);
                         
                         continue;
                     }
@@ -437,20 +351,10 @@ public class Game
                             Board newBoard = new Board(Settings.safeColors, Settings.bigNotation);
                             whiteTurn = newBoard.importFEN(input);
 
-                            previousMove = null;
-                            positionKeys.clear();
-                            TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                            newBoard.updateCastlingRights();
-                            // save position
-                            positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
-                            // is in check finder
-                            inCheck = false;
-                            kingSquare = Board.findKing(newBoard, whiteTurn);
-                            if (Moves.inCheck(newBoard, kingSquare, whiteTurn)) inCheck = true;
+                            afterAMove("fen", newBoard);
 
-                            board = newBoard;
+                            importedFEN = input;
                             debugMsg = "FEN imported";
-                            Game.importedFEN = input;
                         }
                         catch (Exception e) { debugMsg = "error importing FEN"; }
                         break;
@@ -483,14 +387,8 @@ public class Game
 
                         if (!playEngineMove(board, whiteTurn)) {debugMsg = "bot error"; continue;}
                         System.out.println();
-                        // finish move sequence
-                        whiteTurn = !whiteTurn;
-                        // save position
-                        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-                        // is in check finder
-                        inCheck = false;
-                        kingSquare = Board.findKing(board, whiteTurn);
-                        if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
+                        
+                        afterAMove("move", board);
                         
                         continue;
                     }
@@ -567,7 +465,7 @@ public class Game
             {
                 clear();
                 validMoves = board.validMoves(piece, false);
-                board.printBoard(validMoves, -1, -1);
+                board.printBoard(validMoves, null);
                 System.out.print("chose your destination: ");
 
                 loc = getSquare(reader.nextLine().toLowerCase());
@@ -653,20 +551,117 @@ public class Game
                 previousMove[loc[0]][loc[1]] = true;
                 previousMove[piece[0]][piece[1]] = true;
             }
-            whiteTurn = !whiteTurn;
-            // save position
-            positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
-            // is in check finder
-            inCheck = false;
-            kingSquare = Board.findKing(board, whiteTurn);
-            if (Moves.inCheck(board, kingSquare, whiteTurn)) inCheck = true;
-            
 
+            afterAMove("move", board);
             // reset bot values to default / unreachable values
             botPlayedLastMove = false;
         }
     }
+
+    public static String gameOverCheck()
+    {
+        if(Moves.hasNoLegalMoves(board, whiteTurn))
+        {
+            if (inCheck)
+            {
+                gameResult = whiteTurn? "0-1" : "1-0";
+                return (whiteTurn? "Black" : "White") + " has won by checkmate!";
+            }
+            else
+            {
+                gameResult = "1/2-1/2";
+                return "The game has ended in a stalemate!";
+            }
+        }
+        if (setUp) return null;
+
+        // insufficient material check(-10 for king)
+        if (board.getBoardValue(true) - 10 <= 3 && board.getBoardValue(false) - 10 <= 3)
+        {
+            if (board.getBoardPawnCount(true) + board.getBoardPawnCount(false) == 0)
+            {
+                gameResult = "1/2-1/2";
+                return "The game has ended in a draw by insufficient material!";
+            }
+        }
+        // repetition check
+        if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
+        {
+            gameResult = "1/2-1/2";
+            return "The game has ended in a draw by repetition!";
+        }
+        // 50 move rule
+        if (board.getTimeSinceCaptureOrPawnPush() >= 100 )
+        {
+            gameResult = "1/2-1/2";
+            return "The game has ended in a draw by the 50 move rule!";
+        }
+
+        return null;
+    }
     
+    public static void afterAMove(String protocol, Board board)
+    {
+        protocol = protocol.toLowerCase();
+        switch (protocol) 
+        {
+            case "move":
+            {
+                whiteTurn = !whiteTurn;
+                setUp = false;
+                break;
+            }
+            case "add":
+            {
+                board.updateCastlingRights();
+                board.setHistory(new ArrayList<>());
+                board.setBlackStarted(!whiteTurn);
+                board.setEnPassantSquare(null);
+                importedFEN = board.makeFEN(whiteTurn);
+                positionKeys.clear(); 
+                break;
+            }
+            case "clear":
+            {
+                board.setHistory(new ArrayList<>());
+                board.setBlackStarted(!whiteTurn);
+                board.setEnPassantSquare(null);
+                board.updateCastlingRights();
+                importedFEN = board.makeFEN(whiteTurn);
+                previousMove = null;
+                positionKeys.clear();
+                setUp = true;
+                break;
+            }
+            case "reset":
+            {
+                importedFEN = "";
+                previousMove = null;
+                TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                positionKeys.clear();
+                setUp = false;
+                break;
+            }
+            case "fen":
+            {
+                previousMove = null;
+                TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                board.updateCastlingRights();
+                positionKeys.clear();
+                Game.board = board;
+                setUp = false;
+                break;
+            }
+            default:
+            {
+                System.out.println("error with after a move protocol");
+                System.out.println("protocol inputed: " + protocol);
+            }
+        }
+        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
+        inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
+    }
+
     public static boolean playEngineMove(Board board, boolean whiteTurn)
     {
         UI.stillThinking = true;
