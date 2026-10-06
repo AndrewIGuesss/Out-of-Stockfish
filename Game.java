@@ -18,7 +18,7 @@
     ---Bot---
     done    Null move pruning (speed)
     done    Late move reductions / LMR (speed) ~1-1.5 hours
-    Principal variation search / PVS (speed) ~1 hour
+    done    Principal variation search / PVS (speed) ~1 hour
     Tempo bonus (eval) ~10 minutes
     Tapered eval (eval) ~1.5-2 hours
     Delta pruning in quiescence (speed) ~20-30 minutes
@@ -184,7 +184,7 @@ public class Game
             }
             
             // bot moves
-            if (whiteBotToggle && whiteTurn || blackBotToggle && !whiteTurn)
+            if ((whiteBotToggle && whiteTurn || blackBotToggle && !whiteTurn) && !Bot.stopThinking)
             {
                 botPlayedLastMove = true;
 

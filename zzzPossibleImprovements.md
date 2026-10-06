@@ -3,6 +3,8 @@
 |---|---|---|---|
 | **Transposition table** | Remember positions already searched. | 2-4×, 10×+ in endgames | 3 |
 | **Null move pruning** | "If I skip my turn and I'm *still* winning, this position is so good I can cut it off early." | ~2-3×, one of the biggest | 2 |
+| **Late move reductions (LMR)** | Search moves late in the ordered list at reduced depth, and only re-search if they surprise you. | ~2-5× with good ordering | 3 |
+| **Principal variation search** | Search the first move fully and the rest with a tiny "prove it's worse" window. | 10-20% | 2 |
 
 # What Stockfish Has That My Engine Doesn't
 
@@ -24,8 +26,6 @@ Rough estimates only. Real numbers vary a lot by engine and position.
 
 | Feature | What it is | Gain | Difficulty |
 |---|---|---|---|
-| **Late move reductions (LMR)** | Search moves late in the ordered list at reduced depth, and only re-search if they surprise you. | ~2-5× with good ordering | 3 |
-| **Principal variation search** | Search the first move fully and the rest with a tiny "prove it's worse" window. | 10-20% | 2 |
 | **Aspiration windows** | Start each iteration with a narrow window around last depth's score. | 5-10% | 2 |
 | **Futility / reverse futility pruning** | Near the leaves, skip moves that can't possibly raise alpha. | 20-50% | 2 |
 | **Delta pruning** | In quiescence, skip captures that can't possibly matter. | 10-20% | 1 |

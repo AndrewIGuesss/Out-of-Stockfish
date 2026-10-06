@@ -9,6 +9,7 @@ public class Bot
     private static final int INFINITY = 1234567890;
     private static final int MAX_DEPTH_EXTENTION = 20;
     private static final int LMR_REDUCTION = 1;
+    private static final int TEMPO_BONUS = 15;
     private static final int NULL_MOVE_REDUCTION = 2;
     public static String rootScores = "";
     public static boolean exactRootScores = false; // true = exact root score (slower)
@@ -444,7 +445,7 @@ public class Bot
         quiescenceMovesAnalysed++;
 
         // stand pat (eval if we stop capturing here)
-        int standPat = evalBoard(board) * (whiteTurn? 1 : -1);
+        int standPat = evalBoard(board) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
         if (standPat >= beta) return standPat;
         
         alpha = Math.max(alpha, standPat);
@@ -589,7 +590,7 @@ public class Bot
             
             validMoves++;
             
-            // LMR (late move reductions)
+                        // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
             boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
@@ -598,15 +599,39 @@ public class Bot
                 if (!Moves.inCheck(copy, Board.findKing(copy, !whiteTurn), !whiteTurn) && !promoting)
                 {
                     searched = true;
+                    // reduced depth, null window
                     score = -negamax(copy, maxDepth - 1 - LMR_REDUCTION, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
                     if (score > alpha)
                     {
-                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                        // full depth, null window
+                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                        if (score > alpha && score < beta)
+                        {
+                            // full depth, full window
+                            score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                        }
                     }
                 }
             }
 
-            if (!searched) score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+            // PVS (principal variation search)
+            if (!searched)
+            {
+                if (validMoves == 1)
+                {
+                    score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                }
+                else
+                {
+                    // full depth, null window
+                    score = -negamax(copy, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                    if (score > alpha && score < beta)
+                    {
+                        // full depth, full window
+                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                    }
+                }
+            }
 
             if (score > best)
             {
@@ -677,6 +702,9 @@ public class Bot
         // root move generation + ordering
         // startRow, startCol, endRow, endCol
         ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+
+        // alpha - the best score we've already found
+        // beta - the score where the opponent would never allow this position
 
         int bestScore = -INFINITY;
         int bestScoreSoFar = -INFINITY;
