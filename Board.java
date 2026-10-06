@@ -763,6 +763,9 @@ public class Board
 
         // move offset / full moves
         moveOffSet = Integer.parseInt(splitFEN[5]);
+
+        updateCastlingRights();
+
         return whiteTurn;
     }
 
