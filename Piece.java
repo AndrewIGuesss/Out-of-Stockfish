@@ -1,76 +1,67 @@
-/*
-    ---TODO---
-
-*/
-
-import java.util.*;
-public class Piece 
+public enum Piece 
 {
-    public static final Piece blankSquare = new Piece();
+    EMPTY(false, ' ', -1),
+
+    W_PAWN(true, 'P', 0),
+    W_KNIGHT(true, 'N', 1),
+    W_BISHOP(true, 'B', 2),
+    W_ROOK(true, 'R', 3),
+    W_QUEEN(true, 'Q', 4),
+    W_KING(true, 'K', 5),
+
+    B_PAWN(false, 'P', 6),
+    B_KNIGHT(false, 'N', 7),
+    B_BISHOP(false, 'B', 8),
+    B_ROOK(false, 'R', 9),
+    B_QUEEN(false, 'Q', 10),
+    B_KING(false, 'K', 11);
     
     private boolean white;
     private char piece;
-    private int x;
-    private int y;
-    private ArrayList<String> history;
-    private boolean hasMoved;
-    private boolean hasCastled;
-
-    private boolean occupied;
+    private int index;
     
-    public Piece(boolean white, char piece, int x, int y, boolean hasMoved, boolean hasCastled, boolean trackHistory)
+    Piece(boolean white, char piece, int index)
     {
         this.white = white;
         this.piece = piece;
-        this.x = x;
-        this.y = y;
-        this.hasMoved = hasMoved;
-        this.hasCastled = hasCastled;
-
-        if (trackHistory) history = new ArrayList<String>();
-        else history = null;
-        occupied = true;
-    }
-
-    public Piece()
-    {
-        occupied = false;
-        history = null;
+        this.index = index;
     }
     
     // geters
     public boolean isWhite() {return white;}
     public char getPiece() {return piece;}
-    public int getX() {return x;}
-    public int getY() {return y;}
-    public ArrayList<String> getHistory() {if (history == null) return new ArrayList<>(); else return new ArrayList<>(history);}
-    public boolean isOccupied() {return occupied;}
-    public boolean hasMoved() {return hasMoved;}
-    public boolean hasCastled() {return hasCastled;}
-    
-    // seters
-    public void setX(int x) {if (occupied) this.x = x;}
-    public void setY(int y) {if (occupied) this.y = y;}
-    public void setXY(int x, int y) {if (occupied) this.x = x; if (occupied) this.y = y;}
-    public void setPiece(char piece) {if (occupied) this.piece = piece;}
-    public void addHistory(String move) {if (occupied && history != null) history.add(move);}
-    public void setHasMoved(boolean hasMoved) {if (occupied) this.hasMoved = hasMoved;}
-    public void setHasCastled(boolean hasCastled) {if (occupied) this.hasCastled = hasCastled;}
+    public int pieceToIndex() { return index; }
+    public boolean isOccupied() { return this != EMPTY; }
 
-    public int pieceToIndex()
+
+    public static Piece get(boolean white, char piece)
     {
-        int index = 0;
-        switch (getPiece()) 
+        piece = Character.toUpperCase(piece);
+        if (white)
         {
-            case 'P': index = 0; break;
-            case 'N': index = 1; break;
-            case 'B': index = 2; break;
-            case 'R': index = 3; break;
-            case 'Q': index = 4; break;
-            case 'K': index = 5; break;
+            switch (piece) 
+            {
+                case 'P': { return W_PAWN; } 
+                case 'N': { return W_KNIGHT; } 
+                case 'B': { return W_BISHOP; } 
+                case 'R': { return W_ROOK; } 
+                case 'Q': { return W_QUEEN; } 
+                case 'K': { return W_KING; } 
+            }
         }
-        if (!isWhite()) index += 6;
-        return index;
+        else
+        {
+            switch (piece) 
+            {
+                case 'P': { return B_PAWN; } 
+                case 'N': { return B_KNIGHT; } 
+                case 'B': { return B_BISHOP; } 
+                case 'R': { return B_ROOK; } 
+                case 'Q': { return B_QUEEN; } 
+                case 'K': { return B_KING; } 
+            }
+        }
+        return EMPTY;
     }
 
     public String toIcon()

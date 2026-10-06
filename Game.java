@@ -183,7 +183,7 @@ public class Game
                     break gameLoop;
                 }
                 // 50 move rule
-                if (board.getTimeSinceCaptureOrPawnPush() == 100 )
+                if (board.getTimeSinceCaptureOrPawnPush() >= 100 )
                 {
                     board.printBoard(previousMove, -1, -1);
                     System.out.println("The game has ended in a draw by the 50 move rule!");
@@ -298,7 +298,6 @@ public class Game
                     }
                     case "info":
                     {
-                        int counter = 1;
                         System.out.println("input square: ");
                         int[] piece = getSquare(reader.nextLine());
                         
@@ -308,20 +307,13 @@ public class Game
                         else
                         {
                             Piece p = board.getPiece(piece); 
-                            board.validMoves(new int[]{p.getX(), p.getY()}, false);
+                            board.validMoves(piece, false);
                             debugMsg += 
-                            "Square: " + Board.convertMove(new int[]{p.getX(), p.getY()}) + " [" + p.getX() + ", " + p.getY() + "]" +
+                            "Square: " + Board.convertMove(piece) + " [" + piece[0] + ", " + piece[1] + "]" +
                             "\nPiece: " + p.getPiece() +
                             "\nColor: " + (p.isWhite()? "white" : "black") +
                             "\nAll moves:" + board.getFakeMoves().size() + " " + board.getFakeMoves() +
-                            "\nLegal moves:" + board.getLegalMoves().size() + " " + board.getLegalMoves() +
-                            "\nHistory:" + p.getHistory().size() + " [";
-                            for(String s : p.getHistory())
-                            {
-                                debugMsg += counter + "." + s; 
-                                debugMsg += (counter != p.getHistory().size()? "|" : "]");
-                                counter++;
-                            }
+                            "\nLegal moves:" + board.getLegalMoves().size() + " " + board.getLegalMoves();
                         }
                         break;
                     }
@@ -340,6 +332,7 @@ public class Game
                             
                             if (input.equals("")) // empty square path, stops here
                             {
+                                board.updateCastlingRights();
                                 board.setHistory(new ArrayList<>());
                                 board.setBlackStarted(!whiteTurn);
                                 board.addPiece(customLoc); 
@@ -364,6 +357,7 @@ public class Game
                                 
                                 if (valid) 
                                 {
+                                    board.updateCastlingRights();
                                     board.setHistory(new ArrayList<>());
                                     board.setBlackStarted(!whiteTurn);
                                     board.addPiece(customPiece, customLoc, customColor); 
@@ -422,6 +416,7 @@ public class Game
                         board.setBlackStarted(!whiteTurn);
                         board.setEnPassantSquare(null);
                         importedFEN = board.makeFEN(whiteTurn);
+                        board.updateCastlingRights();
                         previousMove = null;
                         positionKeys.clear();
                         // save position
@@ -445,6 +440,7 @@ public class Game
                             previousMove = null;
                             positionKeys.clear();
                             TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                            newBoard.updateCastlingRights();
                             // save position
                             positionKeys.add(Zobrist.makeZobristHash(newBoard, whiteTurn));
                             // is in check finder

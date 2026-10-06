@@ -7,7 +7,7 @@ public class Settings
     public static boolean showBotStatsInHistory = true;
 
     // history/PGN vars
-    public static String eventPGN = "bot long test";
+    public static String eventPGN = "bot test";
     public static boolean restartTimerOnBotGame = true;
     public static boolean addSavedFenInHistory = true;
 

@@ -38,28 +38,10 @@ public class Zobrist
 
         if (!whiteTurn) zobristHash ^= zobristWhiteTurn;
 
-        // whiet castling rights
-        if (!board.getPiece(Board.findKing(board, true)).hasMoved())
-        {
-            // long castle
-            Piece scanPiece = board.getPiece(7, 0);
-            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) zobristHash ^=  zobristCanCastle[0];
-            // short castle
-            scanPiece = board.getPiece(7, 7);
-            if (scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) zobristHash ^=  zobristCanCastle[1];
-        }
-
-        // black castling rights
-        if (!board.getPiece(Board.findKing(board, false)).hasMoved())
-        {
-            // long castle
-            Piece scanPiece = board.getPiece(0, 0);
-            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) zobristHash ^= zobristCanCastle[2];
-            // short castle
-            scanPiece = board.getPiece(0, 7);
-            if (!scanPiece.isWhite() && scanPiece.getPiece() == 'R' && !scanPiece.hasMoved()) zobristHash ^= zobristCanCastle[3];
-        }
-
+        if (board.whiteCanCastleLong) zobristHash ^=  zobristCanCastle[0];
+        if (board.whiteCanCastleShort) zobristHash ^=  zobristCanCastle[1];
+        if (board.blackCanCastleShort) zobristHash ^= zobristCanCastle[2];
+        if (board.blackCanCastleLong) zobristHash ^= zobristCanCastle[3];
         return zobristHash;
     }
 }

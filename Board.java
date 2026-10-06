@@ -47,6 +47,15 @@ public class Board
     private ArrayList<String> fakeMoves;
     private ArrayList<String> legalMoves;
 
+    // castling rights
+    public boolean whiteCastled = false;
+    public boolean whiteCanCastleLong = true;
+    public boolean whiteCanCastleShort = true;
+
+    public boolean blackCastled = false;
+    public boolean blackCanCastleLong = true;
+    public boolean blackCanCastleShort = true;
+
     public Board(boolean safeColor, boolean bigNotation)
     {
         this.safeColor = safeColor;
@@ -60,7 +69,7 @@ public class Board
         difine();
     }
     
-    // makes a duped board for checks without altering real board
+    // makes a duped board to not alter the real one
     public Board(Board board)
     {
         playerBoard = new Piece[8][8];
@@ -68,13 +77,18 @@ public class Board
         {
             for (int col = 0; col < 8; col++)
             {
-                Piece p = board.playerBoard[row][col];
-                // make copy of piece
-                if (p.isOccupied()) playerBoard[row][col] = new Piece(p.isWhite(), p.getPiece(), row, col, p.hasMoved(), p.hasCastled(), false);
-                else playerBoard[row][col] = Piece.blankSquare;
+                playerBoard[row][col] = board.getPiece(row, col);
             }
         }
         timeSinceCaptureOrPawnPush = board.getTimeSinceCaptureOrPawnPush();
+
+        whiteCastled = board.whiteCastled;
+        whiteCanCastleLong = board.whiteCanCastleLong;
+        whiteCanCastleShort = board.whiteCanCastleShort;
+        
+        blackCastled = board.blackCastled;
+        blackCanCastleLong = board.blackCanCastleLong;
+        blackCanCastleShort = board.blackCanCastleShort;
 
         //needed for no crash
         whiteCaptured = new ArrayList<>();
@@ -107,9 +121,9 @@ public class Board
     
     // debug seters
     public void addPiece(char piece, int[] cords, boolean isWhite) 
-    { playerBoard[cords[0]][cords[1]] = new Piece(isWhite, piece, cords[0], cords[1], false, false,  true); }
+    { playerBoard[cords[0]][cords[1]] = Piece.get(isWhite, piece); }
     public void addPiece(int[] cords)
-    { playerBoard[cords[0]][cords[1]] = Piece.blankSquare; }
+    { playerBoard[cords[0]][cords[1]] = Piece.EMPTY; }
     
     public void difine()
     {
@@ -118,15 +132,15 @@ public class Board
         {
             for (int col = 0; col < 8; col++)
             {
-                playerBoard[row][col] = Piece.blankSquare;
+                playerBoard[row][col] = Piece.EMPTY;
             }
         }
     
         // pawns
         for (int col = 0; col < 8; col++)
         {
-            playerBoard[1][col] = new Piece(false, 'P', 1, col, false, false,  true);
-            playerBoard[6][col] = new Piece(true,  'P', 6, col, false, false,  true);
+            playerBoard[1][col] = Piece.get(false, 'P');
+            playerBoard[6][col] = Piece.get(true, 'P');
         }
     
         // back
@@ -134,8 +148,8 @@ public class Board
         
         for (int col = 0; col < 8; col++)
         {
-            playerBoard[0][col] = new Piece(false, piecesOrder[col], 0, col, false, false, true);
-            playerBoard[7][col] = new Piece(true,  piecesOrder[col], 7, col, false, false, true);
+            playerBoard[0][col] = Piece.get(false, piecesOrder[col]);
+            playerBoard[7][col] = Piece.get(true, piecesOrder[col]);
         }
         
         if (safeColor)
@@ -151,6 +165,22 @@ public class Board
             WHITE = DEFAULT_WHITE;
             DARK_SQ = DEFAULT_DARK_SQ;
             LIGHT_SQ = DEFAULT_LIGHT_SQ;
+        }
+    }
+
+    public void updateCastlingRights()
+    {
+        if (playerBoard[0][4] != Piece.B_KING) { blackCanCastleLong = false; blackCanCastleShort = false;}
+        else 
+        {
+            if (playerBoard[0][0] != Piece.B_ROOK) blackCanCastleLong = false;
+            if (playerBoard[0][7] != Piece.B_ROOK) blackCanCastleShort = false;
+        }
+        if (playerBoard[7][4] != Piece.W_KING) { whiteCanCastleLong = false; whiteCanCastleShort = false;}
+        else 
+        {
+            if (playerBoard[7][0] != Piece.W_ROOK) whiteCanCastleLong = false;
+            if (playerBoard[7][7] != Piece.W_ROOK) whiteCanCastleShort = false;
         }
     }
 
@@ -240,7 +270,7 @@ public class Board
 
     public void applyMove(int[] start, int[] end, boolean test, char promotionPiece)
     {
-        promotionPiece = Character.toLowerCase(promotionPiece);
+        promotionPiece = Character.toUpperCase(promotionPiece);
         StringBuilder move = new StringBuilder();
         
         // makes temp piece and adds to its history
@@ -280,7 +310,7 @@ public class Board
             if (disambiguateCol) move.append(convertMove(start).charAt(1));
         }
 
-        playerBoard[start[0]][start[1]] = Piece.blankSquare; //clears the space
+        playerBoard[start[0]][start[1]] = Piece.EMPTY; //clears the space
 
 
         if (playerBoard[end[0]][end[1]].isOccupied()) //capture check
@@ -292,8 +322,6 @@ public class Board
             if (temp.getPiece() == 'P') move.append(convertMove(start).charAt(0) + "x");
             else move.append("x"); // capture notation
         }
-        
-        
 
         // castling
         if (temp.getPiece() == 'K' && (start[1] - end[1] == 2 || start[1] - end[1] == -2))
@@ -301,24 +329,25 @@ public class Board
             if (end[1] == 2) // long castle
             {
                 playerBoard[start[0]][3] = playerBoard[start[0]][0];
-                playerBoard[start[0]][0] = Piece.blankSquare;
+                playerBoard[start[0]][0] = Piece.EMPTY;
                 move = new StringBuilder("O-O-O");
-                
-                playerBoard[start[0]][3].setHasMoved(true);
-                temp.setHasCastled(true);
-                playerBoard[start[0]][3].setY(3);
             }
             else // short castle
             {
                 playerBoard[start[0]][5] = playerBoard[start[0]][7];
-                playerBoard[start[0]][7] = Piece.blankSquare;
+                playerBoard[start[0]][7] = Piece.EMPTY;
                 move = new StringBuilder("O-O");
-
-                playerBoard[start[0]][5].setHasMoved(true);
-                temp.setHasCastled(true);
-                playerBoard[start[0]][5].setY(5);
             }
+            if (temp.isWhite()) whiteCastled = true;
+            else blackCastled = true;
         }
+        if (start[0] == 7 && start[1] == 4 || end[0] == 7 && end[1] == 4) { whiteCanCastleLong = false; whiteCanCastleShort = false; }
+        if (start[0] == 7 && start[1] == 0 || end[0] == 7 && end[1] == 0) whiteCanCastleLong = false;
+        if (start[0] == 7 && start[1] == 7 || end[0] == 7 && end[1] == 7) whiteCanCastleShort = false;
+
+        if (start[0] == 0 && start[1] == 4 || end[0] == 0 && end[1] == 4) { blackCanCastleLong = false; blackCanCastleShort = false; }
+        if (start[0] == 0 && start[1] == 0 || end[0] == 0 && end[1] == 0) blackCanCastleLong = false;
+        if (start[0] == 0 && start[1] == 7 || end[0] == 0 && end[1] == 7) blackCanCastleShort = false;
         
 
         // en passant
@@ -327,12 +356,12 @@ public class Board
             if (temp.isWhite())
             {
                 whiteCaptured.add(playerBoard[end[0] + 1][end[1]]);
-                playerBoard[end[0] + 1][end[1]] = Piece.blankSquare; // removes pawn before square
+                playerBoard[end[0] + 1][end[1]] = Piece.EMPTY; // removes pawn before square
             }
             else
             {
                 blackCaptured.add(playerBoard[end[0] - 1][end[1]]);
-                playerBoard[end[0] - 1][end[1]] = Piece.blankSquare; // removes pawn before square
+                playerBoard[end[0] - 1][end[1]] = Piece.EMPTY; // removes pawn before square
             }
             move.append(convertMove(start).charAt(0) + "x");
         }
@@ -347,10 +376,6 @@ public class Board
         }
         else enPassantSquare = null; // clear square every non double pawn move
         
-
-        // changes piece x and y vars
-        temp.setX(end[0]);
-        temp.setY(end[1]);
         
          // converts int[] to proper notation (e4, d5, etc.)
         if (temp.getPiece() != 'K' || (start[1] - end[1] != 2 && start[1] - end[1] != -2)) move.append(convertMove(end));
@@ -360,11 +385,9 @@ public class Board
         
         if (temp.getPiece() == 'P' && end[0] == promotionRow)
         {
-                 if (promotionPiece == 'q') { temp.setPiece('Q'); move.append("=Q"); }
-            else if (promotionPiece == 'r') { temp.setPiece('R'); move.append("=R"); }
-            else if (promotionPiece == 'n') { temp.setPiece('N'); move.append("=N"); }
-            else if (promotionPiece == 'b') { temp.setPiece('B'); move.append("=B"); }
-            else                            { temp.setPiece('Q'); move.append("=Q"); }
+            if ( promotionPiece == 'Z') promotionPiece = 'Q';
+            temp = Piece.get(temp.isWhite(), promotionPiece);
+            move.append("=" + promotionPiece);
         }
 
         // finishing move notation
@@ -380,9 +403,7 @@ public class Board
         if (!test) 
         {
             history.add((bigNotation)? convertMove(start) + " > " + convertMove(end) : move.toString() ); // standard chess notation and square to square
-            temp.addHistory(move.toString());
         }
-        temp.setHasMoved(true);
     }
     
     public static int[] findKing(Board board, boolean white)
@@ -675,28 +696,27 @@ public class Board
         {
             for (int j = 0; j < 8; j++)
             {
-                if (getPiece(i, j).getPiece() == 'K' || getPiece(i, j).getPiece() == 'R')
+                if (getPiece(i, j).getPiece() == 'K')
                 {
-                    getPiece(i, j).setHasMoved(true);
-                    if (getPiece(i, j).getPiece() == 'K')
-                    {
-                             if (i == 0 && j == 2) getPiece(i, j).setHasCastled(true);
-                        else if (i == 0 && j == 6) getPiece(i, j).setHasCastled(true);
-                        else if (i == 7 && j == 2) getPiece(i, j).setHasCastled(true);
-                        else if (i == 7 && j == 6) getPiece(i, j).setHasCastled(true);
-                    }
+                         if ((i == 7 && j == 2) || (i == 7 && j == 6)) whiteCastled = true;
+                    else if ((i == 0 && j == 2) || (i == 0 && j == 6)) blackCastled = true;
                 }
             }
         }
+
+        whiteCanCastleShort = false;
+        whiteCanCastleLong = false;
+        blackCanCastleShort = false;
+        blackCanCastleLong = false;
 
         for (char currChar : splitFEN[2].toCharArray())
         {
             switch (currChar)
             {
-                case 'K': getPiece(7, 4).setHasMoved(false); getPiece(7, 7).setHasMoved(false); break;
-                case 'Q': getPiece(7, 4).setHasMoved(false); getPiece(7, 0).setHasMoved(false); break;
-                case 'k': getPiece(0, 4).setHasMoved(false); getPiece(0, 7).setHasMoved(false); break;
-                case 'q': getPiece(0, 4).setHasMoved(false); getPiece(0, 0).setHasMoved(false); break;
+                case 'K': whiteCanCastleShort = true; break;
+                case 'Q': whiteCanCastleLong = true; break;
+                case 'k': blackCanCastleShort = true; break;
+                case 'q': blackCanCastleLong = true; break;
             }
         }
 
@@ -742,19 +762,13 @@ public class Board
         fen.append(" ");
 
         // Castling rights
-        Piece whiteKing = getPiece(findKing(this, true));
-        Piece blackKing = getPiece(findKing(this, false));
         boolean someoneCanCastle = false;
-        if (!whiteKing.hasCastled() && !whiteKing.hasMoved())
-        {
-            if (getPiece(7, 7).getPiece() == 'R' && !getPiece(7, 7).hasMoved()) { fen.append("K"); someoneCanCastle = true; }
-            if (getPiece(7, 0).getPiece() == 'R' && !getPiece(7, 0).hasMoved()) { fen.append("Q"); someoneCanCastle = true; }
-        }
-        if (!blackKing.hasCastled() && !blackKing.hasMoved())
-        {
-            if (getPiece(0, 7).getPiece() == 'R' && !getPiece(0, 7).hasMoved()) { fen.append("k"); someoneCanCastle = true; }
-            if (getPiece(0, 0).getPiece() == 'R' && !getPiece(0, 0).hasMoved()) { fen.append("q"); someoneCanCastle = true; }
-        }
+
+        if (whiteCanCastleShort) { fen.append("K"); someoneCanCastle = true; }
+        if (whiteCanCastleLong) { fen.append("Q"); someoneCanCastle = true; }
+        if (blackCanCastleShort) { fen.append("k"); someoneCanCastle = true; }
+        if (blackCanCastleLong) { fen.append("q"); someoneCanCastle = true; }
+
         if (!someoneCanCastle) fen.append("-");
         fen.append(" ");
 

@@ -223,20 +223,14 @@ public class Bot
                     else if (currentPiece.getPiece() == 'N')
                     {
                         centipawns += KNIGHT_TABLE[tableRow][col];
-                        if (!currentPiece.hasMoved())
-                        {
-                            if (currentPiece.isWhite()) whiteMinorPiecesHome++;
-                            else blackMinorPiecesHome++;
-                        }
+                             if (((row == 7 && col == 1) || (row == 7 && col == 6)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
+                        else if (((row == 0 && col == 1) || (row == 0 && col == 6)) && !currentPiece.isWhite()) blackMinorPiecesHome++;
                     }
                     else if (currentPiece.getPiece() == 'B') 
                     {
                         centipawns += BISHOP_TABLE[tableRow][col];
-                        if (!currentPiece.hasMoved())
-                        {
-                            if (currentPiece.isWhite()) whiteMinorPiecesHome++;
-                            else blackMinorPiecesHome++;
-                        }
+                             if (((row == 7 && col == 2) || (row == 7 && col == 5)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
+                        else if (((row == 0 && col == 2) || (row == 0 && col == 5)) && !currentPiece.isWhite()) blackMinorPiecesHome++;
 
                         boolean currPieceIsWhite = currentPiece.isWhite();
 
@@ -322,11 +316,8 @@ public class Bot
                     else if (currentPiece.getPiece() == 'Q')
                     {
                         centipawns += QUEEN_TABLE[tableRow][col];
-                        if (currentPiece.hasMoved())
-                        {
-                            if (currentPiece.isWhite()) whiteQueenMoved = true;
-                            else blackQueenMoved = true;
-                        }
+                             if ((row != 7 || col != 3) && currentPiece.isWhite()) whiteQueenMoved = true;
+                        else if ((row != 0 || col != 3) && !currentPiece.isWhite()) blackQueenMoved = true;
                     }
                     centipawns *= currentPiece.isWhite()? 1 : -1;
                     totalCentipawns += centipawns;
@@ -371,7 +362,8 @@ public class Bot
         
         // pawn sheild
         int pawnSheildBonus = 0;
-        if (!board.getPiece(kingLoc).hasCastled()) pawnSheildBonus = 30;
+
+        if (isWhite? !board.whiteCastled : !board.blackCastled) pawnSheildBonus = 30;
         else
         {
             for (int i = -1; i <= 1; i++)
@@ -397,8 +389,8 @@ public class Bot
         
         //cant castle penalty
         int castlingRightsPenalty = 0;
-        if (!board.getPiece(kingLoc).hasCastled() && isWhite && board.getPiece(kingLoc).hasMoved()) castlingRightsPenalty = -30;
-        else if (!board.getPiece(kingLoc).hasCastled() && !isWhite && board.getPiece(kingLoc).hasMoved()) castlingRightsPenalty = -30;
+        if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
+        else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
 
         safetyBonus = pawnSheildBonus + columnBonus + rowBonus + castlingRightsPenalty;
         return safetyBonus * sideMulti;
@@ -493,7 +485,7 @@ public class Bot
         int[] bestMoveHere = null;
 
         // 50 move rule
-        if (board.getTimeSinceCaptureOrPawnPush() == 100) return 0;
+        if (board.getTimeSinceCaptureOrPawnPush() >= 100) return 0;
 
         // zobrist hash + repetition detection
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);

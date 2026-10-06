@@ -206,8 +206,7 @@ public class Moves
         {
             if (king.isWhite())
             {
-                // short castle
-                if (!board.getPiece(new int[]{7,7}).hasMoved() && !board.getPiece(new int[]{7,4}).hasMoved())
+                if (board.whiteCanCastleShort)
                 {
                     // peice in the way check
                     if (!board.getPiece(new int[]{7,5}).isOccupied() && !board.getPiece(new int[]{7,6}).isOccupied())
@@ -218,8 +217,7 @@ public class Moves
                         }
                     }
                 }
-                // long castle
-                if(!board.getPiece(new int[]{7,0}).hasMoved() && !board.getPiece(new int[]{7,4}).hasMoved())
+                if(board.whiteCanCastleLong)
                 {
                     // peice in the way check
                     if (!board.getPiece(new int[]{7,1}).isOccupied() && !board.getPiece(new int[]{7,2}).isOccupied() && !board.getPiece(new int[]{7,3}).isOccupied())
@@ -233,8 +231,7 @@ public class Moves
             }
             else
             {
-                // short castle
-                if (!board.getPiece(new int[]{0,7}).hasMoved() && !board.getPiece(new int[]{0,4}).hasMoved())
+                if (board.blackCanCastleShort)
                 {
                     // peice in the way check
                     if (!board.getPiece(new int[]{0,5}).isOccupied() && !board.getPiece(new int[]{0,6}).isOccupied())
@@ -245,8 +242,7 @@ public class Moves
                         }
                     }
                 }
-                // long castle
-                if(!board.getPiece(new int[]{0,0}).hasMoved() && !board.getPiece(new int[]{0,4}).hasMoved())
+                if (board.blackCanCastleLong)
                 {
                     // peice in the way check
                     if (!board.getPiece(new int[]{0,1}).isOccupied() && !board.getPiece(new int[]{0,2}).isOccupied() && !board.getPiece(new int[]{0,3}).isOccupied())
