@@ -12,6 +12,7 @@ public class Bot
     private static final int LMR_REDUCTION = 1;
     private static final int TEMPO_BONUS = 15;
     private static final int DELTA_MARGIN = 200; // delta pruning
+    private static final int WINDOW = 35;
     public static String rootScores = "";
     public static boolean exactRootScores = false; // true = exact root score (slower)
 
@@ -744,6 +745,7 @@ public class Bot
         int beta = INFINITY;
         int[] bestMove = null;
         int[] bestMoveSoFar = null;
+        int previousScore = -INFINITY;
 
         moves.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
         // root position key for repetition detection
@@ -752,41 +754,78 @@ public class Bot
         // iterative deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            bestScoreSoFar = -INFINITY;
-            bestMoveSoFar = null;
-            alpha = -INFINITY;
-            beta = INFINITY;
-            StringBuilder depthScores = new StringBuilder();
-            
-            // root search loop
-            for(int[] move : moves)
+            if (depth < 4 || previousScore >= MATE - 1000 || exactRootScores)
             {
-                Board copy = new Board(board);
-                copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
-                if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
-                
-                if (bestMoveSoFar == null) bestMoveSoFar = move;
-                
-                int score = -negamax(copy, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
-                
-                if (timeUp) break;
-                
-                // root scores display
-                depthScores.append(Board.convertMove(new int[]{move[0], move[1]}) + Board.convertMove(new int[]{move[2], move[3]}));
-                depthScores.append((!exactRootScores && score <= alpha && bestMoveSoFar != move)? " <= " : " = ");
-                depthScores.append(score / 100.0 + "\n");
+                alpha = -INFINITY;
+                beta = INFINITY;
+            }
+            else
+            {   
+                alpha = previousScore - WINDOW;
+                beta = previousScore + WINDOW;
+            }
+            StringBuilder depthScores;
+            int aspAlpha = alpha;
+            int aspBeta = beta;
+            
+            aspiration: while (true)
+            {
+                alpha = aspAlpha;
+                beta = aspBeta;
+                bestScoreSoFar = -INFINITY;
+                bestMoveSoFar = null;
+                depthScores = new StringBuilder();
 
-                if (score > bestScoreSoFar) 
+                // root search loop
+                roots: for(int[] move : moves)
                 {
-                    bestScoreSoFar = score; bestMoveSoFar = move;
-                    if (!exactRootScores) alpha = Math.max(alpha, score);
+                    Board copy = new Board(board);
+                    copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
+                    if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
+                    
+                    if (bestMoveSoFar == null) bestMoveSoFar = move;
+                    
+                    int score = -negamax(copy, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
+                    
+                    if (timeUp) break;
+                    
+                    // root scores display
+                    depthScores.append(Board.convertMove(new int[]{move[0], move[1]}) + Board.convertMove(new int[]{move[2], move[3]}));
+                    depthScores.append((!exactRootScores && score <= alpha && bestMoveSoFar != move)? " <= " : " = ");
+                    depthScores.append(score / 100.0 + "\n");
+
+                    if (score > bestScoreSoFar) 
+                    {
+                        bestScoreSoFar = score; bestMoveSoFar = move;
+                        if (!exactRootScores) alpha = Math.max(alpha, score);
+                    }
+                    if (score >= beta) break roots;
+                }
+                if (timeUp) break;
+                if (bestScoreSoFar >= aspBeta || bestScoreSoFar <= aspAlpha)
+                {
+                    if (aspAlpha == -INFINITY) break;
+                    else if (aspAlpha == previousScore - WINDOW)
+                    {
+                        aspAlpha = previousScore - WINDOW * 2;
+                        aspBeta = previousScore + WINDOW * 2;
+                    }
+                    else
+                    {
+                        aspAlpha = -INFINITY;
+                        aspBeta = INFINITY;
+                    }
+                }
+                else
+                {
+                    break aspiration;
                 }
             }
             if (timeUp) break;
             
             // depth finished: save results, best move first for next depth
             rootScores = "root scores (depth " + depth + "):\n" + depthScores;
-
+            previousScore = bestScoreSoFar;
             moves.remove(bestMoveSoFar);
             moves.add(0, bestMoveSoFar);
             

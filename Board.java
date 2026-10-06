@@ -816,7 +816,7 @@ public class Board
         fen.append(" ");
 
         // move offset / full moves
-        fen.append(((history.size() + (blackStarted? 0 : 1)) / 2) + moveOffSet);
+        fen.append(((history.size() + (blackStarted? 1 : 0)) / 2) + moveOffSet);
 
         return fen.toString();
     }

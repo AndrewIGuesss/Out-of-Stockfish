@@ -1,6 +1,6 @@
 /*
     ---QOL---
-    make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
+    done    make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
     add tests
     Undo / takeback (~30 min)
     PGN import (~1-2 hrs)
@@ -22,7 +22,7 @@
     done    Tempo bonus (eval) ~10 minutes
     done    Delta pruning in quiescence (speed) ~20-30 minutes
     Tapered eval (eval) ~1.5-2 hours
-    Aspiration windows (speed) ~45 minutes-1 hour
+    done    Aspiration windows (speed) ~45 minutes-1 hour
     UCI (testing) ~3-4 hours, plus setting up a GUI or match runner
     King safety upgrade (eval) ~1.5-2 hours
     Time management (eval) ~1 hour for a basic version
@@ -735,10 +735,10 @@ public class Game
         }
         historySB.append("{game lasted for: " + convertMs(System.currentTimeMillis() - gameStartTime) + "}\n");
 
-        int offset = (board.getBlackStarted()? 1 : 0) + board.getMoveOffSet();
+        int offset = (board.getBlackStarted()? 1 : 0);
         for (int i = 0; i < gameHistory.size(); i++)
         {
-            int moveNumber = (i + offset) / 2;
+            int moveNumber = ((i + offset) / 2) + board.getMoveOffSet();
             if ((i + offset) % 2 == 0) historySB.append(moveNumber + ". " + gameHistory.get(i) + " "); // white move
             else if (i == 0) historySB.append(moveNumber + "... " + gameHistory.get(i) + " "); // black moved first
             else historySB.append(gameHistory.get(i) + " "); // black move
