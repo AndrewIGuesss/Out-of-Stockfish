@@ -19,9 +19,9 @@
     done    Null move pruning (speed)
     done    Late move reductions / LMR (speed) ~1-1.5 hours
     done    Principal variation search / PVS (speed) ~1 hour
-    Tempo bonus (eval) ~10 minutes
-    Tapered eval (eval) ~1.5-2 hours
+    done    Tempo bonus (eval) ~10 minutes
     Delta pruning in quiescence (speed) ~20-30 minutes
+    Tapered eval (eval) ~1.5-2 hours
     Aspiration windows (speed) ~45 minutes-1 hour
     UCI (testing) ~3-4 hours, plus setting up a GUI or match runner
     King safety upgrade (eval) ~1.5-2 hours

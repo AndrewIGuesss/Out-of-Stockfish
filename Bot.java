@@ -8,9 +8,10 @@ public class Bot
     public static final int MATE = 123456789;
     private static final int INFINITY = 1234567890;
     private static final int MAX_DEPTH_EXTENTION = 20;
+    private static final int NULL_MOVE_REDUCTION = 2;
     private static final int LMR_REDUCTION = 1;
     private static final int TEMPO_BONUS = 15;
-    private static final int NULL_MOVE_REDUCTION = 2;
+    private static final int DELTA_MARGIN = 200; // delta pruning
     public static String rootScores = "";
     public static boolean exactRootScores = false; // true = exact root score (slower)
 
@@ -431,6 +432,25 @@ public class Bot
         else return Math.min(historyTable[move[0] * 8 + move[1]][move[2] * 8 + move[3]], 799999);
     }
 
+    public static boolean hasPromotingPawn(Board board, boolean isWhite)
+    {
+        if (isWhite)
+        {
+            for (int i = 7; i >= 0; i--)
+            {
+                if (board.getPiece(1, i) == Piece.W_PAWN) return true;
+            }
+        }
+        else
+        {
+            for (int i = 0; i <= 7; i++)
+            {
+                if (board.getPiece(6, i) == Piece.B_PAWN) return true;
+            }
+        }
+        return false;
+    }
+
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
     {
         // time limit check
@@ -460,10 +480,18 @@ public class Bot
             if (orderScore(board, move, -1) != 0) captures.add(move);
         }
         captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
+
+        if (!hasPromotingPawn(board, whiteTurn))
+        {
+            if (standPat + getPieceValue('Q') + DELTA_MARGIN <= alpha) return best;
+        }
         
         // search captures
         for (int[] capture : captures)
         {
+            boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
+            if (!promoting && standPat + getPieceValue(board.getPiece(capture[2], capture[3]).getPiece()) + DELTA_MARGIN <= alpha) continue;
+
             Board copy = new Board(board);
             copy.applyMove(new int[]{capture[0], capture[1]}, new int[]{capture[2], capture[3]}, true, 'Q');
             if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
@@ -590,7 +618,7 @@ public class Bot
             
             validMoves++;
             
-                        // LMR (late move reductions)
+            // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
             boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
