@@ -460,6 +460,8 @@ public class Bot
             return 0;
         }
 
+        if (Board.isInsufficientMaterial(board)) return 0;
+
         // node counters
         movesAnalysed++;
         quiescenceMovesAnalysed++;
@@ -516,6 +518,8 @@ public class Bot
         // 50 move rule
         if (board.getTimeSinceCaptureOrPawnPush() >= 100) return 0;
 
+        if (Board.isInsufficientMaterial(board)) return 0;
+        
         // zobrist hash + repetition detection
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)

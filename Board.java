@@ -637,6 +637,40 @@ public class Board
         return pawns;
     }
 
+    public static boolean isInsufficientMaterial(Board board)
+    {
+        int blackMinorPieceCount = 0;
+        int whiteMinorPieceCount = 0;
+
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                switch (board.getPiece(row, col).getPiece()) 
+                {
+                    case 'Q': return false;
+                    case 'R': return false;
+                    case 'P': return false;
+
+                    case 'N': 
+                    { 
+                        if (board.getPiece(row, col).isWhite()) whiteMinorPieceCount++;
+                        else blackMinorPieceCount++;
+                        break;
+                    }
+                    case 'B':
+                    { 
+                        if (board.getPiece(row, col).isWhite()) whiteMinorPieceCount++;
+                        else blackMinorPieceCount++;
+                        break;
+                    }
+                }
+                if (blackMinorPieceCount > 1 || whiteMinorPieceCount > 1) return false;
+            }
+        }
+        return true;
+    }
+
     public boolean importFEN (String fen)
     {
         boolean whiteTurn;

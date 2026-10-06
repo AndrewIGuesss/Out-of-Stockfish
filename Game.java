@@ -20,7 +20,7 @@
     done    Late move reductions / LMR (speed) ~1-1.5 hours
     done    Principal variation search / PVS (speed) ~1 hour
     done    Tempo bonus (eval) ~10 minutes
-    Delta pruning in quiescence (speed) ~20-30 minutes
+    done    Delta pruning in quiescence (speed) ~20-30 minutes
     Tapered eval (eval) ~1.5-2 hours
     Aspiration windows (speed) ~45 minutes-1 hour
     UCI (testing) ~3-4 hours, plus setting up a GUI or match runner
@@ -576,13 +576,10 @@ public class Game
         if (setUp) return null;
 
         // insufficient material check(-10 for king)
-        if (board.getBoardValue(true) - 10 <= 3 && board.getBoardValue(false) - 10 <= 3)
+        if (Board.isInsufficientMaterial(board))
         {
-            if (board.getBoardPawnCount(true) + board.getBoardPawnCount(false) == 0)
-            {
-                gameResult = "1/2-1/2";
-                return "The game has ended in a draw by insufficient material!";
-            }
+            gameResult = "1/2-1/2";
+            return "The game has ended in a draw by insufficient material!";
         }
         // repetition check
         if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
