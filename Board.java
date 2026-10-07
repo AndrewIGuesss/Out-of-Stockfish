@@ -549,7 +549,7 @@ public class Board
         if (Settings.showStandardDebugMenu)
         {
             System.out.println("\n----debug----");
-        if (Settings.showEval) System.out.println("eval: " + Bot.evalBoard(this) / 100.0); // divide by 100 to convert centipawns into eval
+        if (Settings.showEval) System.out.println("eval: " + Bot.evalBoard(this, false) / 100.0); // divide by 100 to convert centipawns into eval
         if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((isWhiteTurn())? "WHITE" : "BLACK"));
         if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, isWhiteTurn()).size());
         if (Settings.showGameLength) System.out.println("game length: move " + (history.size() + (isWhiteTurn()? 1 : 2)) / 2 + " | ply " + history.size());

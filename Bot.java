@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Bot 
 {
@@ -19,6 +20,30 @@ public class Bot
     public static int movesAnalysed = 0;
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
+
+    public static ArrayList<String> evalTerms = new ArrayList<>(List.of(
+        "material",
+        "piece squares",
+        "passed pawns",
+        "doubled pawns",
+        "isolated pawns",
+        "bishop lines",
+        "rook files",
+        "early queen",
+        "bishop pair",
+        "king shield",
+        "king column",
+        "king row",
+        "castling rights",
+        "endgame king",
+        "mop up"
+        ));
+    public static int[][] evalBreakDown = new int[evalTerms.size()][2];
+    public static String evalBreakDownString = null;
+    // eval break down constants
+    public static final int MATERIAL = 0, PIECE_SQUARES = 1, PASSED_PAWNS = 2, DOUBLED_PAWNS = 3, ISOLATED_PAWNS = 4, BISHOP_LINES = 5, 
+                            ROOK_FILES = 6, EARLY_QUEEN = 7, BISHOP_PAIR = 8, KING_SHIELD = 9, KING_COLUMN = 10, KING_ROW = 11, 
+                            CASTLING_RIGHTS = 12, ENDGAME_KING = 13, MOP_UP = 14, EVAL_TERM_COUNT = 15;
 
     public static int[][][] killerMoves = new int[64][2][];
     public static int[][] historyTable = new int[64][64];
@@ -123,7 +148,7 @@ public class Bot
         return -1;
     }
 
-    public static int evalBoard (Board board)
+    public static int evalBoard (Board board, boolean breakDown)
     {
         int totalCentipawns = 0;
         int whiteMaterialValue = 0; 
@@ -138,6 +163,13 @@ public class Bot
         int blackMinorPiecesHome = 0;
         boolean whiteQueenMoved = false;
         boolean blackQueenMoved = false;
+
+        if (breakDown) 
+        {
+            evalBreakDownString = "";
+            evalBreakDown = new int[EVAL_TERM_COUNT][2]; // clear old values
+        }
+        else evalBreakDownString = null;
 
         for (int row = 0; row < board.getBoard().length; row++)
         {
@@ -154,17 +186,19 @@ public class Bot
                         continue;
                     }
 
-                    int centipawns = getPieceValue(currentPiece.getPiece());
+                    int centipawns = term(getPieceValue(currentPiece.getPiece()), currentPiece.isWhite(), MATERIAL);
 
                     if (currentPiece.isWhite()) whiteMaterialValue += centipawns;
                     else blackMaterialValue += centipawns;
                     
                     int tableRow = currentPiece.isWhite()? row : 7 - row;
 
-                    
+
+
                     if (currentPiece.getPiece() == 'P')
                     {
-                        centipawns += PAWN_TABLE[tableRow][col];
+                        centipawns += term(PAWN_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+
                         if (currentPiece.isWhite()) whitePawnCount++;
                         else blackPawnCount++;
 
@@ -180,6 +214,7 @@ public class Bot
                             for (int scanRow = row - 1; scanRow >= 0; scanRow--)
                             {
                                 Piece scanPiece = board.getPiece(scanRow, col);
+                                
                                 if (scanPiece.getPiece() == 'P')
                                 {
                                     if (scanPiece.isWhite() == currentPiece.isWhite()) doubledPawnPenalty += 20;
@@ -221,17 +256,21 @@ public class Bot
                         }
                         if (adjacentPawnCounter == 0) isolatedPawnPenalty = 15;
                         if (enemyAdjacentPawnCounter == 0) PassedPawnBonus = currentPiece.isWhite()? PASSED_PAWN_BONUS[7 - row] : PASSED_PAWN_BONUS[row];
-                        centipawns += PassedPawnBonus - doubledPawnPenalty - isolatedPawnPenalty;
+                        centipawns += term(PassedPawnBonus, currentPiece.isWhite(), PASSED_PAWNS);
+                        centipawns += term(-doubledPawnPenalty, currentPiece.isWhite(), DOUBLED_PAWNS);
+                        centipawns += term(-isolatedPawnPenalty, currentPiece.isWhite(), ISOLATED_PAWNS);
                     }
                     else if (currentPiece.getPiece() == 'N')
                     {
-                        centipawns += KNIGHT_TABLE[tableRow][col];
+                        centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+
                              if (((row == 7 && col == 1) || (row == 7 && col == 6)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
                         else if (((row == 0 && col == 1) || (row == 0 && col == 6)) && !currentPiece.isWhite()) blackMinorPiecesHome++;
                     }
                     else if (currentPiece.getPiece() == 'B') 
                     {
-                        centipawns += BISHOP_TABLE[tableRow][col];
+                        centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+
                              if (((row == 7 && col == 2) || (row == 7 && col == 5)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
                         else if (((row == 0 && col == 2) || (row == 0 && col == 5)) && !currentPiece.isWhite()) blackMinorPiecesHome++;
 
@@ -265,11 +304,11 @@ public class Bot
                             }
                         }
 
-                        centipawns -= penalty;
+                        centipawns += term(-penalty, currPieceIsWhite, BISHOP_LINES);
                     }
                     else if (currentPiece.getPiece() == 'R')
                     {
-                        centipawns += ROOK_TABLE[tableRow][col];
+                        centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
 
                         int penalty = 0;
                         if (currentPiece.isWhite())
@@ -314,11 +353,12 @@ public class Bot
                                 else if (blockingPieces == 1) penalty += 10;
                             }
                         }
-                        centipawns -= penalty;
+                        centipawns += term(-penalty, currentPiece.isWhite(), ROOK_FILES);
                     }
                     else if (currentPiece.getPiece() == 'Q')
                     {
-                        centipawns += QUEEN_TABLE[tableRow][col];
+                        centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+
                              if ((row != 7 || col != 3) && currentPiece.isWhite()) whiteQueenMoved = true;
                         else if ((row != 0 || col != 3) && !currentPiece.isWhite()) blackQueenMoved = true;
                     }
@@ -329,12 +369,12 @@ public class Bot
         }
 
         //early queen agro
-        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) totalCentipawns -= 25;
-        if (blackQueenMoved && blackMinorPiecesHome >= 2) totalCentipawns += 25;
+        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) totalCentipawns += term(-25, true, EARLY_QUEEN);
+        if (blackQueenMoved && blackMinorPiecesHome >= 2) totalCentipawns -= term(-25, false, EARLY_QUEEN);
 
         //bishop pair
-        if (whiteBishopCount >= 2) totalCentipawns += 40;
-        if (blackBishopCount >= 2) totalCentipawns -= 40;
+        if (whiteBishopCount >= 2) totalCentipawns += term(40, true, BISHOP_PAIR);
+        if (blackBishopCount >= 2) totalCentipawns -= term(40, false, BISHOP_PAIR);
 
         //insuficent material
         if (blackPawnCount == 0 && whitePawnCount == 0)
@@ -345,15 +385,15 @@ public class Bot
 
 
         //mop up check
-        if (whiteMaterialValue - blackMaterialValue > 500 && blackMaterialValue < 300) totalCentipawns += evalMopup(blackKingLoc, whiteKingLoc, true);
-        else if (blackMaterialValue - whiteMaterialValue > 500 && whiteMaterialValue < 300) totalCentipawns += evalMopup(whiteKingLoc, blackKingLoc, false);
+        if (whiteMaterialValue - blackMaterialValue > 500 && blackMaterialValue < 300) totalCentipawns += term(evalMopup(blackKingLoc, whiteKingLoc, true), true, MOP_UP);
+        else if (blackMaterialValue - whiteMaterialValue > 500 && whiteMaterialValue < 300) totalCentipawns -= term(-evalMopup(whiteKingLoc, blackKingLoc, false), false, MOP_UP);
 
         //king safety / endgame king
         if (blackMaterialValue - (blackPawnCount * 100) > 1300) totalCentipawns += kingSafety(board, whiteKingLoc, true);
-        else totalCentipawns += KING_ENDGAME_TABLE[whiteKingLoc[0]][whiteKingLoc[1]];
+        else totalCentipawns += term(KING_ENDGAME_TABLE[whiteKingLoc[0]][whiteKingLoc[1]], true, ENDGAME_KING);
 
         if (whiteMaterialValue - (whitePawnCount * 100) > 1300) totalCentipawns += kingSafety(board, blackKingLoc, false);
-        else totalCentipawns -= KING_ENDGAME_TABLE[7 - blackKingLoc[0]][blackKingLoc[1]];
+        else totalCentipawns -= term(KING_ENDGAME_TABLE[7 - blackKingLoc[0]][blackKingLoc[1]], false, ENDGAME_KING);
         
         return totalCentipawns;
     }
@@ -395,7 +435,8 @@ public class Bot
         if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
         else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
 
-        safetyBonus = pawnSheildBonus + columnBonus + rowBonus + castlingRightsPenalty;
+        safetyBonus = term(pawnSheildBonus, isWhite, KING_SHIELD) + term(columnBonus, isWhite, KING_COLUMN) 
+                    + term(rowBonus, isWhite, KING_ROW) + term(castlingRightsPenalty, isWhite, CASTLING_RIGHTS);
         return safetyBonus * sideMulti;
     }
 
@@ -452,6 +493,13 @@ public class Bot
         return false;
     }
 
+    private static int term(int value, boolean isWhite, int termIndex)
+    {
+        if (evalBreakDownString != null) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
+        
+        return value;
+    }
+
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
     {
         // time limit check
@@ -468,7 +516,7 @@ public class Bot
         quiescenceMovesAnalysed++;
 
         // stand pat (eval if we stop capturing here)
-        int standPat = evalBoard(board) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
+        int standPat = evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
         if (standPat >= beta) return standPat;
         
         alpha = Math.max(alpha, standPat);
