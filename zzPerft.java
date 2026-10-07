@@ -1,8 +1,7 @@
-import java.net.InetAddress;
 import java.util.ArrayList;
 public class zzPerft 
 {
-    public static void main(String[] args) 
+    public static ArrayList<Integer> runPerft () 
     {
         String[] testPositionFens = new String[]{
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -23,8 +22,8 @@ public class zzPerft
             Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
             testBoard.importFEN(testPositionFens[i]);
             long totalMoves = perft(testBoard, testPositionDepths[i], testBoard.isWhiteTurn());
-            if (totalMoves == testPositionKnown[i]) System.out.printf("PASS | %9d %9d%n", totalMoves, testPositionKnown[i]);
-            else { System.out.printf("FAIL | %9d %9d%n", totalMoves, testPositionKnown[i]); failed.add(i); }
+            if (totalMoves == testPositionKnown[i]) System.out.printf(zzTests.PASS + " | %9d %9d%n", totalMoves, testPositionKnown[i]);
+            else { System.out.printf(zzTests.FAIL + " | %9d %9d%n", totalMoves, testPositionKnown[i]); failed.add(i); }
         }
         if (failed.size() > 0)
         {
@@ -34,6 +33,7 @@ public class zzPerft
                 System.out.print(" " + (test + 1));
             }
         }
+        return failed;
     }
 
     public static long perft(Board board, int depth, boolean isWhite)

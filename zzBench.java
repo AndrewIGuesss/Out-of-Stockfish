@@ -1,6 +1,6 @@
 public class zzBench 
 {
-    public static void main(String[] args)
+    public static void runBench()
     {
         int maxDepth = 7; // 7 = quick 8 = more accurate
 
