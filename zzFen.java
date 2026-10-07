@@ -1,3 +1,6 @@
+// imports a FEN and the makes a FEN to check if they are the same
+// imports a FEN and the makes some moves then makes a new FEN to check if it matches the correct one
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -58,8 +61,8 @@ public class zzFen
         {
             String fen = roundTripFens[i];
             String roundTrip = roundTrip(fen);
-            if (roundTrip.equals(fen)) System.out.println(zzTests.PASS);
-            else { System.out.printf(zzTests.FAIL + " | %s%n       %s%n", roundTrip, fen); failedRT.add(i); }
+            if (roundTrip.equals(fen)) System.out.println(zTests.PASS);
+            else { System.out.printf(zTests.FAIL + " | %s%n       %s%n", roundTrip, fen); failedRT.add(i); }
         }
 
         System.out.println("\n-play moves test-\n");
@@ -68,12 +71,12 @@ public class zzFen
         {
             String fen = startFens[i];
             String playedMove = playMoves(fen, testMoves[i]);
-            if (playedMove.equals(expectedFens[i])) System.out.println(zzTests.PASS);
-            else { System.out.printf(zzTests.FAIL + " | %s%n       %s%n", playedMove, expectedFens[i]); failedPM.add(i); }
+            if (playedMove.equals(expectedFens[i])) System.out.println(zTests.PASS);
+            else { System.out.printf(zTests.FAIL + " | %s%n       %s%n", playedMove, expectedFens[i]); failedPM.add(i); }
         }
         System.out.println();
-        if (failedRT.size() + failedPM.size() > 0) System.out.println(zzTests.FAILED + " A TEST");
-        else System.out.println(zzTests.PASSED + " ALL TESTS");
+        if (failedRT.size() + failedPM.size() > 0) System.out.println(zTests.FAILED + " A TEST");
+        else System.out.println(zTests.PASSED + " ALL TESTS");
         if (failedRT.size() > 0)
         {
             System.out.print("failed round trip tests:");

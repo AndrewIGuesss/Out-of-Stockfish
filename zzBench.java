@@ -1,3 +1,5 @@
+//gets the amount of nodes generated for each depth of a position
+
 public class zzBench 
 {
     public static void runBench()

@@ -1,3 +1,5 @@
+// gets total legal moves for each depth of a position
+
 import java.util.ArrayList;
 public class zzPerft 
 {
@@ -22,8 +24,8 @@ public class zzPerft
             Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
             testBoard.importFEN(testPositionFens[i]);
             long totalMoves = perft(testBoard, testPositionDepths[i], testBoard.isWhiteTurn());
-            if (totalMoves == testPositionKnown[i]) System.out.printf(zzTests.PASS + " | %9d %9d%n", totalMoves, testPositionKnown[i]);
-            else { System.out.printf(zzTests.FAIL + " | %9d %9d%n", totalMoves, testPositionKnown[i]); failed.add(i); }
+            if (totalMoves == testPositionKnown[i]) System.out.printf(zTests.PASS + " | %9d %9d%n", totalMoves, testPositionKnown[i]);
+            else { System.out.printf(zTests.FAIL + " | %9d %9d%n", totalMoves, testPositionKnown[i]); failed.add(i); }
         }
         if (failed.size() > 0)
         {

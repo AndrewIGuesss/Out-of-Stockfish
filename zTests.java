@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class zzTests 
+public class zTests 
 {
     private static boolean runBench = false;
     private static boolean runPerft = true;
