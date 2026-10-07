@@ -1,33 +1,28 @@
 /*
-    ---QOL---
-    done    make it possible to play moves using notation (e4 plays e4 instead of doing e2 e4)
-    add tests
-    Undo / takeback (~30 min)
-    PGN import (~1-2 hrs)
-    done    Flip the board (~20 min)
-    Show the principal variation / PV (~45 min)
-    Eval breakdown command (~45 min)
-    Hint command (~10 min)
-    Analysis mode (~30 min)
-    Perft command
-    Bench command (~20 min)
-    Small opening book (~1 hr)
-    done    ff
-    add setting to show eval, depth, time after each bot move in PGNs
+    --- TO DO ---
+    TASK                          TIME        ELO          TYPE
+    Eval breakdown command        45 min      n/a          QOL/debug
+    King safety upgrade           2-3 hr      +50-100      eval
+    Tapered eval                  1.5-2 hr    +30-60       eval
+    UCI                           3-4 hr      n/a          testing
+    Make/unmake + inc. Zobrist    6-10 hr     +50-80       speed
+    Show PV                       45 min      n/a          QOL/debug
+    Small eval terms              1 hr        +20-40       eval
+    Futility + reverse futility   1 hr        +20-40       speed
+    SEE                           2 hr        +15-30       speed
+    Time management               1 hr        +10-30       strength
+    Small opening book            1 hr        +10-30       strength
+    Undo / takeback               1-2 hr      n/a          QOL
+    Lazy SMP                      4-6 hr      +40-80       speed
+    Underpromotions               30 min      n/a          rules
+    Analysis mode                 30 min      n/a          QOL
+    Hint command                  10 min      n/a          QOL
+    PGN import                    1-2 hr      n/a          QOL
+    Bot stats in PGN setting      30 min      n/a          QOL
+    Perft command                 15 min      n/a          QOL
+    Bench command                 20 min      n/a          QOL
 
-    ---Bot---
-    done    Null move pruning (speed)
-    done    Late move reductions / LMR (speed) ~1-1.5 hours
-    done    Principal variation search / PVS (speed) ~1 hour
-    done    Tempo bonus (eval) ~10 minutes
-    done    Delta pruning in quiescence (speed) ~20-30 minutes
-    Tapered eval (eval) ~1.5-2 hours
-    done    Aspiration windows (speed) ~45 minutes-1 hour
-    UCI (testing) ~3-4 hours, plus setting up a GUI or match runner
-    King safety upgrade (eval) ~1.5-2 hours
-    Time management (eval) ~1 hour for a basic version
-    Make/unmake + incremental Zobrist (speed) ~6-10 hours, spread over a few sessions
-    Lazy SMP (speed) ~4-6 hours, mostly untangling the static variables
+    small eval terms = bishop pair, rooks on open files, mobility
 */
 
 import java.io.IOException;
