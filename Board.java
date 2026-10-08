@@ -550,8 +550,8 @@ public class Board
         {
             System.out.println("\n----debug----");
             
-            if (Settings.showEval) System.out.println("eval: " + Bot.evalBoard(this, false) / 100.0); // divide by 100 to convert centipawns into eval
-            if (Settings.showEvalBreakDown) { int eval = Bot.evalBoard(this, true); System.out.println(Bot.getEvalBreakDown(eval)); }
+            if (Settings.showEval) System.out.println("eval: " + Eval.evalBoard(this, false) / 100.0); // divide by 100 to convert centipawns into eval
+            if (Settings.showEvalBreakDown) { int eval = Eval.evalBoard(this, true); System.out.println(Eval.getEvalBreakDown(eval)); }
             if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((isWhiteTurn())? "WHITE" : "BLACK")); 
             if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, isWhiteTurn()).size());
             if (Settings.showGameLength) System.out.println("game length: move " + (history.size() + (isWhiteTurn()? 1 : 2)) / 2 + " | ply " + history.size());
@@ -599,7 +599,7 @@ public class Board
         {
             for (int col = 0; col < 8; col++)
             {
-                int pieceValue = Bot.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                int pieceValue = Eval.getPieceValue(getPiece(row, col).getPiece()) / 100;
                 if (getPiece(row, col).isWhite()) value += pieceValue;
                 else value -= pieceValue;
             }
@@ -616,7 +616,7 @@ public class Board
             {
                 if (getPiece(row, col).isOccupied() && getPiece(row, col).isWhite() == isWhite)
                 {
-                    value += Bot.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                    value += Eval.getPieceValue(getPiece(row, col).getPiece()) / 100;
                 }
             }
         }

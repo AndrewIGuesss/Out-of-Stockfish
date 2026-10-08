@@ -1,9 +1,8 @@
 /*
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
-    Eval breakdown command        45 min      n/a          QOL/debug
-    King safety upgrade           2-3 hr      +50-100      eval
     Tapered eval                  1.5-2 hr    +30-60       eval
+    King safety upgrade           2-3 hr      +50-100      eval
     UCI                           3-4 hr      n/a          testing
     Make/unmake + inc. Zobrist    6-10 hr     +50-80       speed
     Show PV                       45 min      n/a          QOL/debug
@@ -26,7 +25,6 @@
 */
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.file.*;
 import java.util.*;
 import java.text.SimpleDateFormat;

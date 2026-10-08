@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class zTests 
 {
-    private static boolean runBench = false;
+    private static boolean runBench = true;
     private static boolean runPerft = true;
     private static boolean runFen = true;
 
@@ -17,8 +17,9 @@ public class zTests
     public static List<String[]> tests = new ArrayList<>();
     public static void main(String[] args) 
     {
+        long benchNodes = 0;
         System.out.println("\n\nTesting");
-        if (runBench) zzBench.runBench();
+        if (runBench) benchNodes = zzBench.runBench();
         if (runPerft) 
         {
             String perftResult = Arrays.toString(zzPerft.runPerft().toArray()).replace("[", "").replace("]", "");
@@ -31,8 +32,8 @@ public class zTests
             tests.add(new String[]{"Fen move test", fenTest[1]});
         }
 
-        System.out.println("\n\n-----Summary-----\n");
-        System.out.println("passed   test\n----------------------");
+        System.out.println("\n\n-----Summary-----");
+        if (runBench) System.out.printf("bench nodes: %s%n", benchNodes);
         for (String[] test : tests)
         {
             String testMsg = PASSED;

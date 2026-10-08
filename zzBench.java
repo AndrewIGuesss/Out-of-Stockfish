@@ -2,7 +2,7 @@
 
 public class zzBench 
 {
-    public static void runBench()
+    public static long runBench()
     {
         int maxDepth = 7; // 7 = quick 8 = more accurate
 
@@ -37,10 +37,11 @@ public class zzBench
                 long zobristHash = Zobrist.makeZobristHash(testBoard, whiteTurn);
                 
                 Game.positionKeys.clear();
+                Game.repetition.clear();
                 
                 Game.positionKeys.add(zobristHash);
                 Game.repetition.merge(zobristHash, 1, Integer::sum);
-                
+
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
 
                 long startTime = System.nanoTime();
@@ -56,5 +57,6 @@ public class zzBench
             }
         }
         System.out.println("total nodes:" + totalNodes);
+        return totalNodes;
     }
 }
