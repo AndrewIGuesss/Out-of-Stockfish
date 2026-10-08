@@ -34,8 +34,13 @@ public class zzBench
             boolean whiteTurn = testBoard.importFEN(position);
             for (int depth = 1; depth <= maxDepth; depth++)
             {
+                long zobristHash = Zobrist.makeZobristHash(testBoard, whiteTurn);
+                
                 Game.positionKeys.clear();
-                Game.positionKeys.add(Zobrist.makeZobristHash(testBoard, whiteTurn));
+                
+                Game.positionKeys.add(zobristHash);
+                Game.repetition.merge(zobristHash, 1, Integer::sum);
+                
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
 
                 long startTime = System.nanoTime();

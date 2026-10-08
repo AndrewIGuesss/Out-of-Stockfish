@@ -26,6 +26,7 @@
 */
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.*;
 import java.util.*;
 import java.text.SimpleDateFormat;
@@ -44,7 +45,8 @@ public class Game
     public static boolean botPlayedLastMove = false;
     public static String debugMsg = "";
 
-    public static ArrayList<Long> positionKeys = new ArrayList<>();
+    public static List<Long> positionKeys = new ArrayList<>();
+    public static Map<Long, Integer> repetition = new HashMap<>();
     private static Board board;
     private static boolean whiteTurn = true;
     private static boolean inCheck = false;
@@ -131,7 +133,9 @@ public class Game
         }
         
         board = new Board(Settings.safeColors, Settings.bigNotation);
-        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
+        long zobristHash = Zobrist.makeZobristHash(board, whiteTurn);
+        positionKeys.add(zobristHash);
+        repetition.merge(zobristHash, 1, Integer::sum);
 
 
 
@@ -593,7 +597,7 @@ public class Game
             return "The game has ended in a draw by insufficient material!";
         }
         // repetition check
-        if (Collections.frequency(positionKeys, positionKeys.get(positionKeys.size() - 1)) >= 3)
+        if (repetition.get(positionKeys.get(positionKeys.size() - 1)) >= 3)
         {
             gameResult = "1/2-1/2";
             return "The game has ended in a draw by repetition!";
@@ -627,6 +631,7 @@ public class Game
                 board.setEnPassantSquare(null);
                 importedFEN = board.makeFEN(whiteTurn);
                 positionKeys.clear(); 
+                repetition.clear();
                 break;
             }
             case "clear":
@@ -638,6 +643,7 @@ public class Game
                 importedFEN = board.makeFEN(whiteTurn);
                 previousMove = null;
                 positionKeys.clear();
+                repetition.clear();
                 setUp = true;
                 break;
             }
@@ -647,6 +653,7 @@ public class Game
                 previousMove = null;
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                 positionKeys.clear();
+                repetition.clear();
                 setUp = false;
                 break;
             }
@@ -656,6 +663,7 @@ public class Game
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                 board.updateCastlingRights();
                 positionKeys.clear();
+                repetition.clear();
                 Game.board = board;
                 setUp = false;
                 break;
@@ -666,7 +674,9 @@ public class Game
                 System.out.println("protocol inputed: " + protocol);
             }
         }
-        positionKeys.add(Zobrist.makeZobristHash(board, whiteTurn));
+        long zobristHash = Zobrist.makeZobristHash(board, whiteTurn);
+        positionKeys.add(zobristHash);
+        repetition.merge(zobristHash, 1, Integer::sum);
         inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
     }
 
@@ -724,7 +734,7 @@ public class Game
     public static void makePGN(Board board, boolean whiteBotToggle, boolean blackBotToggle)
     {
         Path filePath = Paths.get("History.txt");
-        ArrayList<String> gameHistory = board.getHistory();
+        List<String> gameHistory = board.getHistory();
         StringBuilder historySB = new StringBuilder(); Date now = new Date();
         SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy.MM.dd");
 

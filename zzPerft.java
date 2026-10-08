@@ -1,9 +1,10 @@
 // gets total legal moves for each depth of a position
 
 import java.util.ArrayList;
+import java.util.List;
 public class zzPerft 
 {
-    public static ArrayList<Integer> runPerft () 
+    public static List<Integer> runPerft () 
     {
         String[] testPositionFens = new String[]{
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -15,7 +16,7 @@ public class zzPerft
 
         int[] testPositionDepths = new int[]{4,3,5,4,3};
         int[] testPositionKnown = new int[]{197281, 97862, 674624, 320802, 54007}; // dosent include promotions besides queen
-        ArrayList<Integer> failed = new ArrayList<>();
+        List<Integer> failed = new ArrayList<>();
         System.out.println("\n\n---Perft Test---\n");
         System.out.println("passed  calculated  expected");
         System.out.println("-----------------------------");
@@ -43,7 +44,7 @@ public class zzPerft
         if (depth == 0) return 1;
 
         long totalMoves = 0;
-        ArrayList<int[]> moves = Moves.allMoves(board, isWhite);
+        List<int[]> moves = Moves.allMoves(board, isWhite);
         for (int[] move : moves)
         {
             Board copy = new Board(board);

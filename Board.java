@@ -28,9 +28,9 @@ public class Board
     private String LIGHT_SQ;
     
     private Piece[][] playerBoard; // board that holds all pieces
-    private ArrayList<String> history; // all moves on board
-    private ArrayList<Piece> whiteCaptured; // pieces white has taken
-    private ArrayList<Piece> blackCaptured; // pieces black has taken
+    private List<String> history; // all moves on board
+    private List<Piece> whiteCaptured; // pieces white has taken
+    private List<Piece> blackCaptured; // pieces black has taken
     
     private int[] enPassantSquare; // for en passant captures
 
@@ -44,8 +44,8 @@ public class Board
     private int timeSinceCaptureOrPawnPush;
 
     // debug vars
-    private ArrayList<String> fakeMoves;
-    private ArrayList<String> legalMoves;
+    private List<String> fakeMoves;
+    private List<String> legalMoves;
 
     // castling rights
     public boolean whiteCastled = false;
@@ -103,7 +103,7 @@ public class Board
     public Piece getPiece(int[] cords) { return playerBoard[cords[0]][cords[1]]; }
     public Piece getPiece(int row, int col) { return playerBoard[row][col]; }
     public boolean getBlackStarted() { return blackStarted; }
-    public ArrayList<String> getHistory() { return history; }
+    public List<String> getHistory() { return history; }
     public int[] getEnPassantSquare() { return enPassantSquare; }
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
     public int getTimeSinceCaptureOrPawnPush() { return timeSinceCaptureOrPawnPush; }
@@ -111,13 +111,13 @@ public class Board
     
     // seters
     public void addHistory(String s) {history.add(s);}
-    public void setHistory(ArrayList<String> history) {this.history = history;}
+    public void setHistory(List<String> history) {this.history = history;}
     public void setEnPassantSquare(int[] cords) {enPassantSquare = cords;}
     public void setBlackStarted(boolean blackStarted) {this.blackStarted = blackStarted;}
 
     // debug geters
-    public ArrayList<String> getFakeMoves() { return fakeMoves; };
-    public ArrayList<String> getLegalMoves() { return legalMoves; };
+    public List<String> getFakeMoves() { return fakeMoves; };
+    public List<String> getLegalMoves() { return legalMoves; };
     
     // debug seters
     public void addPiece(char piece, int[] cords, boolean isWhite) 
@@ -191,7 +191,7 @@ public class Board
         else return false;
     }
     
-    public static String captureValue(ArrayList<Piece> captures)
+    public static String captureValue(List<Piece> captures)
     {
         int val = 0;
         for (Piece p : captures)
@@ -287,8 +287,8 @@ public class Board
             boolean disambiguateCol = false;
             boolean disambiguateRow = false;
 
-            ArrayList<int[]> rivals = new ArrayList<int[]>();
-            ArrayList<int[]> pMoves = Moves.pseudoMoves(this, temp.isWhite());
+            List<int[]> rivals = new ArrayList<int[]>();
+            List<int[]> pMoves = Moves.pseudoMoves(this, temp.isWhite());
             for (int[] pMove : pMoves)
             {
                 if ((pMove[2] == end[0] && pMove[3] == end[1]) && (pMove[0] != start[0] || pMove[1] != start[1]))
@@ -441,7 +441,7 @@ public class Board
         return square;
     }
 
-    public static String captureList(ArrayList<Piece> captures)
+    public static String captureList(List<Piece> captures)
     {
         String list = "";
         char[] hiarchy = new char[]{'Q', 'R', 'N', 'B', 'P'};

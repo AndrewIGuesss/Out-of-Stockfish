@@ -21,7 +21,7 @@ public class Bot
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
 
-    public static ArrayList<String> evalTerms = new ArrayList<>(List.of(
+    public static List<String> evalTerms = new ArrayList<>(List.of(
         "material",
         "piece squares",
         "passed pawns",
@@ -546,8 +546,8 @@ public class Bot
         int best = standPat;
 
         // captures only (MVV-LVA ordered)
-        ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
-        ArrayList<int[]> captures = new ArrayList<>();
+        List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+        List<int[]> captures = new ArrayList<>();
         
         for (int[] move : moves)
         {
@@ -662,7 +662,7 @@ public class Bot
 
         // move generation + ordering (MVV-LVA, killers, history)
         // startRow, startCol, endRow, endCol
-        ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+        List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
         
         int best = -MATE; // extremly low place holder value
 
@@ -805,7 +805,7 @@ public class Bot
 
         // root move generation + ordering
         // startRow, startCol, endRow, endCol
-        ArrayList<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+        List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
 
         // alpha - the best score we've already found
         // beta - the score where the opponent would never allow this position

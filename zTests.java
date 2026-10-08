@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 
 public class zTests 
@@ -13,7 +14,7 @@ public class zTests
     public static final String FAILED = "\u001B[1;31mFAILED\u001B[0m";
 
     private static boolean passedAllTest = true;
-    public static ArrayList<String[]> tests = new ArrayList<>();
+    public static List<String[]> tests = new ArrayList<>();
     public static void main(String[] args) 
     {
         System.out.println("\n\nTesting");

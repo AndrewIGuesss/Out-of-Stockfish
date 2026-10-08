@@ -413,9 +413,9 @@ public class Moves
         return true;
     }
 
-    public static ArrayList<int[]> allMoves(Board board, boolean white)
+    public static List<int[]> allMoves(Board board, boolean white)
     {
-        ArrayList<int[]> moves = new ArrayList<int[]>();
+        List<int[]> moves = new ArrayList<int[]>();
         
         for (int row = 0; row < 8; row++)
         {
@@ -439,9 +439,9 @@ public class Moves
         return moves;
     }
     
-    public static ArrayList<int[]> pseudoMoves(Board board, boolean white)
+    public static List<int[]> pseudoMoves(Board board, boolean white)
     {
-        ArrayList<int[]> moves = new ArrayList<int[]>();
+        List<int[]> moves = new ArrayList<int[]>();
         
         for (int row = 0; row < 8; row++)
         {

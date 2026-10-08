@@ -2,6 +2,7 @@
 // imports a FEN and the makes some moves then makes a new FEN to check if it matches the correct one
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 
 public class zzFen 
@@ -54,8 +55,8 @@ public class zzFen
 
         System.out.println("\n\n---Fen test---");
         System.out.println("\n-round trip test-\n");
-        ArrayList<Integer> failedRT = new ArrayList<>();
-        ArrayList<Integer> failedPM = new ArrayList<>();
+        List<Integer> failedRT = new ArrayList<>();
+        List<Integer> failedPM = new ArrayList<>();
         System.out.println("-----------------------------");
         for (int i = 0; i < roundTripFens.length; i++)
         {
