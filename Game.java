@@ -50,15 +50,13 @@ public class Game
     private static boolean inCheck = false;
     private static boolean setUp = false;
     
+    private static boolean whiteBotToggle = false;
+    private static boolean blackBotToggle = false;
     public static void main(String[] args)
     {
         Scanner reader = new Scanner(System.in);
         
         boolean error = false;
-        
-        boolean whiteBotToggle = false;
-        boolean blackBotToggle = false;
-        
 
         if(!Settings.useCustomStartOptions)
         {
@@ -194,6 +192,18 @@ public class Game
             String rawInput = reader.nextLine();
             String input = rawInput.toLowerCase();
             
+            if (Bot.stopThinking && input.equals("bot"))
+            {
+                Bot.stopThinking = false;
+                botPlayedLastMove = true;
+
+                if (!playEngineMove(board, whiteTurn)) {debugMsg = "bot error"; continue;}
+                System.out.println();
+                
+                afterAMove("move", board);
+                continue;
+            }
+
             // debug cmds
             if (Settings.enableDebug)
             {
@@ -675,6 +685,7 @@ public class Game
         }
         finally
         {
+            if (Bot.stopThinking && (whiteBotToggle || blackBotToggle)) debugMsg = "bot stoped type 'bot' to resume"; 
             UI.stillThinking = false;
             try 
             {

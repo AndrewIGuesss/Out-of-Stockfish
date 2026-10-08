@@ -39,7 +39,6 @@ public class Bot
         "mop up"
         ));
     public static int[][] evalBreakDown = new int[evalTerms.size()][2];
-    public static String evalBreakDownString = null;
     private static boolean recordBreakDown = false;
     
     public static final int // eval break down constants
@@ -152,7 +151,7 @@ public class Bot
 
     private static int term(int value, boolean isWhite, int termIndex)
     {
-        if (recordBreakDown == true) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
+        if (recordBreakDown) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
         
         return value;
     }
@@ -826,7 +825,7 @@ public class Bot
         // iterative deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            if (depth < 4 || previousScore >= MATE - 1000 || exactRootScores)
+            if (depth < 4 || Math.abs(previousScore) >= MATE - 1000 || exactRootScores)
             {
                 alpha = -INFINITY;
                 beta = INFINITY;
