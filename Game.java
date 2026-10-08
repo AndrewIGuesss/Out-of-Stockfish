@@ -157,7 +157,7 @@ public class Game
             String endMessage = gameOverCheck();
             if (endMessage != null)
             {
-                if (inCheck) board.printBoard(previousMove, Board.findKing(board, whiteTurn));
+                if (inCheck) board.printBoard(previousMove, board.getKingLoc(whiteTurn));
                 else board.printBoard(previousMove, null);
                 System.out.print(endMessage);
                 makePGN(board, whiteBotToggle, blackBotToggle);
@@ -167,7 +167,7 @@ public class Game
             {
                 if (inCheck)
                 {
-                    board.printBoard(previousMove, Board.findKing(board, whiteTurn));
+                    board.printBoard(previousMove, board.getKingLoc(whiteTurn));
                     System.out.print((whiteTurn? "White" : "Black") + " is in check!");
                 }
                 else
@@ -214,7 +214,7 @@ public class Game
                     case "ff":
                     {
                         clear();
-                        board.printBoard(previousMove, Board.findKing(board, whiteTurn));
+                        board.printBoard(previousMove, board.getKingLoc(whiteTurn));
                         
                         System.out.println((whiteTurn? "Black" : "White") + " has won by resignation");
                         gameResult = whiteTurn? "0-1" : "1-0";
@@ -675,7 +675,7 @@ public class Game
         long zobristHash = Zobrist.makeZobristHash(board, whiteTurn);
         positionKeys.add(zobristHash);
         repetition.merge(zobristHash, 1, Integer::sum);
-        inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
+        inCheck = Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn);
     }
 
     public static boolean playEngineMove(Board board, boolean whiteTurn)

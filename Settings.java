@@ -36,7 +36,7 @@ public class Settings
         public static boolean showStandardDebugMenu = true;
 
         public static boolean showEval = false;
-        public static boolean showEvalBreakDown = true;
+        public static boolean showEvalBreakDown = false;
         public static boolean showTurnIndicator = false;
         public static boolean showLegalMoves = true;
         public static boolean showGameLength = true;

@@ -47,6 +47,9 @@ public class Board
     private List<String> fakeMoves;
     private List<String> legalMoves;
 
+    private int[] whiteKingLoc = new int[2];
+    private int[] blackKingLoc = new int[2];
+
     // castling rights
     public boolean whiteCastled = false;
     public boolean whiteCanCastleLong = true;
@@ -108,6 +111,9 @@ public class Board
     public boolean inBounds(int row, int col) { return row >= 0 && row < 8 && col >= 0 && col < 8;}
     public int getTimeSinceCaptureOrPawnPush() { return timeSinceCaptureOrPawnPush; }
     public int getMoveOffSet() { return moveOffSet; }
+    public int[] getBlackKingLoc() { return blackKingLoc; }
+    public int[] getWhiteKingLoc() { return whiteKingLoc; }
+    public int[] getKingLoc(boolean isWhite) { return isWhite? whiteKingLoc : blackKingLoc; }
     
     // seters
     public void addHistory(String s) {history.add(s);}
@@ -222,7 +228,7 @@ public class Board
                     Board copy = new Board(this); // make a copy of the board
                     copy.applyMove(square, new int[]{row, col}, true, 'Q'); // applies move to copied board
     
-                    int[] kingSquare = Board.findKing(copy, white); // finds king
+                    int[] kingSquare = copy.getKingLoc(white); // finds king
                     if (!Moves.inCheck(copy, kingSquare, white)) legal[row][col] = true; // checks if king would be in check
                 }
             }
@@ -279,6 +285,11 @@ public class Board
         if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
         else timeSinceCaptureOrPawnPush++;
 
+        if (temp.getPiece() == 'K') 
+        {
+            if (temp.isWhite()) whiteKingLoc = findKing(this, true);
+            else blackKingLoc = findKing(this, false);
+        }
 
         if (temp.getPiece() != 'P' && !test)
         {
@@ -394,7 +405,7 @@ public class Board
         
         playerBoard[end[0]][end[1]] = temp;
 
-        if(!test && Moves.inCheck(this, findKing(this, !temp.isWhite()), !temp.isWhite())) // check notation
+        if(!test && Moves.inCheck(this, this.getKingLoc(!temp.isWhite()), !temp.isWhite())) // check notation
         {
             if (Moves.hasNoLegalMoves(this, !temp.isWhite())) move.append("#"); // checkmate
             else move.append("+"); // check
@@ -586,7 +597,7 @@ public class Board
         
         Board copy = new Board(this);
         copy.applyMove(start, end, true, 'q');
-        int[] king = findKing(copy, p.isWhite()); 
+        int[] king = copy.getKingLoc(p.isWhite());
         if (Moves.inCheck(copy, king, p.isWhite())) return "Move leads to check";
     
         return null; // move is legal

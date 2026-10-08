@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Bot 
@@ -92,30 +93,54 @@ public class Bot
         alpha = Math.max(alpha, standPat);
         int best = standPat;
 
-        // captures only (MVV-LVA ordered)
-        List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
-        List<int[]> captures = new ArrayList<>();
-        
-        for (int[] move : moves)
-        {
-            if (orderScore(board, move, -1) != 0) captures.add(move);
-        }
-        captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
-
         if (!hasPromotingPawn(board, whiteTurn))
         {
             if (standPat + Eval.getPieceValue('Q') + DELTA_MARGIN <= alpha) return best;
         }
         
-        // search captures
-        for (int[] capture : captures)
+        // captures only (MVV-LVA ordered)
+        List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+        List<int[]> captures = new ArrayList<>();
+        int[] scores = new int[moves.size()];
+        int captureCount = 0;
+
+        for (int i = 0; i < moves.size(); i++)
         {
+            int currOrderScore = orderScore(board, moves.get(i), -1);
+            if (currOrderScore != 0) 
+            {
+                captures.add(moves.get(i));
+                scores[captureCount] = currOrderScore;
+                captureCount++;
+            }
+        }
+        // captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
+        
+        // search captures
+        for (int i = 0; i < captures.size(); i++)
+        {
+            int high = Integer.MIN_VALUE;
+            int highIndex = i;
+            for (int j = i; j < captures.size(); j++)
+            {
+                if (scores[j] > high)
+                {
+                    high = scores[j];
+                    highIndex = j;
+                }
+            }
+            scores[highIndex] = scores[i];
+            scores[i] = high;
+            Collections.swap(captures, highIndex, i);
+
+            int[] capture = captures.get(i);
+
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
             if (!promoting && standPat + Eval.getPieceValue(board.getPiece(capture[2], capture[3]).getPiece()) + DELTA_MARGIN <= alpha) continue;
 
             Board copy = new Board(board);
             copy.applyMove(new int[]{capture[0], capture[1]}, new int[]{capture[2], capture[3]}, true, 'Q');
-            if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
+            if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
 
             int score = -quiescence(copy, !whiteTurn, -beta, -alpha);
             if (score > best)
@@ -162,22 +187,22 @@ public class Bot
         movesAnalysed++;
 
         // check depth extension
-        boolean inCheck = Moves.inCheck(board, Board.findKing(board, whiteTurn), whiteTurn);
+        boolean inCheck = Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn);
         if (inCheck && ply < MAX_DEPTH_EXTENTION) maxDepth++;
 
         // transposition table lookup (check if we've seen this position before)
         int[] ttMove = null;
         int index = (int)(currKey & (TTEntry.TT_SIZE - 1));
         TTEntry entry = TTEntry.ttTable[index];
-        if (entry != null && entry.key == currKey)
+        if (entry != null && entry.key() == currKey)
         {
-            ttMove = entry.bestmove;
-            if (entry.depth >= maxDepth)
+            ttMove = entry.bestmove();
+            if (entry.depth() >= maxDepth)
             {
-                int ttScore = entry.score;
+                int ttScore = entry.score();
                 if (ttScore > MATE - 1000) ttScore -= ply;
                 if (ttScore < -(MATE - 1000)) ttScore += ply;
-                switch (entry.flag) 
+                switch (entry.flag()) 
                 {
                     case TTEntry.EXACT: return ttScore;
                     case TTEntry.LOWER: 
@@ -210,20 +235,24 @@ public class Bot
         // move generation + ordering (MVV-LVA, killers, history)
         // startRow, startCol, endRow, endCol
         List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+        int[] scores = new int[moves.size()];
         
         int best = -MATE; // extremly low place holder value
+        for (int i = 0; i < moves.size(); i++)
+        {
+            scores[i] = orderScore(board, moves.get(i), ply);
+        }
 
-        moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
+        // moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
         // try TT move first
         if (ttMove != null)
         {
-            for (int [] move : moves)
+            for (int i = 0; i < moves.size(); i++)
             {
-                if (Arrays.equals(ttMove, move))
+                if (Arrays.equals(ttMove, moves.get(i)))
                 {
-                    moves.remove(move);
-                    moves.add(0, move);
+                    scores[i] = 5000000; // give big value so it gets sorted to the top
                     break;
                 }
             }
@@ -232,12 +261,27 @@ public class Bot
         // main search loop
         int validMoves = 0;
         
-        for (int[] move : moves)
+        for (int i = 0; i < moves.size(); i++)
         {
+            int high = Integer.MIN_VALUE;
+            int highIndex = i;
+            for (int j = i; j < moves.size(); j++)
+            {
+                if (scores[j] > high)
+                {
+                    high = scores[j];
+                    highIndex = j;
+                }
+            }
+            scores[highIndex] = scores[i];
+            scores[i] = high;
+            Collections.swap(moves, highIndex, i);
+            
 
+            int[] move = moves.get(i); 
             Board copy = new Board(board);
             copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
-            if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
+            if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
             
             validMoves++;
             
@@ -247,7 +291,7 @@ public class Bot
             boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
             if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !board.getPiece(move[2], move[3]).isOccupied() )
             {
-                if (!Moves.inCheck(copy, Board.findKing(copy, !whiteTurn), !whiteTurn) && !promoting)
+                if (!Moves.inCheck(copy, copy.getKingLoc(!whiteTurn), !whiteTurn) && !promoting)
                 {
                     searched = true;
                     // reduced depth, null window
@@ -399,7 +443,7 @@ public class Bot
                 {
                     Board copy = new Board(board);
                     copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
-                    if (Moves.inCheck(copy, Board.findKing(copy, whiteTurn), whiteTurn)) continue;
+                    if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
                     
                     if (bestMoveSoFar == null) bestMoveSoFar = move;
                     

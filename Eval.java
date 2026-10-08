@@ -6,30 +6,8 @@ public class Eval
     public static int phase = 0;
 
     // eval breakdown
-    public static List<String> evalTerms = new ArrayList<>(List.of(
-        "material",
-        "piece squares",
-        "passed pawns",
-        "doubled pawns",
-        "isolated pawns",
-        "bishop lines",
-        "rook files",
-        "early queen",
-        "bishop pair",
-        "king shield",
-        "king square",
-        "castling rights",
-        "endgame king",
-        "mop up"
-        ));
-    public static int[][] evalBreakDown = new int[evalTerms.size()][2];
+    public static int[][] evalBreakDown = new int[EvalTerm.SIZE][2];
     private static boolean recordBreakDown = false;
-    
-    public static final int // eval break down constants
-    MATERIAL = 0, PIECE_SQUARES = 1, PASSED_PAWNS = 2, DOUBLED_PAWNS = 3, ISOLATED_PAWNS = 4, BISHOP_LINES = 5, 
-    ROOK_FILES = 6, EARLY_QUEEN = 7, BISHOP_PAIR = 8, KING_SHIELD = 9, KING_SQUARE = 10, 
-    CASTLING_RIGHTS = 11, ENDGAME_KING = 12, MOP_UP = 13, EVAL_TERM_COUNT = 14;
-
 
     //indiv piece bonuses
     // piece square tables from whites view (row 0 is rank 8), black uses row 7 - row
@@ -172,7 +150,7 @@ public class Eval
         phase = 0;
 
         recordBreakDown = breakDown;
-        if (recordBreakDown) evalBreakDown = new int[EVAL_TERM_COUNT][2];
+        if (recordBreakDown) evalBreakDown = new int[EvalTerm.SIZE][2];
 
         for (int row = 0; row < board.getBoard().length; row++)
         {
@@ -189,7 +167,7 @@ public class Eval
                         continue;
                     }
 
-                    int centipawns = term(getPieceValue(currentPiece.getPiece()), currentPiece.isWhite(), MATERIAL);
+                    int centipawns = term(getPieceValue(currentPiece.getPiece()), currentPiece.isWhite(), EvalTerm.MATERIAL.ordinal());
 
                     if (currentPiece.isWhite()) whiteMaterialValue += centipawns;
                     else blackMaterialValue += centipawns;
@@ -200,8 +178,8 @@ public class Eval
 
                     if (currentPiece.getPiece() == 'P')
                     {
-                        midGameScore += term(PAWN_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(PAWN_ENDGAME_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(PAWN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal()) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(PAWN_ENDGAME_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal()) * (currentPiece.isWhite()? 1 : -1);
                         if (currentPiece.isWhite()) whitePawnCount++;
                         else blackPawnCount++;
 
@@ -259,13 +237,13 @@ public class Eval
                         }
                         if (adjacentPawnCounter == 0) isolatedPawnPenalty = 15;
                         if (enemyAdjacentPawnCounter == 0) PassedPawnBonus = currentPiece.isWhite()? PASSED_PAWN_BONUS[7 - row] : PASSED_PAWN_BONUS[row];
-                        endGameScore += term(PassedPawnBonus, currentPiece.isWhite(), PASSED_PAWNS) * (currentPiece.isWhite()? 1 : -1);
-                        centipawns += term(-doubledPawnPenalty, currentPiece.isWhite(), DOUBLED_PAWNS);
-                        centipawns += term(-isolatedPawnPenalty, currentPiece.isWhite(), ISOLATED_PAWNS);
+                        endGameScore += term(PassedPawnBonus, currentPiece.isWhite(), EvalTerm.PASSED_PAWNS.ordinal()) * (currentPiece.isWhite()? 1 : -1);
+                        centipawns += term(-doubledPawnPenalty, currentPiece.isWhite(), EvalTerm.DOUBLED_PAWNS.ordinal());
+                        centipawns += term(-isolatedPawnPenalty, currentPiece.isWhite(), EvalTerm.ISOLATED_PAWNS.ordinal());
                     }
                     else if (currentPiece.getPiece() == 'N')
                     {
-                        centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+                        centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal());
                         phase += 1;
 
                              if (((row == 7 && col == 1) || (row == 7 && col == 6)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -273,7 +251,7 @@ public class Eval
                     }
                     else if (currentPiece.getPiece() == 'B') 
                     {
-                        centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+                        centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal());
                         phase += 1;
 
                              if (((row == 7 && col == 2) || (row == 7 && col == 5)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -309,11 +287,11 @@ public class Eval
                             }
                         }
 
-                        centipawns += term(-penalty, currPieceIsWhite, BISHOP_LINES);
+                        centipawns += term(-penalty, currPieceIsWhite, EvalTerm.BISHOP_LINES.ordinal());
                     }
                     else if (currentPiece.getPiece() == 'R')
                     {
-                        centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+                        centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal());
                         phase += 2;
 
                         int penalty = 0;
@@ -359,11 +337,11 @@ public class Eval
                                 else if (blockingPieces == 1) penalty += 10;
                             }
                         }
-                        centipawns += term(-penalty, currentPiece.isWhite(), ROOK_FILES);
+                        centipawns += term(-penalty, currentPiece.isWhite(), EvalTerm.ROOK_FILES.ordinal());
                     }
                     else if (currentPiece.getPiece() == 'Q')
                     {
-                        centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), PIECE_SQUARES);
+                        centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal());
                         phase += 4;
 
                              if ((row != 7 || col != 3) && currentPiece.isWhite()) whiteQueenMoved = true;
@@ -378,12 +356,12 @@ public class Eval
         }
 
         //early queen agro
-        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) midGameScore += term(-25, true, EARLY_QUEEN);
-        if (blackQueenMoved && blackMinorPiecesHome >= 2) midGameScore -= term(-25, false, EARLY_QUEEN);
+        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) midGameScore += term(-25, true, EvalTerm.EARLY_QUEEN.ordinal());
+        if (blackQueenMoved && blackMinorPiecesHome >= 2) midGameScore -= term(-25, false, EvalTerm.EARLY_QUEEN.ordinal());
 
         //bishop pair
-        if (whiteBishopCount >= 2) { int value = term(40, true, BISHOP_PAIR); midGameScore += value; endGameScore += value; }
-        if (blackBishopCount >= 2) { int value = term(40, false, BISHOP_PAIR); midGameScore -= value; endGameScore -= value; }
+        if (whiteBishopCount >= 2) { int value = term(40, true, EvalTerm.BISHOP_PAIR.ordinal()); midGameScore += value; endGameScore += value; }
+        if (blackBishopCount >= 2) { int value = term(40, false, EvalTerm.BISHOP_PAIR.ordinal()); midGameScore -= value; endGameScore -= value; }
 
         //insuficent material
         if (blackPawnCount == 0 && whitePawnCount == 0)
@@ -394,15 +372,15 @@ public class Eval
 
 
         //mop up check
-        if (whiteMaterialValue - blackMaterialValue > 500 && blackMaterialValue < 300) endGameScore += term(evalMopup(blackKingLoc, whiteKingLoc, true), true, MOP_UP);
-        else if (blackMaterialValue - whiteMaterialValue > 500 && whiteMaterialValue < 300) endGameScore -= term(-evalMopup(whiteKingLoc, blackKingLoc, false), false, MOP_UP);
+        if (whiteMaterialValue - blackMaterialValue > 500 && blackMaterialValue < 300) endGameScore += term(evalMopup(blackKingLoc, whiteKingLoc, true), true, EvalTerm.MOP_UP.ordinal());
+        else if (blackMaterialValue - whiteMaterialValue > 500 && whiteMaterialValue < 300) endGameScore -= term(-evalMopup(whiteKingLoc, blackKingLoc, false), false, EvalTerm.MOP_UP.ordinal());
 
         //king safety / endgame king
         midGameScore += kingSafety(board, whiteKingLoc, true);
-        endGameScore += term(KING_ENDGAME_TABLE[whiteKingLoc[0]][whiteKingLoc[1]], true, ENDGAME_KING);
+        endGameScore += term(KING_ENDGAME_TABLE[whiteKingLoc[0]][whiteKingLoc[1]], true, EvalTerm.ENDGAME_KING.ordinal());
 
         midGameScore += kingSafety(board, blackKingLoc, false);
-        endGameScore -= term(KING_ENDGAME_TABLE[7 - blackKingLoc[0]][blackKingLoc[1]], false, ENDGAME_KING);
+        endGameScore -= term(KING_ENDGAME_TABLE[7 - blackKingLoc[0]][blackKingLoc[1]], false, EvalTerm.ENDGAME_KING.ordinal());
         
         // blend middlegame and endgame scores by game phase (24 = all pieces, 0 = no pieces)
         phase = Math.min(phase, 24); // promotions can push phase over 24
@@ -442,8 +420,8 @@ public class Eval
         if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
         else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
 
-        safetyBonus = term(pawnSheildBonus, isWhite, KING_SHIELD) + term(kingLocBonus, isWhite, KING_SQUARE) +
-                      term(castlingRightsPenalty, isWhite, CASTLING_RIGHTS);
+        safetyBonus = term(pawnSheildBonus, isWhite, EvalTerm.KING_SHIELD.ordinal()) + term(kingLocBonus, isWhite, EvalTerm.KING_SQUARE.ordinal()) +
+                      term(castlingRightsPenalty, isWhite, EvalTerm.CASTLING_RIGHTS.ordinal());
         return safetyBonus * sideMulti;
     }
 
@@ -466,24 +444,24 @@ public class Eval
         StringBuilder result = new StringBuilder();
         int total = 0;
 
-        String headerFormat = "%-16s %7s %7s %7s%n";
-        String rowFormat    = "%-16s %7.2f %7.2f %+7.2f%n";
+        String headerFormat = "%-19s %7s %7s %7s%n";
+        String rowFormat    = "%-19s %7.2f %7.2f %+7.2f%n";
 
         result.append(String.format(headerFormat, "term", "white", "black", "net"));
         result.append("-".repeat(40) + "\n");
 
-        for (int i = 0; i < EVAL_TERM_COUNT; i++)
+        for (EvalTerm term : EvalTerm.values())
         {
-            double white = evalBreakDown[i][0] / 100.0;
-            double black = evalBreakDown[i][1] / 100.0;
+            double white = evalBreakDown[term.ordinal()][0] / 100.0;
+            double black = evalBreakDown[term.ordinal()][1] / 100.0;
             double net = white - black;
 
-            total += evalBreakDown[i][0] - evalBreakDown[i][1];
-            result.append(String.format(rowFormat, evalTerms.get(i), white, black, net));
+            total += evalBreakDown[term.ordinal()][0] - evalBreakDown[term.ordinal()][1];
+            result.append(String.format(rowFormat, (term.ordinal() + 1) + ". " + term.getName(), white, black, net));
         }
 
         result.append("-".repeat(40) + "\n");
-        result.append(String.format("%-16s %15s %+7.2f   (matches evalBoard: %s)%n", "total", "", total / 100.0, total == eval? "yes" : "no"));
+        result.append(String.format("%-19s %15s %+7.2f   (matches evalBoard: %s)%n", "total", "", total / 100.0, total == eval? "yes" : "no"));
         return result.toString();
     }
 }
