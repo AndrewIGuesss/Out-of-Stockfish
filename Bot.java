@@ -40,10 +40,12 @@ public class Bot
         ));
     public static int[][] evalBreakDown = new int[evalTerms.size()][2];
     public static String evalBreakDownString = null;
-    // eval break down constants
-    public static final int MATERIAL = 0, PIECE_SQUARES = 1, PASSED_PAWNS = 2, DOUBLED_PAWNS = 3, ISOLATED_PAWNS = 4, BISHOP_LINES = 5, 
-                            ROOK_FILES = 6, EARLY_QUEEN = 7, BISHOP_PAIR = 8, KING_SHIELD = 9, KING_COLUMN = 10, KING_ROW = 11, 
-                            CASTLING_RIGHTS = 12, ENDGAME_KING = 13, MOP_UP = 14, EVAL_TERM_COUNT = 15;
+    private static boolean recordBreakDown = false;
+    
+    public static final int // eval break down constants
+    MATERIAL = 0, PIECE_SQUARES = 1, PASSED_PAWNS = 2, DOUBLED_PAWNS = 3, ISOLATED_PAWNS = 4, BISHOP_LINES = 5, 
+    ROOK_FILES = 6, EARLY_QUEEN = 7, BISHOP_PAIR = 8, KING_SHIELD = 9, KING_COLUMN = 10, KING_ROW = 11, 
+    CASTLING_RIGHTS = 12, ENDGAME_KING = 13, MOP_UP = 14, EVAL_TERM_COUNT = 15;
 
     public static int[][][] killerMoves = new int[64][2][];
     public static int[][] historyTable = new int[64][64];
@@ -148,6 +150,13 @@ public class Bot
         return -1;
     }
 
+    private static int term(int value, boolean isWhite, int termIndex)
+    {
+        if (recordBreakDown == true) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
+        
+        return value;
+    }
+
     public static int evalBoard (Board board, boolean breakDown)
     {
         int totalCentipawns = 0;
@@ -164,12 +173,8 @@ public class Bot
         boolean whiteQueenMoved = false;
         boolean blackQueenMoved = false;
 
-        if (breakDown) 
-        {
-            evalBreakDownString = "";
-            evalBreakDown = new int[EVAL_TERM_COUNT][2]; // clear old values
-        }
-        else evalBreakDownString = null;
+        recordBreakDown = breakDown;
+        if (recordBreakDown) evalBreakDown = new int[EVAL_TERM_COUNT][2];
 
         for (int row = 0; row < board.getBoard().length; row++)
         {
@@ -435,8 +440,8 @@ public class Bot
         if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
         else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
 
-        safetyBonus = term(pawnSheildBonus, isWhite, KING_SHIELD) + term(columnBonus, isWhite, KING_COLUMN) 
-                    + term(rowBonus, isWhite, KING_ROW) + term(castlingRightsPenalty, isWhite, CASTLING_RIGHTS);
+        safetyBonus = term(pawnSheildBonus, isWhite, KING_SHIELD) + term(columnBonus, isWhite, KING_COLUMN)  +
+                      term(rowBonus, isWhite, KING_ROW) + term(castlingRightsPenalty, isWhite, CASTLING_RIGHTS);
         return safetyBonus * sideMulti;
     }
 
@@ -493,11 +498,30 @@ public class Bot
         return false;
     }
 
-    private static int term(int value, boolean isWhite, int termIndex)
+    public static String getEvalBreakDown (int eval)
     {
-        if (evalBreakDownString != null) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
-        
-        return value;
+        StringBuilder result = new StringBuilder();
+        int total = 0;
+
+        String headerFormat = "%-16s %7s %7s %7s%n";
+        String rowFormat    = "%-16s %7.2f %7.2f %+7.2f%n";
+
+        result.append(String.format(headerFormat, "term", "white", "black", "net"));
+        result.append("-".repeat(40) + "\n");
+
+        for (int i = 0; i < EVAL_TERM_COUNT; i++)
+        {
+            double white = evalBreakDown[i][0] / 100.0;
+            double black = evalBreakDown[i][1] / 100.0;
+            double net = white - black;
+
+            total += evalBreakDown[i][0] - evalBreakDown[i][1];
+            result.append(String.format(rowFormat, evalTerms.get(i), white, black, net));
+        }
+
+        result.append("-".repeat(40) + "\n");
+        result.append(String.format("%-16s %15s %+7.2f   (matches evalBoard: %s)%n", "total", "", total / 100.0, total == eval? "yes" : "no"));
+        return result.toString();
     }
 
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)

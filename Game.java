@@ -236,6 +236,12 @@ public class Game
                         if (board.getHistory().size() > 0 && (board.getHistory().size() + offset) % 2 == 1) debugMsg += "|";
                         break;
                     }
+                    case "break down":
+                    {
+                        Settings.showEvalBreakDown = !Settings.showEvalBreakDown;
+                        debugMsg = Settings.showEvalBreakDown? "showing eval breakdown" : "hiding eval breakdown";
+                        break;
+                    }
                     case "info":
                     {
                         System.out.println("input square: ");
