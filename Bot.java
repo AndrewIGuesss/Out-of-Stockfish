@@ -20,6 +20,7 @@ public class Bot
     private static final int MAX_PLY = 64;
     private static final int KILLER_SLOTS = 2;
     private static final int SQUARES = 64;
+    private static final int QUEEN_VALUE = 900;
 
     private static final int NULL_MOVE_REDUCTION = 2;
     private static final int LMR_REDUCTION = 1;
@@ -109,7 +110,7 @@ public class Bot
 
         if (!hasPromotingPawn(board, whiteTurn))
         {
-            if (standPat + Piece.B_QUEEN.value() + DELTA_MARGIN <= alpha) return best;
+            if (standPat + QUEEN_VALUE + DELTA_MARGIN <= alpha) return best;
         }
         
         // captures only (MVV-LVA ordered)

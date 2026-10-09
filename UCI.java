@@ -76,10 +76,8 @@ public class UCI
         else return;
 
         Game.repetition.clear();
-        Game.positionKeys.clear();
 
         long zobristHash = Zobrist.makeZobristHash(uciBoard, whiteTurn);
-        Game.positionKeys.add(zobristHash);
         Game.repetition.merge(zobristHash, 1, Integer::sum);
 
         int movesIndex = List.of(tokens).indexOf("moves");
@@ -96,7 +94,6 @@ public class UCI
             whiteTurn = !whiteTurn;
 
             zobristHash = Zobrist.makeZobristHash(uciBoard, whiteTurn);
-            Game.positionKeys.add(zobristHash);
             Game.repetition.merge(zobristHash, 1, Integer::sum);
         }
     }

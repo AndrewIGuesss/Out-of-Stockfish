@@ -3,8 +3,8 @@ public class Board
 {
     private Piece[][] playerBoard; // board that holds all pieces
     private List<String> history; // all moves on board
-    public List<Piece> whiteCaptured; // pieces white has taken
-    public List<Piece> blackCaptured; // pieces black has taken
+    private List<Piece> whiteCaptured; // pieces white has taken
+    private List<Piece> blackCaptured; // pieces black has taken
     
     private int[] enPassantSquare; // for en passant captures
 
@@ -88,6 +88,7 @@ public class Board
     public int[] getBlackKingLoc() { return blackKingLoc; }
     public int[] getWhiteKingLoc() { return whiteKingLoc; }
     public int[] getKingLoc(boolean isWhite) { return isWhite? whiteKingLoc : blackKingLoc; }
+    public List<Piece> getCaptures(boolean isWhite) {return isWhite? whiteCaptured : blackCaptured;}
     
     // seters
     public void addHistory(String s) {history.add(s);}
@@ -465,26 +466,10 @@ public class Board
             for (int col = 0; col < 8; col++)
             {
                 int currValue = getPiece(row, col).value();
-                if (currValue > 100 && currValue < 1000) return true;
+                if (currValue > 100 && currValue < 1000 && getPiece(row, col).isWhite() == isWhite) return true;
             }
         }
         return false;
-    }
-
-    public int getBoardPawnCount(boolean isWhite)
-    {
-        int pawns = 0;
-        for (int row = 0; row < 8; row++)
-        {
-            for (int col = 0; col < 8; col++)
-            {
-                if (getPiece(row, col).isOccupied() && getPiece(row, col).getPiece() == 'P' && getPiece(row, col).isWhite() == isWhite)
-                {
-                    pawns++;
-                }
-            }
-        }
-        return pawns;
     }
 
     public static boolean isInsufficientMaterial(Board board)

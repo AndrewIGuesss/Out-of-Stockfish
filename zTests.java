@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class zTests 
 {
-    private static boolean runBench = false;
+    private static boolean runBench = true;
     private static boolean runPerft = true;
     private static boolean runFen = true;
 

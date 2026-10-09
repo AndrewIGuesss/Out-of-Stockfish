@@ -19,11 +19,6 @@ public class UI
     public static final String SAFE_BLACK = "\033[35m";
     public static final String SAFE_LIGHT_SQ = "\033[47m";  
     public static final String SAFE_DARK_SQ  = "\033[40m";
-    
-    public static String BLACK = Settings.safeColors? SAFE_BLACK : DEFAULT_BLACK;
-    public static String WHITE = Settings.safeColors? SAFE_WHITE : DEFAULT_WHITE;
-    public static String DARK_SQ = Settings.safeColors? SAFE_DARK_SQ : DEFAULT_DARK_SQ;
-    public static String LIGHT_SQ = Settings.safeColors? SAFE_LIGHT_SQ : DEFAULT_LIGHT_SQ;
 
     
     public static void welcome()
@@ -50,17 +45,18 @@ public class UI
     
     public static void preGameColor()
     {
-        System.out.println("========================================");
-        System.out.println("|              !WARNING!               |");
-        System.out.println("|  board was meant to be played on the  |");
-        System.out.println("|  CodeHS' IDE with dark mode console  |");
-        System.out.println("|                                      |");
-        System.out.println("| Other IDEs/themes may not accurately |");
-        System.out.println("|      display piece/board colors      |");
-        System.out.println("|                                      |");
-        System.out.println("|  to toggle safe colors type 'color'  |");
-        System.out.println("|     otherwise enter a blank line     |");
-        System.out.println("========================================");
+        System.out.println("============================================");
+        System.out.println("|                !WARNING!                 |");
+        System.out.println("|    this was meant to be played on the    |");
+        System.out.println("|   with the terminal contrast ratio off   |");
+        System.out.println("|                                          |");
+        System.out.println("|       if you are using VS code set:      |");
+        System.out.println("| terminal.integrated.minimumContrastRatio |");
+        System.out.println("|                   to 1                   |");
+        System.out.println("|                                          |");
+        System.out.println("|    to toggle safe colors type 'color'    |");
+        System.out.println("|       otherwise enter a blank line       |");
+        System.out.println("============================================");
     }
     
     public static void preGameNotation()
@@ -138,9 +134,14 @@ public class UI
 
     public static void printBoard(Board board, boolean[][] validMoves, int[]checkSquare)
     {
+        String BLACK = Settings.safeColors? SAFE_BLACK : DEFAULT_BLACK;
+        String WHITE = Settings.safeColors? SAFE_WHITE : DEFAULT_WHITE;
+        String DARK_SQ = Settings.safeColors? SAFE_DARK_SQ : DEFAULT_DARK_SQ;
+        String LIGHT_SQ = Settings.safeColors? SAFE_LIGHT_SQ : DEFAULT_LIGHT_SQ;
+
         List<String> history = board.getHistory();
         // previous move
-        if (history.isEmpty()) 
+        if (!history.isEmpty()) 
         {
             if (!board.isWhiteTurn()) System.out.println("White Played: " + history.get(history.size() - 1));
             else System.out.println("Black Played: " + history.get(history.size() - 1));
@@ -148,7 +149,7 @@ public class UI
         }
         else System.out.println("Good luck!\n");
         // black captures
-        System.out.println("Black: " + (board.getBoardValue() < 0? "+" + Math.abs(board.getBoardValue()) : "") + " " + captureList(board.blackCaptured));
+        System.out.println("Black: " + (board.getBoardValue() < 0? "+" + Math.abs(board.getBoardValue()) : "") + " " + captureList(board.getCaptures(false)));
         
         
         int firstRow = 0;
@@ -193,7 +194,7 @@ public class UI
         }
         
         // white captures
-        System.out.println("White: " + (board.getBoardValue() > 0? "+" + board.getBoardValue() : "") + " " + captureList(board.whiteCaptured));
+        System.out.println("White: " + (board.getBoardValue() > 0? "+" + board.getBoardValue() : "") + " " + captureList(board.getCaptures(true)));
         
         System.out.println();
 
