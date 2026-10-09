@@ -9,9 +9,21 @@ public class Bot
 
     public static final int MATE = 123456789;
     private static final int INFINITY = 1234567890;
+
     private static final int MAX_DEPTH_EXTENTION = 20;
+
+    private static final int TT_MOVE_SCORE = 5000000;
+    private static final int CAPTURE_BASE = 1000000;
+    private static final int KILLER_1 = 900000;
+    private static final int KILLER_2 = 800000;
+    private static final int HISTORY_MAX = 799999;
+    private static final int MAX_PLY = 64;
+    private static final int KILLER_SLOTS = 2;
+    private static final int SQUARES = 64;
+
     private static final int NULL_MOVE_REDUCTION = 2;
     private static final int LMR_REDUCTION = 1;
+
     private static final int TEMPO_BONUS = 15;
     private static final int DELTA_MARGIN = 200; // delta pruning
     private static final int WINDOW = 35;
@@ -22,11 +34,13 @@ public class Bot
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
 
-    public static int[][][] killerMoves = new int[64][2][];
-    public static int[][] historyTable = new int[64][64];
+    //   [ply]   [slot 0 newest / 1 older]   -> int[] move
+    public static int[][][] killerMoves = new int[MAX_PLY][KILLER_SLOTS][];
+    //   [from square 0-63]   [to square 0-63]   -> beta cutoff
+    public static int[][] historyTable = new int[SQUARES][SQUARES];
 
     // repetition check
-    public static long[] plyPathKeys = new long[64];
+    public static long[] plyPathKeys = new long[MAX_PLY];
 
     static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
     static boolean timeUp = false;
@@ -36,20 +50,20 @@ public class Bot
     {
         // MVV-LVA = most valuable victim, least valuable attacker
         int victimValue;
-        int attackerValue = Eval.getPieceValue(board.getPiece(move[0], move[1]).getPiece());
+        int attackerValue = board.getPiece(move[0], move[1]).value();
         if (board.getPiece(move[0], move[1]).getPiece() == 'K') attackerValue = 50;
 
         if (board.getPiece(move[2], move[3]).isOccupied()) 
         {
-            victimValue = Eval.getPieceValue(board.getPiece(move[2], move[3]).getPiece());
-            return 1000000 + victimValue * 10 - attackerValue; 
+            victimValue = board.getPiece(move[2], move[3]).value();
+            return CAPTURE_BASE + victimValue * 10 - attackerValue; 
         }
 
         if (ply == -1) return 0;
 
-        if (Arrays.equals(killerMoves[ply][0], move)) return 900000;
-        else if (Arrays.equals(killerMoves[ply][1], move)) return 800000;
-        else return Math.min(historyTable[move[0] * 8 + move[1]][move[2] * 8 + move[3]], 799999);
+        if (Arrays.equals(killerMoves[ply][0], move)) return KILLER_1;
+        else if (Arrays.equals(killerMoves[ply][1], move)) return KILLER_2;
+        else return Math.min(historyTable[move[0] * 8 + move[1]][move[2] * 8 + move[3]], HISTORY_MAX);
     }
 
     public static boolean hasPromotingPawn(Board board, boolean isWhite)
@@ -95,7 +109,7 @@ public class Bot
 
         if (!hasPromotingPawn(board, whiteTurn))
         {
-            if (standPat + Eval.getPieceValue('Q') + DELTA_MARGIN <= alpha) return best;
+            if (standPat + Piece.B_QUEEN.value() + DELTA_MARGIN <= alpha) return best;
         }
         
         // captures only (MVV-LVA ordered)
@@ -107,7 +121,7 @@ public class Bot
         for (int i = 0; i < moves.size(); i++)
         {
             int currOrderScore = orderScore(board, moves.get(i), -1);
-            if (currOrderScore != 0) 
+            if (currOrderScore >= CAPTURE_BASE) 
             {
                 captures.add(moves.get(i));
                 scores[captureCount] = currOrderScore;
@@ -136,7 +150,7 @@ public class Bot
             int[] capture = captures.get(i);
 
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
-            if (!promoting && standPat + Eval.getPieceValue(board.getPiece(capture[2], capture[3]).getPiece()) + DELTA_MARGIN <= alpha) continue;
+            if (!promoting && standPat + board.getPiece(capture[2], capture[3]).value() + DELTA_MARGIN <= alpha) continue;
 
             Board copy = new Board(board);
             copy.applyMove(new int[]{capture[0], capture[1]}, new int[]{capture[2], capture[3]}, true, 'Q');
@@ -168,7 +182,7 @@ public class Bot
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)
         {
-            if (Game.positionKeys.contains(currKey)) return 0;
+            if (Game.repetition.containsKey(currKey)) return 0;
             for (int i = 0; i <= ply - 1; i++)
             {
                 if (plyPathKeys[i] == currKey) return 0;
@@ -221,8 +235,7 @@ public class Bot
         // null move pruning
         if (ply != 0 && maxDepth >= 4 && !isNullMove && !inCheck)
         {
-            // - 10 for king
-            if (board.getBoardValue(whiteTurn) - 10 != board.getBoardPawnCount(whiteTurn))
+            if (board.hasNonPawnMaterial(whiteTurn))
             {
                 Board nullCopy = new Board(board);
                 nullCopy.setEnPassantSquare(null);
@@ -252,7 +265,7 @@ public class Bot
             {
                 if (Arrays.equals(ttMove, moves.get(i)))
                 {
-                    scores[i] = 5000000; // give big value so it gets sorted to the top
+                    scores[i] = TT_MOVE_SCORE; // give big value so it gets sorted to the top
                     break;
                 }
             }
@@ -383,8 +396,8 @@ public class Bot
         deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
         timeCanBeUp = false;
         timeUp = false;
-        killerMoves = new int[64][2][];
-        historyTable = new int[64][64];
+        killerMoves = new int[MAX_PLY][KILLER_SLOTS][];
+        historyTable = new int[SQUARES][SQUARES];
 
         // stats
         depthReached = 0;

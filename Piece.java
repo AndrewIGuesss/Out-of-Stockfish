@@ -1,36 +1,36 @@
 public enum Piece 
 {
-    EMPTY(false, ' ', -1),
+    W_PAWN(true, 'P', 100),
+    W_KNIGHT(true, 'N', 300),
+    W_BISHOP(true, 'B', 300),
+    W_ROOK(true, 'R', 500),
+    W_QUEEN(true, 'Q', 900),
+    W_KING(true, 'K', 1000),
 
-    W_PAWN(true, 'P', 0),
-    W_KNIGHT(true, 'N', 1),
-    W_BISHOP(true, 'B', 2),
-    W_ROOK(true, 'R', 3),
-    W_QUEEN(true, 'Q', 4),
-    W_KING(true, 'K', 5),
+    B_PAWN(false, 'P', 100),
+    B_KNIGHT(false, 'N', 300),
+    B_BISHOP(false, 'B', 300),
+    B_ROOK(false, 'R', 500),
+    B_QUEEN(false, 'Q', 900),
+    B_KING(false, 'K', 1000),
 
-    B_PAWN(false, 'P', 6),
-    B_KNIGHT(false, 'N', 7),
-    B_BISHOP(false, 'B', 8),
-    B_ROOK(false, 'R', 9),
-    B_QUEEN(false, 'Q', 10),
-    B_KING(false, 'K', 11);
+    EMPTY(false, ' ', -1);
     
     private boolean white;
     private char piece;
-    private int index;
+    private int value;
     
-    Piece(boolean white, char piece, int index)
+    Piece(boolean white, char piece, int value)
     {
         this.white = white;
         this.piece = piece;
-        this.index = index;
+        this.value = value;
     }
     
     // geters
     public boolean isWhite() {return white;}
     public char getPiece() {return piece;}
-    public int pieceToIndex() { return index; }
+    public int value() { return value; }
     public boolean isOccupied() { return this != EMPTY; }
 
 

@@ -30,16 +30,14 @@ public class zzBench
             String position = testPositions[i];
             System.out.printf("\ntesting: %s%n(%s)%n-----------------------------------------%n", position, testPositionNames[i]);
 
-            Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
+            Board testBoard = new Board();
             boolean whiteTurn = testBoard.importFEN(position);
             for (int depth = 1; depth <= maxDepth; depth++)
             {
                 long zobristHash = Zobrist.makeZobristHash(testBoard, whiteTurn);
                 
-                Game.positionKeys.clear();
                 Game.repetition.clear();
                 
-                Game.positionKeys.add(zobristHash);
                 Game.repetition.merge(zobristHash, 1, Integer::sum);
 
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];

@@ -1,6 +1,3 @@
-import java.util.ArrayList;
-import java.util.List;
-
 public class Eval 
 {
     public static int phase = 0;
@@ -110,18 +107,6 @@ public class Eval
         {-30, -20, -10, -10, -10, -10, -20, -30}  // 1
     };
 
-    public static int getPieceValue(char piece)
-    {
-        piece = Character.toLowerCase(piece);
-        if (piece == 'p') return 100;
-        if (piece == 'n') return 300;
-        if (piece == 'b') return 300;
-        if (piece == 'r') return 500;
-        if (piece == 'q') return 900;
-        if (piece == 'k') return 1000;
-        return -1;
-    }
-
     private static int term(int value, boolean isWhite, int termIndex)
     {
         if (recordBreakDown) evalBreakDown[termIndex][isWhite? 0 : 1] += value;
@@ -140,8 +125,8 @@ public class Eval
         int blackPawnCount = 0;
         int whiteBishopCount = 0;
         int blackBishopCount = 0;
-        int[] whiteKingLoc = new int[2];
-        int[] blackKingLoc = new int[2];
+        int[] whiteKingLoc = board.getWhiteKingLoc();
+        int[] blackKingLoc = board.getBlackKingLoc();
         int whiteMinorPiecesHome = 0;
         int blackMinorPiecesHome = 0;
         boolean whiteQueenMoved = false;
@@ -159,15 +144,10 @@ public class Eval
                 Piece currentPiece = board.getPiece(row, col);
                 if (currentPiece.isOccupied())
                 {
-                    // save king location then skip
-                    if (currentPiece.getPiece() == 'K')
-                    {
-                        if (currentPiece.isWhite()) whiteKingLoc = new int[]{row, col};
-                        else blackKingLoc = new int[]{row, col};
-                        continue;
-                    }
+                    // skip king
+                    if (currentPiece.getPiece() == 'K') continue;
 
-                    int centipawns = term(getPieceValue(currentPiece.getPiece()), currentPiece.isWhite(), EvalTerm.MATERIAL.ordinal());
+                    int centipawns = term(currentPiece.value(), currentPiece.isWhite(), EvalTerm.MATERIAL.ordinal());
 
                     if (currentPiece.isWhite()) whiteMaterialValue += centipawns;
                     else blackMaterialValue += centipawns;
@@ -190,9 +170,9 @@ public class Eval
                         int adjacentPawnCounter = 0;
                         int enemyAdjacentPawnCounter = 0;
 
-                        if (currentPiece.isWhite()) 
-                        {
-                            for (int scanRow = row - 1; scanRow >= 0; scanRow--)
+                        int forward = currentPiece.isWhite()? -1 : 1;
+                        
+                            for (int scanRow = row + forward; scanRow >= 0 && scanRow <= 7; scanRow += forward)
                             {
                                 Piece scanPiece = board.getPiece(scanRow, col);
                                 
@@ -202,19 +182,6 @@ public class Eval
                                     else enemyAdjacentPawnCounter++; 
                                 }
                             }
-                        }
-                        else
-                        {
-                            for (int scanRow = row + 1; scanRow <= 7; scanRow++)
-                            {
-                                Piece scanPiece = board.getPiece(scanRow, col);
-                                if (scanPiece.getPiece() == 'P')
-                                {
-                                    if (scanPiece.isWhite() == currentPiece.isWhite()) doubledPawnPenalty += 20;
-                                    else enemyAdjacentPawnCounter++; 
-                                }
-                            }
-                        }
 
                         
                         for (int isoScanCol = -1; isoScanCol <= 1; isoScanCol += 2)
@@ -227,11 +194,11 @@ public class Eval
 
                                 if (currentPiece.isWhite())
                                 {
-                                    if (isoScanRow < row && isoScanPiece.getPiece() == 'P' && isoScanPiece.isWhite() == false) enemyAdjacentPawnCounter++;
+                                    if (isoScanRow < row && isoScanPiece == Piece.B_PAWN) enemyAdjacentPawnCounter++;
                                 }
                                 else
                                 {
-                                    if (isoScanRow > row && isoScanPiece.getPiece() == 'P' && isoScanPiece.isWhite() == true) enemyAdjacentPawnCounter++;
+                                    if (isoScanRow > row && isoScanPiece == Piece.W_PAWN) enemyAdjacentPawnCounter++;
                                 }
                             }
                         }
@@ -294,50 +261,28 @@ public class Eval
                         centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal());
                         phase += 2;
 
+                        int forward = currentPiece.isWhite()? -1 : 1;
+
                         int penalty = 0;
-                        if (currentPiece.isWhite())
+                        int blockingPieces = 0;
+                        for (int scanRow = row + forward; scanRow >= 0 && scanRow <= 7; scanRow += forward)
                         {
-                            int blockingPieces = 0;
-                            for (int scanRow = row; scanRow > 0; scanRow--)
-                            {
-                                Piece scanPiece = board.getPiece(scanRow - 1, col);
-                                if (!scanPiece.isOccupied()) continue;
-                                else blockingPieces++;
-                                
-                                // can x ray at most 2 pieces (pinned piece & target piece) 
-                                if (blockingPieces > 2) break;
+                            Piece scanPiece = board.getPiece(scanRow, col);
+                            if (!scanPiece.isOccupied()) continue;
+                            else blockingPieces++;
+                            
+                            // can x ray at most 2 pieces (pinned piece & target piece) 
+                            if (blockingPieces > 2) break;
 
-                                if (scanPiece.isWhite())
-                                {
-                                    if (blockingPieces == 1) penalty += 20;
-                                }
-                                else if (scanPiece.getPiece() == 'K') penalty -= (20 / blockingPieces);
-                                else if (scanPiece.getPiece() == 'Q') penalty -= (10 / blockingPieces);
-                                else if (blockingPieces == 1) penalty += 10;
-                            }
-                        }
-                        else
-                        {
-                            int blockingPieces = 0;
-                            for (int scanRow = row; scanRow < 7; scanRow++)
+                            if (scanPiece.isWhite() == currentPiece.isWhite())
                             {
-                                Piece scanPiece = board.getPiece(scanRow + 1, col);
-                                if (!scanPiece.isOccupied()) continue;
-                                else blockingPieces++;
-                                
-                                // can x ray at most 2 pieces (pinned piece & target piece) 
-                                if (blockingPieces > 2) break;
-
-                                if (!scanPiece.isWhite())
-                                {
-                                    if (blockingPieces == 1) penalty += 20;
-                                }
-                                else if (scanPiece.getPiece() == 'K') penalty -= (20 / blockingPieces);
-                                else if (scanPiece.getPiece() == 'Q') penalty -= (10 / blockingPieces);
-                                else if (blockingPieces == 1) penalty += 10;
+                                if (blockingPieces == 1) penalty += 20;
                             }
+                            else if (scanPiece.getPiece() == 'K') penalty -= (20 / blockingPieces);
+                            else if (scanPiece.getPiece() == 'Q') penalty -= (10 / blockingPieces);
+                            else if (blockingPieces == 1) penalty += 10;
                         }
-                        centipawns += term(-penalty, currentPiece.isWhite(), EvalTerm.ROOK_FILES.ordinal());
+                    centipawns += term(-penalty, currentPiece.isWhite(), EvalTerm.ROOK_FILES.ordinal());
                     }
                     else if (currentPiece.getPiece() == 'Q')
                     {

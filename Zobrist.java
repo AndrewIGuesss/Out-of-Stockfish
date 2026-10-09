@@ -32,7 +32,7 @@ public class Zobrist
             {
                 Piece scanPiece = board.getPiece(row, col);
                 if (!scanPiece.isOccupied()) continue;
-                else zobristHash ^= zobristPieceKeys[scanPiece.pieceToIndex()][(row * 8) + col];
+                else zobristHash ^= zobristPieceKeys[scanPiece.ordinal()][(row * 8) + col];
             }
         }
 

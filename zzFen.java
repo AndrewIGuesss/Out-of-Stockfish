@@ -102,13 +102,13 @@ public class zzFen
 
     public static String roundTrip(String fen)
     {
-        Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
+        Board testBoard = new Board();
         boolean whiteTurn = testBoard.importFEN(fen);
         return testBoard.makeFEN(whiteTurn);
     }
     public static String playMoves(String fen, String[] moves)
     {
-        Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
+        Board testBoard = new Board();
         boolean whiteTurn = testBoard.importFEN(fen);
         for (String move : moves)
         {

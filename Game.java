@@ -43,7 +43,6 @@ public class Game
     public static boolean botPlayedLastMove = false;
     public static String debugMsg = "";
 
-    public static List<Long> positionKeys = new ArrayList<>();
     public static Map<Long, Integer> repetition = new HashMap<>();
     private static Board board;
     private static boolean whiteTurn = true;
@@ -130,9 +129,8 @@ public class Game
             else error = true;
         }
         
-        board = new Board(Settings.safeColors, Settings.bigNotation);
+        board = new Board();
         long zobristHash = Zobrist.makeZobristHash(board, whiteTurn);
-        positionKeys.add(zobristHash);
         repetition.merge(zobristHash, 1, Integer::sum);
 
 
@@ -157,8 +155,8 @@ public class Game
             String endMessage = gameOverCheck();
             if (endMessage != null)
             {
-                if (inCheck) board.printBoard(previousMove, board.getKingLoc(whiteTurn));
-                else board.printBoard(previousMove, null);
+                if (inCheck) UI.printBoard(board, previousMove, board.getKingLoc(whiteTurn));
+                else UI.printBoard(board, previousMove, null);
                 System.out.print(endMessage);
                 makePGN(board, whiteBotToggle, blackBotToggle);
                 break gameLoop;
@@ -167,12 +165,12 @@ public class Game
             {
                 if (inCheck)
                 {
-                    board.printBoard(previousMove, board.getKingLoc(whiteTurn));
+                    UI.printBoard(board, previousMove, board.getKingLoc(whiteTurn));
                     System.out.print((whiteTurn? "White" : "Black") + " is in check!");
                 }
                 else
                 {
-                    board.printBoard(previousMove, null);
+                    UI.printBoard(board, previousMove, null);
                     System.out.print(whiteTurn? "White's turn" : "Black's turn");
                 }
                 System.out.print(" chose your piece: ");
@@ -214,7 +212,7 @@ public class Game
                     case "ff":
                     {
                         clear();
-                        board.printBoard(previousMove, board.getKingLoc(whiteTurn));
+                        UI.printBoard(board, previousMove, board.getKingLoc(whiteTurn));
                         
                         System.out.println((whiteTurn? "Black" : "White") + " has won by resignation");
                         gameResult = whiteTurn? "0-1" : "1-0";
@@ -333,7 +331,7 @@ public class Game
                     case "reset":
                     {
                         debugMsg = "board reset";
-                        board = new Board(Settings.safeColors, Settings.bigNotation);
+                        board = new Board();
                         whiteTurn = true;
 
                         afterAMove("reset", board);
@@ -361,7 +359,7 @@ public class Game
                         input = reader.nextLine();
                         try
                         {
-                            Board newBoard = new Board(Settings.safeColors, Settings.bigNotation);
+                            Board newBoard = new Board();
                             whiteTurn = newBoard.importFEN(input);
 
                             afterAMove("fen", newBoard);
@@ -478,7 +476,7 @@ public class Game
             {
                 clear();
                 validMoves = board.validMoves(piece, false);
-                board.printBoard(validMoves, null);
+                UI.printBoard(board, validMoves, null);
                 System.out.print("chose your destination: ");
 
                 loc = getSquare(reader.nextLine().toLowerCase());
@@ -595,7 +593,8 @@ public class Game
             return "The game has ended in a draw by insufficient material!";
         }
         // repetition check
-        if (repetition.get(positionKeys.get(positionKeys.size() - 1)) >= 3)
+        long currPos = Zobrist.makeZobristHash(board, whiteTurn);
+        if (repetition.getOrDefault(currPos, 0) >= 3)
         {
             gameResult = "1/2-1/2";
             return "The game has ended in a draw by repetition!";
@@ -628,7 +627,6 @@ public class Game
                 board.setBlackStarted(!whiteTurn);
                 board.setEnPassantSquare(null);
                 importedFEN = board.makeFEN(whiteTurn);
-                positionKeys.clear(); 
                 repetition.clear();
                 break;
             }
@@ -640,7 +638,6 @@ public class Game
                 board.updateCastlingRights();
                 importedFEN = board.makeFEN(whiteTurn);
                 previousMove = null;
-                positionKeys.clear();
                 repetition.clear();
                 setUp = true;
                 break;
@@ -650,7 +647,6 @@ public class Game
                 importedFEN = "";
                 previousMove = null;
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                positionKeys.clear();
                 repetition.clear();
                 setUp = false;
                 break;
@@ -660,7 +656,6 @@ public class Game
                 previousMove = null;
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                 board.updateCastlingRights();
-                positionKeys.clear();
                 repetition.clear();
                 Game.board = board;
                 setUp = false;
@@ -673,7 +668,6 @@ public class Game
             }
         }
         long zobristHash = Zobrist.makeZobristHash(board, whiteTurn);
-        positionKeys.add(zobristHash);
         repetition.merge(zobristHash, 1, Integer::sum);
         inCheck = Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn);
     }

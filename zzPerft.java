@@ -22,7 +22,7 @@ public class zzPerft
         System.out.println("-----------------------------");
         for (int i = 0; i < testPositionFens.length; i++)
         {
-            Board testBoard = new Board(Settings.safeColors, Settings.bigNotation);
+            Board testBoard = new Board();
             testBoard.importFEN(testPositionFens[i]);
             long totalMoves = perft(testBoard, testPositionDepths[i], testBoard.isWhiteTurn());
             if (totalMoves == testPositionKnown[i]) System.out.printf(zTests.PASS + " | %9d %9d%n", totalMoves, testPositionKnown[i]);

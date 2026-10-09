@@ -1,41 +1,14 @@
 import java.util.*;
 public class Board 
 {
-    // board is fliped
-    // 0 is 8th rank
-    // 7 is 1st rank
-
-    // colors
-    private static final String RESET = "\033[0m";
-    private static final String BOLD = "\033[1m";
-    private static final String RED_BG  = "\033[48;2;255;100;100m";
-    private static final String LIGHT_MOVE_SQ = "\033[48;2;20;160;165m";
-    private static final String DARK_MOVE_SQ  = "\033[48;2;20;75;160m";
-    
-    private static final String DEFAULT_WHITE = "\033[38;2;255;255;255m";
-    private static final String DEFAULT_BLACK = "\033[38;2;0;0;0m";
-    private static final String DEFAULT_LIGHT_SQ = "\033[48;2;188;188;188m";  
-    private static final String DEFAULT_DARK_SQ  = "\033[48;2;88;88;88m";
-
-    private static final String SAFE_WHITE = "\033[34m";
-    private static final String SAFE_BLACK = "\033[35m";
-    private static final String SAFE_LIGHT_SQ = "\033[47m";  
-    private static final String SAFE_DARK_SQ  = "\033[40m";
-    
-    private String BLACK;
-    private String WHITE;
-    private String DARK_SQ;
-    private String LIGHT_SQ;
-    
     private Piece[][] playerBoard; // board that holds all pieces
     private List<String> history; // all moves on board
-    private List<Piece> whiteCaptured; // pieces white has taken
-    private List<Piece> blackCaptured; // pieces black has taken
+    public List<Piece> whiteCaptured; // pieces white has taken
+    public List<Piece> blackCaptured; // pieces black has taken
     
     private int[] enPassantSquare; // for en passant captures
 
-    private boolean safeColor;
-    private boolean bigNotation;
+    private boolean bigNotation = Settings.bigNotation;
 
     private int moveOffSet = 1;
     private boolean blackStarted = false;
@@ -59,10 +32,8 @@ public class Board
     public boolean blackCanCastleLong = true;
     public boolean blackCanCastleShort = true;
 
-    public Board(boolean safeColor, boolean bigNotation)
+    public Board()
     {
-        this.safeColor = safeColor;
-        this.bigNotation = bigNotation;
         blackCaptured = new ArrayList<Piece>();
         whiteCaptured = new ArrayList<Piece>();
         history = new ArrayList<String>();
@@ -157,21 +128,6 @@ public class Board
             playerBoard[0][col] = Piece.get(false, piecesOrder[col]);
             playerBoard[7][col] = Piece.get(true, piecesOrder[col]);
         }
-        
-        if (safeColor)
-        {
-            BLACK = SAFE_BLACK;
-            WHITE = SAFE_WHITE;
-            DARK_SQ = SAFE_DARK_SQ;
-            LIGHT_SQ = SAFE_LIGHT_SQ;
-        }
-        else
-        {
-            BLACK = DEFAULT_BLACK;
-            WHITE = DEFAULT_WHITE;
-            DARK_SQ = DEFAULT_DARK_SQ;
-            LIGHT_SQ = DEFAULT_LIGHT_SQ;
-        }
     }
 
     public void updateCastlingRights()
@@ -195,20 +151,6 @@ public class Board
         int historySize = history.size() + (blackStarted? 1 : 0);
         if (historySize % 2 == 0) return true;
         else return false;
-    }
-    
-    public static String captureValue(List<Piece> captures)
-    {
-        int val = 0;
-        for (Piece p : captures)
-        {
-            if (p.getPiece() == 'P') val += 1;
-            if (p.getPiece() == 'N') val += 3;
-            if (p.getPiece() == 'B') val += 3;
-            if (p.getPiece() == 'R') val += 5;
-            if (p.getPiece() == 'Q') val += 9;
-        }
-        return (val > 0)? "+" + val : "";
     }
     
     //main validater
@@ -452,128 +394,6 @@ public class Board
         return square;
     }
 
-    public static String captureList(List<Piece> captures)
-    {
-        String list = "";
-        char[] hiarchy = new char[]{'Q', 'R', 'N', 'B', 'P'};
-
-        for (int i = 0; i < 5; i++)
-        {
-            for (Piece p : captures)
-            {
-                if (p.getPiece() == hiarchy[i]) list += hiarchy[i];
-            }
-        }
-        
-        return list;
-    }
-
-
-
-
-
-    public void printBoard(boolean[][] validMoves, int[]checkSquare)
-    {
-        // previous move
-        if (!history.isEmpty()) 
-        {
-            if (!isWhiteTurn()) System.out.println("White Played: " + history.get(history.size() - 1));
-            else System.out.println("Black Played: " + history.get(history.size() - 1));
-            System.out.println();
-        }
-        else System.out.println("Good luck!\n");
-        // black captures
-        System.out.println("Black: " + (getBoardValue() < 0? "+" + Math.abs(getBoardValue()) : "") + " " + captureList(blackCaptured));
-        
-        
-        int firstRow = 0;
-        int lastRow = 8;
-        int firstCol = 0;
-        int lastCol = 8;
-        char[] file = new char[]{'a','b','c','d','e','f','g','h'};
-        if (Settings.blackOnBottom)
-        {
-            firstRow = 7;
-            lastRow = -1;
-            firstCol = 7;
-            lastCol = -1;
-            file = new char[]{'h','g','f','e','d','c','b','a'};
-        }
-        // files
-        if (Settings.usePieceIcons) System.out.printf(RESET + "   %c    %c   %c   %c   %c   %c   %c   %c%n", file[0], file[1], file[2], file[3], file[4], file[5], file[6], file[7]);
-        else System.out.printf(RESET + "   %c  %c  %c  %c  %c  %c  %c  %c%n", file[0], file[1], file[2], file[3], file[4], file[5], file[6], file[7]);
-        for (int row = firstRow; row != lastRow; row += (Settings.blackOnBottom? -1 : 1))
-        {
-            // ranks
-            System.out.print(RESET + (8 - row) + " ");
-            for (int col = firstCol; col != lastCol; col += (Settings.blackOnBottom? -1 : 1))
-            {
-                String bg = (col + row) % 2 == 0? LIGHT_SQ : DARK_SQ;
-                if (validMoves != null && validMoves[row][col]) bg = (col + row) % 2 == 0? LIGHT_MOVE_SQ : DARK_MOVE_SQ;
-                if (checkSquare != null && checkSquare[0] == row && checkSquare[1] == col) bg = RED_BG;
-    
-                if (playerBoard[row][col].isOccupied())
-                {
-                    String color = playerBoard[row][col].isWhite()? WHITE : BLACK;
-                    if (Settings.usePieceIcons) System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].toIcon() + "  ");
-                    else System.out.print(RESET + BOLD + color + bg + " " + playerBoard[row][col].getPiece() + " ");
-                }
-                else
-                {
-                    if (Settings.usePieceIcons) System.out.print(RESET + bg + "    ");
-                    else System.out.print(RESET + bg + "   ");
-                }
-            }
-            System.out.println(RESET);
-        }
-        
-        // white captures
-        System.out.println("White: " + (getBoardValue() > 0? "+" + getBoardValue() : "") + " " + captureList(whiteCaptured));
-        
-        System.out.println();
-
-        // debug menu
-        if (!Settings.debugMenu) return;
-        if (Settings.showBotDebugMenu)
-        {
-            System.out.println("---- bot ----");
-            if (Settings.showBotRootScores) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
-            if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
-            if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
-            if (Settings.showBotSelfEval) 
-            {
-                if (!Game.botPlayedLastMove) System.out.println("bot self eval: N/A");
-                else
-                {
-                    int botSelfEval = Game.botMoveEval * (isWhiteTurn()? -1 : 1);   
-                    if (Math.abs(botSelfEval) > Bot.MATE - 1000)
-                    {
-                        int movesTillMate = (Bot.MATE - Math.abs(botSelfEval) + 1) / 2;
-                        System.out.println("bot self eval: " + (botSelfEval > 0? "M" : "-M") + movesTillMate);
-                    }
-                    else System.out.println("bot self eval: " + botSelfEval / 100.0);
-                }
-            }
-            if (Settings.showBotDepthReached) System.out.println((Game.botPlayedLastMove)? "bot depth reached: " + Bot.depthReached : "bot depth reached: N/A");
-            if (Settings.showBotMovesAnalysed) System.out.println((Game.botPlayedLastMove)? "Moves analysed: " + Bot.movesAnalysed + "|" + Bot.quiescenceMovesAnalysed + "|" + Bot.movesAnalysed / Math.max(1,Game.botMoveTimeMs) + " moves per ms" : "Moves analysed: N/A");
-        }
-        if (Settings.showStandardDebugMenu)
-        {
-            System.out.println("\n----debug----");
-            
-            if (Settings.showEval) System.out.println("eval: " + Eval.evalBoard(this, false) / 100.0); // divide by 100 to convert centipawns into eval
-            if (Settings.showEvalBreakDown) { int eval = Eval.evalBoard(this, true); System.out.println(Eval.getEvalBreakDown(eval)); }
-            if (Settings.showTurnIndicator) System.out.println("turn:" + history.size() + "|" + ((isWhiteTurn())? "WHITE" : "BLACK")); 
-            if (Settings.showLegalMoves) System.out.println("total legal moves:" + Moves.allMoves(this, isWhiteTurn()).size());
-            if (Settings.showGameLength) System.out.println("game length: move " + (history.size() + (isWhiteTurn()? 1 : 2)) / 2 + " | ply " + history.size());
-            if (Settings.showWhiteHasValidMoves) System.out.println("white has moves:" + !Moves.hasNoLegalMoves(this, true));
-            if (Settings.showBlackHasValidMoves) System.out.println("black has moves:" + !Moves.hasNoLegalMoves(this, false));
-            if (Settings.showPieceLegalMoves) System.out.println((legalMoves == null)? "legal moves:null": "legal moves:" + legalMoves.size() + ":" + legalMoves);
-        }
-
-        System.out.println();
-    }
-
     public String getIllegalReason(int[] start, int[] end)
     {
         boolean whiteTurn = isWhiteTurn();
@@ -610,7 +430,7 @@ public class Board
         {
             for (int col = 0; col < 8; col++)
             {
-                int pieceValue = Eval.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                int pieceValue = getPiece(row, col).value() / 100;
                 if (getPiece(row, col).isWhite()) value += pieceValue;
                 else value -= pieceValue;
             }
@@ -627,11 +447,24 @@ public class Board
             {
                 if (getPiece(row, col).isOccupied() && getPiece(row, col).isWhite() == isWhite)
                 {
-                    value += Eval.getPieceValue(getPiece(row, col).getPiece()) / 100;
+                    value += getPiece(row, col).value() / 100;
                 }
             }
         }
         return value;
+    }
+
+    public boolean hasNonPawnMaterial(boolean isWhite)
+    {
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                int currValue = getPiece(row, col).value();
+                if (currValue > 100 && currValue < 1000) return true;
+            }
+        }
+        return false;
     }
 
     public int getBoardPawnCount(boolean isWhite)
