@@ -2,6 +2,79 @@ import java.util.*;
 
 public class Moves 
 {
+    private static final int[] STRAIGHT_R = {1, -1,  0, 0};
+    private static final int[] STRAIGHT_C = {0,  0, -1, 1};
+
+    private static final int[] DIAG_R = {1, -1,  1, -1};
+    private static final int[] DIAG_C = {1, -1, -1,  1};
+
+    private static final int[] QUEEN_R = {1, -1,  0, 0, 1, -1,  1, -1};
+    private static final int[] QUEEN_C = {0,  0, -1, 1, 1, -1, -1,  1};
+
+    // single step directions
+    private static final int[] KNIGHT_R = { 1, -1,  2, -2, 2, -2, -1, 1};
+    private static final int[] KNIGHT_C = {-2, -2, -1, -1, 1,  1,  2, 2};
+
+    private static final int[] KING_R = {1, -1,  1, -1, 1, -1, 0,  0};
+    private static final int[] KING_C = {1, -1, -1,  1, 0,  0, 1, -1};
+
+    private static final int[] PAWN_CAPTURE_C = {-1, 1};
+
+    public static boolean[][] dirMoveScan(Board board, int[] square, int[] rDir, int[] cDir)
+    {   
+        boolean[][] moves = new boolean[8][8];
+        
+        int r = square[0];
+        int c = square[1];
+        
+        int forward = 1;
+        for (int i = 0; i < rDir.length; i++)
+        {
+            while (true)
+            {
+                forward++;
+                int row = r + rDir[i] * forward;
+                int col = c + cDir[i] * forward;
+                
+                if (board.inBounds(row, col))
+                {
+                    if (board.getPiece(row, col).isOccupied())
+                    {
+                        if (board.getPiece(row, col).isWhite() != board.getPiece(square).isWhite()) moves[row][col] = true;
+                        break;
+                    }
+                    else moves[row][col] = true;
+                }
+                else break;
+            }
+        }
+        return moves;
+    }
+
+    public static Piece dirPieceScan(Board board, int[] square, int rDir, int cDir)
+    {   
+        int r = square[0];
+        int c = square[1];
+        
+        int forward = 1;
+        while (true)
+        {
+            forward++;
+            int row = r + rDir * forward;
+            int col = c + cDir * forward;
+                
+            if (board.inBounds(row, col))
+            {
+                if (board.getPiece(row, col).isOccupied())
+                {
+                    return board.getPiece(row, col);
+                }
+            }
+            else break;
+        }
+        return Piece.EMPTY;
+    }
+
     public static boolean[][] pawnMoves(Board board, int[] square)
     {
         boolean[][] moves = new boolean[8][8];
@@ -26,9 +99,7 @@ public class Moves
             if (row == startRow && !board.getPiece(newSquare).isOccupied()) moves[newSquare[0]][newSquare[1]] = true;
         }
         
-        int[] diagonalCaptures = new int[]{-1, 1};
-        
-        for (int diagonal : diagonalCaptures)
+        for (int diagonal : PAWN_CAPTURE_C)
         {
             if (board.inBounds(row + dir, col + diagonal))
             {
@@ -83,90 +154,19 @@ public class Moves
     
     public static boolean[][] rookMoves(Board board, int[] square)
     {
-        boolean[][] moves = new boolean[8][8];
-        Piece rook = board.getPiece(square);
-        
-        int[] newSquare = new int[2];
-        int row = square[0];
-        int col = square[1];
-        
-        int[] rDir = new int[]{1, -1, 0, 0};
-        int[] cDir = new int[]{0, 0, -1, 1};
-        
-        for(int i = 0; i < 4; i++)
-        {
-            int j = 0;
-            while (true)
-            {
-                j++;
-                newSquare[0] = row + rDir[i] * j;
-                newSquare[1] = col + cDir[i] * j;
-                
-                if (board.inBounds(newSquare[0], newSquare[1]))
-                {
-                    Piece target = board.getPiece(newSquare);
-                    if (target.isOccupied())
-                    {
-                        if (target.isWhite() != rook.isWhite()) moves[newSquare[0]][newSquare[1]] = true;
-                        break;
-                    }
-                    else moves[newSquare[0]][newSquare[1]] = true;
-                }
-                else break;
-            }
-        }
-        return moves;
+        return dirMoveScan(board, square, STRAIGHT_R, STRAIGHT_C);
     }
     
     
     public static boolean[][] bishopMoves(Board board, int[] square)
     {
-        boolean[][] moves = new boolean[8][8];
-        Piece bishop = board.getPiece(square);
-        
-        int[] newSquare = new int[2];
-        int row = square[0];
-        int col = square[1];
-        
-        int[] rDir = new int[]{1, -1, 1, -1};
-        int[] cDir = new int[]{1, -1, -1, 1};
-        
-        for (int i = 0; i < 4; i++)
-        {
-            int j = 0;
-            while (true)
-            {
-                j++;
-                newSquare[0] = row + rDir[i] * j;
-                newSquare[1] = col + cDir[i] * j;
-                
-                if (board.inBounds(newSquare[0], newSquare[1]))
-                {
-                    Piece target = board.getPiece(newSquare);
-                    if (target.isOccupied())
-                    {
-                        if (target.isWhite() != bishop.isWhite()) { moves[newSquare[0]][newSquare[1]] = true; break; }
-                        else break;
-                    }
-                    else moves[newSquare[0]][newSquare[1]] = true;
-                }
-                else break;
-            }
-        }
-        return moves;
+        return dirMoveScan(board, square, DIAG_R, DIAG_C);
     }
     
     
     public static boolean[][] queenMoves(Board board, int[] square)
     {
-        boolean[][] moves = rookMoves(board, square);
-        boolean[][] bishopMoves = bishopMoves(board, square);
-        
-        for (int row = 0; row < 8; row++)
-            for (int col = 0; col < 8; col++)
-                if (bishopMoves[row][col]) moves[row][col] = true;
-
-        return moves;
+        return dirMoveScan(board, square, QUEEN_R, QUEEN_C);
     }
     
     
@@ -179,13 +179,10 @@ public class Moves
         int row = square[0];
         int col = square[1];
         
-        int[] rDir = new int[]{1, -1, 1, -1, 1, -1, 0, 0};
-        int[] cDir = new int[]{1, -1, -1, 1, 0, 0, 1, -1};
-        
         for(int i = 0; i < 8; i++)
         {
-            newSquare[0] = row + rDir[i];
-            newSquare[1] = col + cDir[i];
+            newSquare[0] = row + KING_R[i];
+            newSquare[1] = col + KING_C[i];
             if (board.inBounds(newSquare[0], newSquare[1]))
             {
                 Piece target = board.getPiece(newSquare);
@@ -193,10 +190,10 @@ public class Moves
                 {
                     if (target.isWhite() != king.isWhite())
                     {
-                        if (!inCheck(board, newSquare, king.isWhite())) moves[row + rDir[i]][col + cDir[i]] = true;
+                        if (!inCheck(board, newSquare, king.isWhite())) moves[row + KING_R[i]][col + KING_C[i]] = true;
                     }
                 }
-                else if (!inCheck(board, newSquare, king.isWhite())) moves[row + rDir[i]][col + cDir[i]] = true;
+                else if (!inCheck(board, newSquare, king.isWhite())) moves[row + KING_R[i]][col + KING_C[i]] = true;
             }
         }
         
@@ -261,84 +258,34 @@ public class Moves
     
     public static boolean inCheck(Board board, int[] square, boolean isWhite)
     {
-        int row = square[0];
-        int col = square[1];
-        int[] newSquare = new int[2];
     
         // diagonal check       
         // bishop/queen
-        int[] diagR = new int[]{1, -1, 1, -1};
-        int[] diagC = new int[]{1, -1, -1, 1};
-    
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < DIAG_C.length; i++)
         {
-            int j = 0;
-            while (true)
-            {
-                j++;
-                newSquare[0] = row + diagR[i] * j;
-                newSquare[1] = col + diagC[i] * j;
-    
-                if (board.inBounds(newSquare[0], newSquare[1]))
-                {
-                    Piece target = board.getPiece(newSquare);
-                    if (target.isOccupied())
-                    {
-                        if (target.getPiece() == 'B' || target.getPiece() == 'Q')
-                        {
-                            if (target.isWhite() != isWhite) return true;
-                            else break;
-                        }
-                        else break;
-                    }
-                }
-                else break;
-            }
+            Piece scanPiece = dirPieceScan(board, square, DIAG_R[i], DIAG_C[i]);
+            if (scanPiece.isWhite() != isWhite && (scanPiece.getPiece() == 'Q' || scanPiece.getPiece() == 'B')) return true;
         }
     
         // vertical/horizontal
         // rook/queen
-        int[] straightR = new int[]{0, 0, 1, -1};
-        int[] straightC = new int[]{1, -1, 0, 0};
-    
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < STRAIGHT_C.length; i++)
         {
-            int j = 0;
-            while (true)
-            {
-                j++;
-                newSquare[0] = row + straightR[i] * j;
-                newSquare[1] = col + straightC[i] * j;
-    
-                if (board.inBounds(newSquare[0], newSquare[1]))
-                {
-                    Piece target = board.getPiece(newSquare);
-                    if (target.isOccupied())
-                    {
-                        if (target.getPiece() == 'R' || target.getPiece() == 'Q')
-                        {
-                            if (target.isWhite() != isWhite) return true;
-                            else break;
-                        }
-                        else break;
-                    }
-                }
-                else break;
-            }
+            Piece scanPiece = dirPieceScan(board, square, STRAIGHT_R[i], STRAIGHT_C[i]);
+            if (scanPiece.isWhite() != isWhite && (scanPiece.getPiece() == 'Q' || scanPiece.getPiece() == 'B')) return true;
         }
         
         // pawn check
         int pawnR = isWhite? -1 : 1;
-        int[] pawnC = new int[]{-1, 1};
         
-        for (int dir : pawnC)
+        for (int dir : PAWN_CAPTURE_C)
         {
-            newSquare[0] = row + pawnR;
-            newSquare[1] = col + dir;
+            int r = square[0] + pawnR;
+            int c = square[1] + dir;
             
-            if (board.inBounds(newSquare[0], newSquare[1]))
+            if (board.inBounds(r, c))
             {
-                Piece target = board.getPiece(newSquare);
+                Piece target = board.getPiece(r, c);
                 
                 if (target.isOccupied() && target.getPiece() == 'P')
                 {
@@ -348,17 +295,14 @@ public class Moves
         }
         
         // knight check
-        int[] knightR = new int[]{1, -1, 2, -2, 2, -2, -1, 1};
-        int[] knightC = new int[]{-2, -2,-1, -1, 1, 1,  2, 2};
-        
-        for (int i = 0; i < knightC.length; i++)
+        for (int i = 0; i < KNIGHT_C.length; i++)
         {
-            newSquare[0] = row + knightR[i];
-            newSquare[1] = col + knightC[i];
+            int r = square[0] + KNIGHT_R[i];
+            int c = square[1] + KNIGHT_C[i];
             
-            if (board.inBounds(newSquare[0], newSquare[1]))
+            if (board.inBounds(r, c))
             {
-                Piece target = board.getPiece(newSquare);
+                Piece target = board.getPiece(r, c);
                 
                 if (target.isOccupied() && target.getPiece() == 'N')
                 {
@@ -368,17 +312,14 @@ public class Moves
         }
         
         // king check
-        int[] kingR = new int[]{1, -1, 1, -1, 1, -1, 0, 0};
-        int[] kingC = new int[]{1, -1, -1, 1, 0, 0, 1, -1};
-        
-        for (int i = 0; i < kingC.length; i++)
+        for (int i = 0; i < KING_C.length; i++)
         {
-            newSquare[0] = row + kingR[i];
-            newSquare[1] = col + kingC[i];
+            int r = square[0] + KING_R[i];
+            int c = square[1] + KING_C[i];
             
-            if (board.inBounds(newSquare[0], newSquare[1]))
+            if (board.inBounds(r, c))
             {
-                Piece target = board.getPiece(newSquare);
+                Piece target = board.getPiece(r, c);
                 
                 if (target.isOccupied() && target.getPiece() == 'K')
                 {
