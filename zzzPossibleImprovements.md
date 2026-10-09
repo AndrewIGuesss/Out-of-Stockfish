@@ -7,6 +7,7 @@
 | **Principal variation search** | Search the first move fully and the rest with a tiny "prove it's worse" window. | 10-20% | 2 |
 | **Delta pruning** | In quiescence, skip captures that can't possibly matter. | 10-20% | 1 |
 | **Aspiration windows** | Start each iteration with a narrow window around last depth's score. | 5-10% | 2 |
+| **Tapered eval** | Blend middlegame and endgame scores smoothly based on remaining material, instead of a hard switch at 1300. Removes weird eval jumps when a piece gets traded. | Plays better | 2 |
 
 # What Stockfish Has That My Engine Doesn't
 
@@ -40,7 +41,6 @@ Rough estimates only. Real numbers vary a lot by engine and position.
 | Feature | What it is | Gain | Difficulty |
 |---|---|---|---|
 | **NNUE** | A small neural network replaces the hand-written eval, efficiently updated each move. Stockfish's biggest jump in recent years. | Huge (hundreds of Elo) | 5 (needs training data and a training setup) |
-| **Tapered eval** | Blend middlegame and endgame scores smoothly based on remaining material, instead of a hard switch at 1300. Removes weird eval jumps when a piece gets traded. | Plays better | 2 |
 | **Automated tuning (Texel tuning)** | Tune all eval numbers automatically against thousands of game results, instead of guessing. | Plays a lot better | 3 |
 | **More eval terms** | Mobility, king attack zones, outposts, rooks on open files, threats, space. | Plays better | 2 each |
 

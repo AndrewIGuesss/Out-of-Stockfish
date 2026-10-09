@@ -1,7 +1,6 @@
 /*
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
-    Tapered eval                  1.5-2 hr    +30-60       eval
     King safety upgrade           2-3 hr      +50-100      eval
     UCI                           3-4 hr      n/a          testing
     Make/unmake + inc. Zobrist    6-10 hr     +50-80       speed
@@ -623,6 +622,7 @@ public class Game
             case "add":
             {
                 board.updateCastlingRights();
+                board.updateKingLocs();
                 board.setHistory(new ArrayList<>());
                 board.setBlackStarted(!whiteTurn);
                 board.setEnPassantSquare(null);
@@ -636,6 +636,7 @@ public class Game
                 board.setBlackStarted(!whiteTurn);
                 board.setEnPassantSquare(null);
                 board.updateCastlingRights();
+                board.updateKingLocs();
                 importedFEN = board.makeFEN(whiteTurn);
                 previousMove = null;
                 repetition.clear();

@@ -64,6 +64,9 @@ public class Board
         blackCanCastleLong = board.blackCanCastleLong;
         blackCanCastleShort = board.blackCanCastleShort;
 
+        whiteKingLoc = board.getWhiteKingLoc().clone();
+        blackKingLoc = board.getBlackKingLoc().clone();
+
         //needed for no crash
         whiteCaptured = new ArrayList<>();
         blackCaptured = new ArrayList<>();
@@ -127,6 +130,26 @@ public class Board
         {
             playerBoard[0][col] = Piece.get(false, piecesOrder[col]);
             playerBoard[7][col] = Piece.get(true, piecesOrder[col]);
+        }
+
+        updateKingLocs();
+    }
+
+    public void updateKingLocs()
+    {
+        int kingsFound = 0;
+        kingSearch: for (int row = 0; row < 8; row++) // finds king
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                if (this.getPiece(row, col).getPiece() == 'K')
+                {       
+                    if (this.getPiece(row, col).isWhite()) whiteKingLoc = new int[]{row, col};
+                    else blackKingLoc = new int[]{row, col};
+                    kingsFound++;
+                    if (kingsFound == 2) break kingSearch;
+                }
+            }
         }
     }
 
@@ -229,8 +252,8 @@ public class Board
 
         if (temp.getPiece() == 'K') 
         {
-            if (temp.isWhite()) whiteKingLoc = findKing(this, true);
-            else blackKingLoc = findKing(this, false);
+            if (temp.isWhite()) whiteKingLoc = new int[]{end[0], end[1]};
+            else blackKingLoc = new int[]{end[0], end[1]};
         }
 
         if (temp.getPiece() != 'P' && !test)
@@ -357,25 +380,6 @@ public class Board
         {
             history.add((bigNotation)? convertMove(start) + " > " + convertMove(end) : move.toString() ); // standard chess notation and square to square
         }
-    }
-    
-    public static int[] findKing(Board board, boolean white)
-    {
-        int[] kingLoc = new int [2];
-        boolean found = false;
-        for (int row = 0; row < 8 && !found; row++) // finds king
-        {
-            for (int col = 0; col < 8 && !found; col++)
-            {
-                if (board.getPiece(row, col).getPiece() == 'K' && board.getPiece(row, col).isWhite() == white)
-                {       
-                    kingLoc[0] = row;
-                    kingLoc[1] = col;
-                    found = true;
-                }
-            }
-        }
-        return kingLoc;
     }
 
     public static String convertMove(int[] move)
@@ -611,6 +615,7 @@ public class Board
         moveOffSet = Integer.parseInt(splitFEN[5]);
 
         updateCastlingRights();
+        updateKingLocs();
 
         return whiteTurn;
     }
