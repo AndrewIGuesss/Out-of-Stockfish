@@ -27,9 +27,10 @@ public class Moves
         int r = square[0];
         int c = square[1];
         
-        int forward = 1;
+        int forward;
         for (int i = 0; i < rDir.length; i++)
         {
+            forward = 0;
             while (true)
             {
                 forward++;
@@ -56,7 +57,7 @@ public class Moves
         int r = square[0];
         int c = square[1];
         
-        int forward = 1;
+        int forward = 0;
         while (true)
         {
             forward++;
@@ -258,8 +259,7 @@ public class Moves
     
     public static boolean inCheck(Board board, int[] square, boolean isWhite)
     {
-    
-        // diagonal check       
+        // diagonal       
         // bishop/queen
         for (int i = 0; i < DIAG_C.length; i++)
         {
@@ -272,10 +272,10 @@ public class Moves
         for (int i = 0; i < STRAIGHT_C.length; i++)
         {
             Piece scanPiece = dirPieceScan(board, square, STRAIGHT_R[i], STRAIGHT_C[i]);
-            if (scanPiece.isWhite() != isWhite && (scanPiece.getPiece() == 'Q' || scanPiece.getPiece() == 'B')) return true;
+            if (scanPiece.isWhite() != isWhite && (scanPiece.getPiece() == 'Q' || scanPiece.getPiece() == 'R')) return true;
         }
         
-        // pawn check
+        // pawn
         int pawnR = isWhite? -1 : 1;
         
         for (int dir : PAWN_CAPTURE_C)
@@ -294,7 +294,7 @@ public class Moves
             }
         }
         
-        // knight check
+        // knight
         for (int i = 0; i < KNIGHT_C.length; i++)
         {
             int r = square[0] + KNIGHT_R[i];
@@ -311,7 +311,7 @@ public class Moves
             }
         }
         
-        // king check
+        // king
         for (int i = 0; i < KING_C.length; i++)
         {
             int r = square[0] + KING_R[i];
@@ -332,7 +332,7 @@ public class Moves
     
     public static boolean hasNoLegalMoves(Board board, boolean white)
     {
-        for (int row = 0; row < 8; row++) // finds every piece
+        for (int row = 0; row < 8; row++)
         {
             for (int col = 0; col < 8; col++)
             {

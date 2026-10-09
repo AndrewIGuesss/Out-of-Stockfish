@@ -48,7 +48,7 @@ public class UI
         System.out.println("============================================");
         System.out.println("|                !WARNING!                 |");
         System.out.println("|   this was meant to be played with the   |");
-        System.out.println("|     the terminal contrast ratio off      |");
+        System.out.println("|       terminal contrast ratio off        |");
         System.out.println("|                                          |");
         System.out.println("|       if you are using VS code set:      |");
         System.out.println("| terminal.integrated.minimumContrastRatio |");
