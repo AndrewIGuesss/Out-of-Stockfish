@@ -89,10 +89,13 @@ public class Bot
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
     {
         // time limit check
-        if (System.currentTimeMillis() > deadline && timeCanBeUp)
-        { 
-            timeUp = true;
-            return 0;
+        if ((movesAnalysed & 1023) == 0)
+        {
+            if (System.currentTimeMillis() > deadline && timeCanBeUp)
+            { 
+                timeUp = true;
+                return 0;
+            }
         }
 
         if (Board.isInsufficientMaterial(board)) return 0;
@@ -192,10 +195,13 @@ public class Bot
         }
 
         // time limit / stop thinking check
-        if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking && timeCanBeUp)
-        { 
-            timeUp = true;
-            return 0;
+        if ((movesAnalysed & 1023) == 0)
+        {
+            if ((System.currentTimeMillis() > deadline && timeCanBeUp) || stopThinking && timeCanBeUp)
+            { 
+                timeUp = true;
+                return 0;
+            }
         }
 
         // node counter

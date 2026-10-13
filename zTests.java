@@ -7,6 +7,7 @@ public class zTests
     private static boolean runBench = true;
     private static boolean runPerft = true;
     private static boolean runFen = true;
+    private static boolean runMirror = true;
 
     public static final String PASS   = "\u001B[1;32mPASS\u001B[0m";
     public static final String PASSED = "\u001B[1;32mPASSED\u001B[0m";
@@ -31,7 +32,11 @@ public class zTests
             tests.add(new String[]{"Fen round trip", fenTest[0]});
             tests.add(new String[]{"Fen move test", fenTest[1]});
         }
-
+        if (runMirror)
+        {
+            String mirrorResult = Arrays.toString(zzMirror.runMirror().toArray()).replace("[", "").replace("]", "");
+            tests.add(new String[]{"Mirror", mirrorResult});
+        }
         System.out.println("\n\n-----Summary-----");
         if (runBench) System.out.printf("bench nodes: %s%n", benchNodes);
         for (String[] test : tests)
