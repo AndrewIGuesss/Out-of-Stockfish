@@ -33,6 +33,7 @@ public class UCI
                 {
                     TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
                     Game.repetition.clear();
+                    Bot.clearHistory();
                     break;
                 }
                 case "quit":

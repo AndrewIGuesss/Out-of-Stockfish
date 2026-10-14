@@ -648,6 +648,7 @@ public class Game
                 importedFEN = "";
                 previousMove = null;
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                Bot.clearHistory();
                 repetition.clear();
                 setUp = false;
                 break;
@@ -656,6 +657,7 @@ public class Game
             {
                 previousMove = null;
                 TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                Bot.clearHistory();
                 board.updateCastlingRights();
                 repetition.clear();
                 Game.board = board;

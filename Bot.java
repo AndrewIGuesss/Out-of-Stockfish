@@ -90,7 +90,10 @@ public class Bot
         return false;
     }
 
-
+    public static void clearHistory()
+    {
+        historyTable = new int[SQUARES][SQUARES];
+    }
 
 
 
@@ -442,7 +445,13 @@ public class Bot
         timeCanBeUp = false;
         timeUp = false;
         killerMoves = new int[MAX_PLY][KILLER_SLOTS][];
-        historyTable = new int[SQUARES][SQUARES];
+        for (int i = 0; i < historyTable.length; i++)
+        {
+            for (int j = 0; j < historyTable[i].length; j++)
+            {
+                historyTable[i][j] /= 2;
+            }
+        }
 
         // stats
         depthReached = 0;
