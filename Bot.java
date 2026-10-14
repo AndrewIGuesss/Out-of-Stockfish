@@ -26,6 +26,8 @@ public class Bot
     private static final int LMR_REDUCTION = 1;
     private static final int RFP_CENTIPAWNS_PER_DEPTH = 90;
     private static final int RFP_MAX_DEPTH = 6;
+    private static final int FP_MAX_DEPTH = 3;
+    private static final int FP_MARGIN = 125;
 
     private static final int TEMPO_BONUS = 15;
     private static final int DELTA_MARGIN = 200; // delta pruning
@@ -251,10 +253,12 @@ public class Bot
         // quiescence at the leaves (last search until we reach the max depth)
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
+        int staticEval = -1;
+
+        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && beta - alpha == 1) staticEval = Eval.evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
         // reverse futility pruning (RFP)
         if (!inCheck && maxDepth <= RFP_MAX_DEPTH && ply > 0 && beta - alpha == 1 && Math.abs(beta) < MATE - 1000)
         {
-            int staticEval = Eval.evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
             if (staticEval - RFP_CENTIPAWNS_PER_DEPTH * maxDepth >= beta) return staticEval;
         }
         
@@ -324,11 +328,21 @@ public class Bot
             
             validMoves++;
             
+            boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
+
+            // futility pruning
+            if (beta - alpha == 1 && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
+            {
+                if (!Moves.inCheck(copy, copy.getKingLoc(!whiteTurn), !whiteTurn) && !promoting && !board.getPiece(move[2], move[3]).isOccupied())
+                {
+                    if (staticEval + FP_MARGIN * maxDepth <= alpha) continue;
+                }
+            }
+
             // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
-            boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
-            if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !board.getPiece(move[2], move[3]).isOccupied() )
+            if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !board.getPiece(move[2], move[3]).isOccupied())
             {
                 if (!Moves.inCheck(copy, copy.getKingLoc(!whiteTurn), !whiteTurn) && !promoting)
                 {

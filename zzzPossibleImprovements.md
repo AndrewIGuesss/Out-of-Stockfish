@@ -8,6 +8,8 @@
 | **Delta pruning** | In quiescence, skip captures that can't possibly matter. | 10-20% | 1 |
 | **Aspiration windows** | Start each iteration with a narrow window around last depth's score. | 5-10% | 2 |
 | **Tapered eval** | Blend middlegame and endgame scores smoothly based on remaining material, instead of a hard switch at 1300. Removes weird eval jumps when a piece gets traded. | Plays better | 2 |
+| **Futility / reverse futility pruning** | Near the leaves, skip moves that can't possibly raise alpha. | 20-50% | 2 |
+| **UCI protocol** | A standard text interface that lets the engine plug into chess GUIs and play other engines automatically. | Testing | 2 |
 
 # What Stockfish Has That My Engine Doesn't
 
@@ -29,7 +31,6 @@ Rough estimates only. Real numbers vary a lot by engine and position.
 
 | Feature | What it is | Gain | Difficulty |
 |---|---|---|---|
-| **Futility / reverse futility pruning** | Near the leaves, skip moves that can't possibly raise alpha. | 20-50% | 2 |
 | **Static exchange evaluation (SEE)** | Work out whether a capture sequence on a square wins or loses material, without searching. Used for ordering and pruning. | 10-30% | 3 |
 | **History + counter-move + continuation history** | Smarter quiet-move ordering, going beyond killers. | 10-30% combined | 2 |
 | **Singular extensions** | Search deeper when one move is way better than all the others. | Plays better | 4 |
@@ -49,5 +50,4 @@ Rough estimates only. Real numbers vary a lot by engine and position.
 | Feature | What it is | Gain | Difficulty |
 |---|---|---|---|
 | **Endgame tablebases** | Precomputed perfect play for positions with 7 or fewer pieces. | Perfect endgames | 3 |
-| **UCI protocol** | A standard text interface that lets the engine plug into chess GUIs and play other engines automatically. | Testing | 2 |
 | **Massive testing** | Every change gets tested over tens of thousands of games before it's accepted. | Why everything else works | Needs UCI first |
