@@ -2,6 +2,8 @@ public class Eval
 {
     public static int phase = 0;
 
+    public static final int[] attackWeight = new int[]{0, 50, 75, 88, 94, 97, 99}; 
+
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
 
@@ -396,8 +398,64 @@ public class Eval
             openFilePenalty += thisFilePenalty;
         }
 
-        //
-        
+        // king zone
+        int attackers = 0;
+        int attackerValues = 0;
+        int attackerPenalty = 0;
+
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                Piece scanPiece = board.getPiece(row, col);
+                if (scanPiece.isOccupied() && scanPiece.isWhite() != isWhite)
+                {
+                    switch (scanPiece.getPiece())
+                    {
+                        case 'N':
+                        {
+                            boolean isAttacker = false;
+                            for (int i = 0; i < Moves.KNIGHT_C.length; i++)
+                            {
+                                int scanRow = row + Moves.KNIGHT_R[i];
+                                int scanCol = col + Moves.KNIGHT_C[i];
+                                if (!board.inBounds(scanRow, scanCol)) continue;
+                                if (Math.abs(scanRow - kingLoc[0]) <= 1 && Math.abs(scanCol - kingLoc[1]) <= 1)
+                                {
+                                    isAttacker = true;
+                                    attackerValues += 20;
+                                }
+                            }
+                            if (isAttacker) attackers++;
+                            break;
+                        }
+                        case 'B':
+                        {
+                            int hits = zoneHits(board, row, col, Moves.DIAG_R, Moves.DIAG_C, kingLoc);
+                            if (hits > 0) attackers++;
+                            attackerValues += 20 * hits;
+                            break;
+                        }
+                        case 'R':
+                        {
+                            int hits = zoneHits(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, kingLoc);
+                            if (hits > 0) attackers++;
+                            attackerValues += 40 * hits;
+                            break;
+                        }
+                        case 'Q':
+                        {
+                            int hits = zoneHits(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, kingLoc);
+                            if (hits > 0) attackers++;
+                            attackerValues += 80 * hits;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        attackerPenalty = -(attackerValues * attackWeight[Math.min(attackers, 7)] / 100);
+
         // king location
         int kingLocBonus = 0;
         kingLocBonus += KING_MIDDLEGAME_TABLE[isWhite? kingLoc[0] : 7 - kingLoc[0]][kingLoc[1]];
@@ -410,6 +468,7 @@ public class Eval
         safetyBonus = 
                     term(pawnSheildBonus, isWhite, EvalTerm.KING_SHIELD.ordinal(), GamePhase.MID) + 
                     term(openFilePenalty, isWhite, EvalTerm.KING_OPEN_FILES.ordinal(), GamePhase.MID) + 
+                    term(attackerPenalty, isWhite, EvalTerm.KING_ATTACKERS.ordinal(), GamePhase.MID) +
                     term(kingLocBonus, isWhite, EvalTerm.KING_SQUARE.ordinal(), GamePhase.MID) +
                     term(castlingRightsPenalty, isWhite, EvalTerm.CASTLING_RIGHTS.ordinal(), GamePhase.MID);
         
@@ -468,5 +527,24 @@ public class Eval
         result.append("-".repeat(40) + "\n");
         result.append(String.format("%-19s %15s %+7.2f   (matches evalBoard: %s)%n", "total", "", total / 100.0, total == eval? "yes" : "no"));
         return result.toString();
+    }
+
+    public static int zoneHits (Board board, int row, int col, int[] dirR, int[] dirC, int[] kingLoc)
+    {
+        int zoneHits = 0;
+        for (int i = 0; i < dirC.length; i++)
+        {
+            int forward = 0;
+            scanLoop: while (true)
+            {
+                forward++;
+                int scanRow = row + dirR[i] * forward;
+                int scanCol = col + dirC[i] * forward;
+                if (!board.inBounds(scanRow, scanCol)) break scanLoop;
+                if (Math.abs(scanRow - kingLoc[0]) <= 1 && Math.abs(scanCol - kingLoc[1]) <= 1) zoneHits++;
+                if (board.getPiece(scanRow, scanCol).isOccupied()) break scanLoop;
+            }
+        }
+        return zoneHits;
     }
 }

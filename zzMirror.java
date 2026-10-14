@@ -105,11 +105,11 @@ public class zzMirror
             if (preEval != -postEval) 
             {
                 failed.add(fenNum);
-                System.out.printf("%s | fen:%s | %d vs %d%n", zTests.FAIL, fen, preEval, postEval);
+                System.out.printf("%s | %d vs %d | fen:%s%n", zTests.FAIL, preEval, postEval, fen);
             }
             else
             {
-                System.out.printf("%s | fen:%s | %d vs %d%n", zTests.PASS, fen, preEval, postEval);
+                System.out.printf("%s | %d vs %d | fen:%s%n", zTests.PASS, preEval, postEval, fen);
             }
         }
         return failed;
