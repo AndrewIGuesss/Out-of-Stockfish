@@ -349,22 +349,54 @@ public class Eval
         
         // pawn sheild
         int pawnSheildBonus = 0;
-
-        if (isWhite? !board.whiteCastled : !board.blackCastled) pawnSheildBonus = 30;
-        else
+        boolean[] pawnsFound = new boolean[3];
+        for (int col = -1; col <= 1; col++)
         {
-            for (int i = -1; i <= 1; i++)
+            if (!board.inBounds(kingLoc[0], kingLoc[1] + col))
             {
-                if (board.inBounds(kingLoc[0] - sideMulti, kingLoc[1] + i))
+                pawnSheildBonus += 12;
+                continue;
+            }
+            rowScan: for (int row = 1; row <= 2; row++)
+            {
+                if (board.inBounds(kingLoc[0] - sideMulti * row, kingLoc[1] + col))
                 {
-                    if (board.getPiece(kingLoc[0] - sideMulti, kingLoc[1] + i).getPiece() == 'P' && board.getPiece(kingLoc[0] - sideMulti, kingLoc[1] + i).isWhite() == isWhite)
+                    Piece scanPiece = board.getPiece(kingLoc[0] - sideMulti * row, kingLoc[1] + col);
+                    if (scanPiece.getPiece() == 'P' && scanPiece.isWhite() == isWhite)
                     {
-                        pawnSheildBonus += 10;
+                        pawnsFound[col + 1] = true;
+                        pawnSheildBonus += 12 / row;
+                        break rowScan;
                     }
                 }
-                else pawnSheildBonus += 10;
+                else break rowScan;
             }
         }
+
+        // empty file
+        int openFilePenalty = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            if (pawnsFound[i]) continue;
+            int thisFilePenalty = -20;
+            int col =  i + (kingLoc[1] - 1);
+            rowScan: for (int row = 0; row < 8; row++)
+            {
+                if (!board.inBounds(row, col)) { thisFilePenalty = 0; break rowScan; }
+                if (board.getPiece(row, col).getPiece() == 'P')
+                {
+                    if (board.getPiece(row, col).isWhite() == isWhite)
+                    {
+                        thisFilePenalty = 0;
+                        break rowScan;
+                    }
+                    else thisFilePenalty = -10;
+                }
+            }
+            openFilePenalty += thisFilePenalty;
+        }
+
+        //
         
         // king location
         int kingLocBonus = 0;
@@ -375,9 +407,12 @@ public class Eval
         if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
         else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
 
-        safetyBonus = term(pawnSheildBonus, isWhite, EvalTerm.KING_SHIELD.ordinal(), GamePhase.MID) + 
-                      term(kingLocBonus, isWhite, EvalTerm.KING_SQUARE.ordinal(), GamePhase.MID) +
-                      term(castlingRightsPenalty, isWhite, EvalTerm.CASTLING_RIGHTS.ordinal(), GamePhase.MID);
+        safetyBonus = 
+                    term(pawnSheildBonus, isWhite, EvalTerm.KING_SHIELD.ordinal(), GamePhase.MID) + 
+                    term(openFilePenalty, isWhite, EvalTerm.KING_OPEN_FILES.ordinal(), GamePhase.MID) + 
+                    term(kingLocBonus, isWhite, EvalTerm.KING_SQUARE.ordinal(), GamePhase.MID) +
+                    term(castlingRightsPenalty, isWhite, EvalTerm.CASTLING_RIGHTS.ordinal(), GamePhase.MID);
+        
         return safetyBonus * sideMulti;
     }
 

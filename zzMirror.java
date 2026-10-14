@@ -31,7 +31,13 @@ public class zzMirror
         // KR vs K, white winning (mop up)
         "8/8/8/4k3/8/8/8/R3K3 w - - 0 1",
         // KQ vs K, black winning (mop up from black's side)
-        "8/8/2k5/8/8/8/q7/6K1 b - - 0 60"
+        "8/8/2k5/8/8/8/q7/6K1 b - - 0 60",
+        // a-file king, castled-long style, c-file shield pawn missing
+        "r3k2r/ppp2ppp/8/8/8/8/PP3PPP/K6R w kq - 0 20",
+        // h-file king with open g-file vs a-file king with full shield
+        "k7/ppp5/8/8/8/8/5P1P/7K w - - 0 30",
+        // a-file king with no a-pawn (would have hung the old version)
+        "4k3/8/8/8/8/8/1PP5/K7 w - - 0 30"
     };
     public static List<Integer> runMirror()
     {
