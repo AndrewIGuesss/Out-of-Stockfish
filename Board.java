@@ -508,6 +508,10 @@ public class Board
 
     public boolean importFEN (String fen)
     {
+        whiteCastled = false;
+        blackCastled = false;
+        blackStarted = false;
+
         boolean whiteTurn;
         String[] preSplitFEN = fen.split(" ");
         String[] splitFEN = new String[6];

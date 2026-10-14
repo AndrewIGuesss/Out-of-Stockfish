@@ -24,6 +24,8 @@ public class Bot
 
     private static final int NULL_MOVE_REDUCTION = 2;
     private static final int LMR_REDUCTION = 1;
+    private static final int RFP_CENTIPAWNS_PER_DEPTH = 90;
+    private static final int RFP_MAX_DEPTH = 6;
 
     private static final int TEMPO_BONUS = 15;
     private static final int DELTA_MARGIN = 200; // delta pruning
@@ -85,6 +87,10 @@ public class Bot
         }
         return false;
     }
+
+
+
+
 
     public static int quiescence(Board board, boolean whiteTurn, int alpha, int beta)
     {
@@ -171,6 +177,12 @@ public class Bot
         return best;
     }
 
+
+
+
+
+
+
     public static int negamax(Board board, int maxDepth, boolean whiteTurn, int alpha, int beta, int ply, boolean isNullMove)
     {
         // transposition table save (remember this position's result)
@@ -239,6 +251,13 @@ public class Bot
         // quiescence at the leaves (last search until we reach the max depth)
         if (maxDepth == 0) return quiescence(board, whiteTurn, alpha, beta);
 
+        // reverse futility pruning (RFP)
+        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && ply > 0 && beta - alpha == 1 && Math.abs(beta) < MATE - 1000)
+        {
+            int staticEval = Eval.evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
+            if (staticEval - RFP_CENTIPAWNS_PER_DEPTH * maxDepth >= beta) return staticEval;
+        }
+        
         // null move pruning
         if (ply != 0 && maxDepth >= 4 && !isNullMove && !inCheck)
         {
@@ -394,6 +413,11 @@ public class Bot
         if (inCheck) return -MATE + ply;
         else return 0;
     }
+
+
+
+
+
 
     public static int[] bestMove(Board board, int maxDepth, boolean whiteTurn)
     {

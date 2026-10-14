@@ -38,7 +38,6 @@ public class zzMirror
         System.out.println("\n- mirror eval test -\n");
         System.out.println("-----------------------------");
 
-        boolean allPassed = true;
         List<Integer> failed = new ArrayList<>();
         for (int fenNum = 0; fenNum < mirrorFens.length; fenNum++)
         {
@@ -99,7 +98,6 @@ public class zzMirror
 
             if (preEval != -postEval) 
             {
-                allPassed = false;
                 failed.add(fenNum);
                 System.out.printf("%s | fen:%s | %d vs %d%n", zTests.FAIL, fen, preEval, postEval);
             }
