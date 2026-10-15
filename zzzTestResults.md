@@ -6,5 +6,7 @@
 | 1 | Oct 8 | Tapered eval | pre-tapered | SPRT [0, 10] | 442 | +74.21 ± 27.41 | accepted |
 | 2 | Oct 9 | Refactor (piece values in enum, move gen helpers, constants, time check every 1024 nodes) | tapered | bench only | n/a | n/a | bench identical, ~12-15% faster |
 | 3 | Oct 13 | Reverse futility pruning (90/depth, max depth 6) | refactor | fixed 200 | 200 | +83.20 ± 41.78 | accepted |
-| 4 | Oct 13 | Futility pruning (125/depth, max depth 3) | RFP | SPRT [0, 10] | stopped | ~85% LOS when stopped | needs rerun |
-| 5 | Oct 14 | History aging (halve instead of reset) | FP | SPRT [0 , 10] | stopped after 3900 | −6 ± 9 | rejected |
+| 4 | Oct 13 | Futility pruning (125/depth, max depth 3) | RFP | SPRT [0, 10] | 1654 | +20.61 ± 12.86 | accepted |
+| 5 | Oct 14 | History aging (halve instead of reset) | FP | SPRT [0, 10] | stopped after 3900 | −6 ± 9 | rejected |
+| 6 | Oct 14 | King safety v1 (pawn shield 12/6, open file −10/−20, middlegame only) | FP | SPRT [0, 10] | 1702 | +22.28 ± 14.13 | accepted |
+| 7 | Oct 14 | King safety v2 (attack zone, CPW weights N/B 20 R 40 Q 80) | KS v1 | SPRT [0, 10] | 3062 | −5.79 ± 10.72 | rejected |
