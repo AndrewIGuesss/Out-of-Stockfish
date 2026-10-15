@@ -37,7 +37,11 @@ public class zzMirror
         // h-file king with open g-file vs a-file king with full shield
         "k7/ppp5/8/8/8/8/5P1P/7K w - - 0 30",
         // a-file king with no a-pawn (would have hung the old version)
-        "4k3/8/8/8/8/8/1PP5/K7 w - - 0 30"
+        "4k3/8/8/8/8/8/1PP5/K7 w - - 0 30",
+        // black queen + rook battery on white's castled king
+        "6k1/5ppp/8/8/8/6q1/5PPP/3r2K1 w - - 0 1",
+        // knight + queen near the king, both sides
+        "r4rk1/ppp2ppp/8/3N4/7Q/8/PPP2PPP/R4RK1 w - - 0 1"
     };
     public static List<Integer> runMirror()
     {

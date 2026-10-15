@@ -454,7 +454,7 @@ public class Eval
                 }
             }
         }
-        attackerPenalty = -(attackerValues * attackWeight[Math.min(attackers, 7)] / 100);
+        attackerPenalty = -(attackerValues * attackWeight[Math.min(attackers, 6)] / 100);
 
         // king location
         int kingLocBonus = 0;
