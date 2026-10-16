@@ -180,22 +180,22 @@ public class Board
     //main validater
     public boolean[][] validMoves(int[] square, boolean test)
     {
-        boolean[][] moves = preValidMoves(square, test); // gets moves a piece could do
-        boolean white = getPiece(square).isWhite(); // gets pieces color
+        boolean[][] moves = preValidMoves(square, test);
+        boolean white = getPiece(square).isWhite();
     
-        boolean[][] legal = new boolean[8][8]; // makes new 2d array for legal moves
+        boolean[][] legal = new boolean[8][8]; 
     
         for (int row = 0; row < 8; row++) // pin check
         {
             for (int col = 0; col < 8; col++)
             {
-                if (moves[row][col]) // if piece could move to this square
+                if (moves[row][col])
                 {
-                    Board copy = new Board(this); // make a copy of the board
-                    copy.applyMove(square, new int[]{row, col}, true, 'Q'); // applies move to copied board
-    
-                    int[] kingSquare = copy.getKingLoc(white); // finds king
-                    if (!Moves.inCheck(copy, kingSquare, white)) legal[row][col] = true; // checks if king would be in check
+                    Undo u = this.makeMove(square, new int[]{row, col}, 'Q');
+                    boolean inCheck = Moves.inCheck(this, getKingLoc(white), white);
+                    this.unMakeMove(square, new int[]{row, col}, u);
+
+                    if (!inCheck) legal[row][col] = true;
                 }
             }
         }
@@ -549,11 +549,11 @@ public class Board
         boolean[][] pieceMoves = preValidMoves(start, true);
         if (!pieceMoves[end[0]][end[1]]) return "Piece cant travel there";
         
-        Board copy = new Board(this);
-        copy.applyMove(start, end, true, 'q');
-        int[] king = copy.getKingLoc(p.isWhite());
-        if (Moves.inCheck(copy, king, p.isWhite())) return "Move leads to check";
-    
+        Undo u = this.makeMove(start, end, 'Q');
+        boolean inCheck = Moves.inCheck(this, getKingLoc(p.isWhite()), p.isWhite());
+        this.unMakeMove(start, end, u);
+
+        if (inCheck) return "Move leads to check";
         return null; // move is legal
     }
 
