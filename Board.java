@@ -245,7 +245,6 @@ public class Board
         promotionPiece = Character.toUpperCase(promotionPiece);
         StringBuilder move = new StringBuilder();
         
-        // makes temp piece and adds to its history
         Piece temp = playerBoard[start[0]][start[1]];
 
         if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
@@ -348,7 +347,6 @@ public class Board
         int doubleMove = end[0] - start[0]; // double moved pawn
         if (temp.getPiece() == 'P' && (doubleMove == -2 || doubleMove == 2)) // double moved pawn check
         {
-            enPassantSquare = null; // clears old en passant square
             enPassantSquare = new int[]{(start[0] + end[0]) / 2, start[1]}; // sets square behind pawn to en passant square
         }
         else enPassantSquare = null; // clear square every non double pawn move
@@ -381,6 +379,137 @@ public class Board
         {
             history.add((bigNotation)? convertMove(start) + " > " + convertMove(end) : move.toString() ); // standard chess notation and square to square
         }
+    }
+
+
+
+
+    public Undo makeMove(int[] start, int[] end, char promotionPiece)
+    {
+        Undo lastPosition = new Undo(this, end);
+
+        promotionPiece = Character.toUpperCase(promotionPiece);
+        
+        Piece temp = playerBoard[start[0]][start[1]];
+
+        if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
+        else timeSinceCaptureOrPawnPush++;
+
+        if (temp.getPiece() == 'K') 
+        {
+            if (temp.isWhite()) whiteKingLoc = new int[]{end[0], end[1]};
+            else blackKingLoc = new int[]{end[0], end[1]};
+        }
+
+        playerBoard[start[0]][start[1]] = Piece.EMPTY; //clears the space
+
+        // castling
+        if (temp.getPiece() == 'K' && (start[1] - end[1] == 2 || start[1] - end[1] == -2))
+        {
+            if (end[1] == 2) // long castle
+            {
+                playerBoard[start[0]][3] = playerBoard[start[0]][0];
+                playerBoard[start[0]][0] = Piece.EMPTY;
+            }
+            else // short castle
+            {
+                playerBoard[start[0]][5] = playerBoard[start[0]][7];
+                playerBoard[start[0]][7] = Piece.EMPTY;
+            }
+            if (temp.isWhite()) whiteCastled = true;
+            else blackCastled = true;
+        }
+
+        if (start[0] == 7 && start[1] == 4 || end[0] == 7 && end[1] == 4) { whiteCanCastleLong = false; whiteCanCastleShort = false; }
+        if (start[0] == 7 && start[1] == 0 || end[0] == 7 && end[1] == 0) whiteCanCastleLong = false;
+        if (start[0] == 7 && start[1] == 7 || end[0] == 7 && end[1] == 7) whiteCanCastleShort = false;
+
+        if (start[0] == 0 && start[1] == 4 || end[0] == 0 && end[1] == 4) { blackCanCastleLong = false; blackCanCastleShort = false; }
+        if (start[0] == 0 && start[1] == 0 || end[0] == 0 && end[1] == 0) blackCanCastleLong = false;
+        if (start[0] == 0 && start[1] == 7 || end[0] == 0 && end[1] == 7) blackCanCastleShort = false;
+        
+
+        // en passant
+        if ((enPassantSquare != null && end[0] == enPassantSquare[0] && end[1] == enPassantSquare[1] && temp.getPiece() == 'P'))
+        {
+            if (temp.isWhite())
+            {
+                playerBoard[end[0] + 1][end[1]] = Piece.EMPTY; // removes pawn before square
+                lastPosition.capture = Piece.B_PAWN;
+                lastPosition.captureLoc = new int[]{end[0] + 1, end[1]};
+            }
+            else
+            {
+                playerBoard[end[0] - 1][end[1]] = Piece.EMPTY; // removes pawn before square
+                lastPosition.capture = Piece.W_PAWN;
+                lastPosition.captureLoc = new int[]{end[0] - 1, end[1]};
+            }
+        }
+
+        
+        // en passant maker
+        int doubleMove = end[0] - start[0]; // double moved pawn
+        if (temp.getPiece() == 'P' && (doubleMove == -2 || doubleMove == 2)) // double moved pawn check
+        {
+            enPassantSquare = new int[]{(start[0] + end[0]) / 2, start[1]}; // sets square behind pawn to en passant square
+        }
+        else enPassantSquare = null; // clear square every non double pawn move
+        
+        // promotion check
+        int promotionRow = temp.isWhite()? 0 : 7;
+        
+        if (temp.getPiece() == 'P' && end[0] == promotionRow)
+        {
+            if ( promotionPiece == 'Z') promotionPiece = 'Q';
+            temp = Piece.get(temp.isWhite(), promotionPiece);
+            lastPosition.promotion = true;
+        }
+
+        playerBoard[end[0]][end[1]] = temp;
+        
+        return lastPosition;
+    }
+
+
+
+    public void unMakeMove(int[] start, int[] end, Undo lastPosition)
+    {
+        // promotion
+        if (lastPosition.promotion) playerBoard[start[0]][start[1]] = getPiece(end).isWhite()? Piece.W_PAWN : Piece.B_PAWN;
+        else playerBoard[start[0]][start[1]] = getPiece(end);
+
+        // capture
+        playerBoard[end[0]][end[1]] = Piece.EMPTY;
+        playerBoard[lastPosition.captureLoc[0]][lastPosition.captureLoc[1]] = lastPosition.capture;
+
+        // castling
+        if (getPiece(start).getPiece() == 'K' && Math.abs(start[1] - end[1]) > 1)
+        {
+            if (end[1] == 2)
+            {
+                playerBoard[end[0]][0] = getPiece(start).isWhite()? Piece.W_ROOK : Piece.B_ROOK;
+                playerBoard[end[0]][3] = Piece.EMPTY;
+            }
+            else
+            {
+                playerBoard[end[0]][7] = getPiece(start).isWhite()? Piece.W_ROOK : Piece.B_ROOK;
+                playerBoard[end[0]][5] = Piece.EMPTY;
+            }
+        }
+
+        whiteKingLoc = lastPosition.whiteKingLoc;
+        blackKingLoc = lastPosition.blackKingLoc;
+
+        whiteCastled = lastPosition.whiteCastled;
+        whiteCanCastleLong = lastPosition.whiteCanCastleLong;
+        whiteCanCastleShort = lastPosition.whiteCanCastleShort;
+
+        blackCastled = lastPosition.blackCastled;
+        blackCanCastleLong = lastPosition.blackCanCastleLong;
+        blackCanCastleShort = lastPosition.blackCanCastleShort;
+
+        enPassantSquare = lastPosition.enPassantSquare;
+        timeSinceCaptureOrPawnPush = lastPosition.timeSinceCaptureOrPawnPush;
     }
 
     public static String convertMove(int[] move)
