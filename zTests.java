@@ -6,8 +6,8 @@ public class zTests
 {
     private static boolean runAll = false;
 
-    private static boolean runBench = false;
-    private static boolean runPerft = true;
+    private static boolean runBench = true;
+    private static boolean runPerft = false;
     private static boolean runFen = true;
     private static boolean runMirror = true;
     private static boolean runMakeUnmake = true;

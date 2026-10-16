@@ -490,7 +490,7 @@ public class Game
             // notation move (Nf3)
             else
             {
-                String cleanInput = rawInput.trim().replaceAll("[+#!?x]", "").replace('0', 'O'); // 0-0 works as O-O
+                String cleanInput = rawInput.trim().replaceAll("[+#!?x]", "").replace('0', 'O'); // 0-0 -> O-O
                 boolean hasPromotion = cleanInput.indexOf("=") != -1;
                 char[] promotionPieceList = {'q', 'r', 'n', 'b'};
                 int matches = 0;
@@ -506,16 +506,16 @@ public class Game
                         Board copyBoard = new Board(board); // fresh copy every try
                         copyBoard.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, false, promotionPieceList[i]);
                         String sanMove = copyBoard.getHistory().get(0).replaceAll("[+#!?x]", "");
-                        if (isPromotion && !hasPromotion) sanMove = sanMove.substring(0, sanMove.indexOf("=")); // e8 matches e8=Q then asks later
+                        if (isPromotion && !hasPromotion) sanMove = sanMove.substring(0, sanMove.indexOf("=")); // e8 asks later
 
                         if (!cleanInput.equalsIgnoreCase(sanMove)) continue;
 
-                        // exact case beats ignore case (bxc4 = pawn, Bxc4 = bishop)
+                        // exact case vs ignore case 
                         boolean exact = cleanInput.equals(sanMove);
                         if (exactMatch && !exact) continue;
-                        if (exact && !exactMatch) matches = 0;
+                        
+                        if (exact && !exactMatch) matches = 1;
                         exactMatch = exact;
-                        matches++;
 
                         piece = new int[]{move[0], move[1]};
                         loc = new int[]{move[2], move[3]};

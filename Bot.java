@@ -163,15 +163,24 @@ public class Bot
             Collections.swap(captures, highIndex, i);
 
             int[] capture = captures.get(i);
+            
+            int[] start = new int[]{capture[0], capture[1]};
+            int[] end = new int[]{capture[2], capture[3]};
 
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
             if (!promoting && standPat + board.getPiece(capture[2], capture[3]).value() + DELTA_MARGIN <= alpha) continue;
 
-            Board copy = new Board(board);
-            copy.applyMove(new int[]{capture[0], capture[1]}, new int[]{capture[2], capture[3]}, true, 'Q');
-            if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
+            Undo u = board.makeMove(start, end, 'Q');
+            if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn))
+            {
+                board.unMakeMove(start, end, u);
+                continue;
+            } 
 
-            int score = -quiescence(copy, !whiteTurn, -beta, -alpha);
+            int score = -quiescence(board, !whiteTurn, -beta, -alpha);
+
+            board.unMakeMove(start, end, u);
+
             if (score > best)
             {
                 best = score;
@@ -270,10 +279,13 @@ public class Bot
         {
             if (board.hasNonPawnMaterial(whiteTurn))
             {
-                Board nullCopy = new Board(board);
-                nullCopy.setEnPassantSquare(null);
-                int score = -negamax(nullCopy, maxDepth - 1 - NULL_MOVE_REDUCTION, !whiteTurn, -beta, -beta + 1, ply + 1, true);
-                
+                int[] undoEnPassant = board.getEnPassantSquare();
+                board.setEnPassantSquare(null);
+
+                int score = -negamax(board, maxDepth - 1 - NULL_MOVE_REDUCTION, !whiteTurn, -beta, -beta + 1, ply + 1, true);
+
+                board.setEnPassantSquare(undoEnPassant);
+
                 if (score >= beta) return beta;
             }
         }
@@ -325,41 +337,56 @@ public class Bot
             
 
             int[] move = moves.get(i); 
-            Board copy = new Board(board);
-            copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
-            if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
+
+            boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
+            boolean capture = board.getPiece(move[2], move[3]).isOccupied();
+
+            int[] start = new int[]{move[0], move[1]};
+            int[] end = new int[]{move[2], move[3]};
+
+            Undo u = board.makeMove(start, end, 'Q');
+            if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn))
+            {
+                board.unMakeMove(start, end, u);
+                continue;
+            }
             
             validMoves++;
             
-            boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
+            
 
             // futility pruning
             if (beta - alpha == 1 && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
             {
-                if (!Moves.inCheck(copy, copy.getKingLoc(!whiteTurn), !whiteTurn) && !promoting && !board.getPiece(move[2], move[3]).isOccupied())
+                if (!Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn) && !promoting && !capture)
                 {
-                    if (staticEval + FP_MARGIN * maxDepth <= alpha) continue;
+                    if (staticEval + FP_MARGIN * maxDepth <= alpha) 
+                    {
+                        board.unMakeMove(start, end, u);
+                        continue;
+                    }
                 }
             }
 
             // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
-            if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !board.getPiece(move[2], move[3]).isOccupied())
+
+            if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !capture)
             {
-                if (!Moves.inCheck(copy, copy.getKingLoc(!whiteTurn), !whiteTurn) && !promoting)
+                if (!Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn) && !promoting)
                 {
                     searched = true;
                     // reduced depth, null window
-                    score = -negamax(copy, maxDepth - 1 - LMR_REDUCTION, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                    score = -negamax(board, maxDepth - 1 - LMR_REDUCTION, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
                     if (score > alpha)
                     {
                         // full depth, null window
-                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                        score = -negamax(board, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
                         if (score > alpha && score < beta)
                         {
                             // full depth, full window
-                            score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                            score = -negamax(board, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
                         }
                     }
                 }
@@ -370,19 +397,21 @@ public class Bot
             {
                 if (validMoves == 1)
                 {
-                    score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                    score = -negamax(board, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
                 }
                 else
                 {
                     // full depth, null window
-                    score = -negamax(copy, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                    score = -negamax(board, maxDepth - 1, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
                     if (score > alpha && score < beta)
                     {
                         // full depth, full window
-                        score = -negamax(copy, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
+                        score = -negamax(board, maxDepth - 1, !whiteTurn, -beta, -alpha, ply + 1, false);
                     }
                 }
             }
+
+            board.unMakeMove(start, end, u);
 
             if (score > best)
             {
@@ -393,7 +422,7 @@ public class Bot
             // beta cutoff: save killer + history for quiet moves
             if (alpha >= beta)
             {
-                if (!board.getPiece(move[2], move[3]).isOccupied())
+                if (!capture)
                 {
                     if (!Arrays.equals(killerMoves[ply][0], move))
                     {
@@ -502,16 +531,23 @@ public class Bot
                 // root search loop
                 roots: for(int[] move : moves)
                 {
-                    Board copy = new Board(board);
-                    copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
-                    if (Moves.inCheck(copy, copy.getKingLoc(whiteTurn), whiteTurn)) continue;
+                    int[] start = new int[]{move[0], move[1]};
+                    int[] end = new int[]{move[2], move[3]};
+                    
+                    Undo u = board.makeMove(start, end, 'Q');
+                    if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn)) 
+                    {
+                        board.unMakeMove(start, end, u);
+                        continue;
+                    }
                     
                     if (bestMoveSoFar == null) bestMoveSoFar = move;
                     
-                    int score = -negamax(copy, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
-                    
+                    int score = -negamax(board, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
+                    board.unMakeMove(start, end, u);
+
                     if (timeUp) break;
-                    
+
                     // root scores display
                     depthScores.append(Board.convertMove(new int[]{move[0], move[1]}) + Board.convertMove(new int[]{move[2], move[3]}));
                     depthScores.append((!exactRootScores && score <= alpha && bestMoveSoFar != move)? " <= " : " = ");
