@@ -10,3 +10,4 @@
 | 5 | Oct 14 | History aging (halve instead of reset) | FP | SPRT [0, 10] | stopped after 3900 | −6 ± 9 | rejected |
 | 6 | Oct 14 | King safety v1 (pawn shield 12/6, open file −10/−20, middlegame only) | FP | SPRT [0, 10] | 1702 | +22.28 ± 14.13 | accepted |
 | 7 | Oct 14 | King safety v2 (attack zone, CPW weights N/B 20 R 40 Q 80) | KS v1 | SPRT [0, 10] | 3062 | −5.79 ± 10.72 | rejected |
+| 8 | Oct 15 | make/unmake |KS v1 | SPRT [0,10] | 828 | +37.91 ± 18.60 | accepted |
