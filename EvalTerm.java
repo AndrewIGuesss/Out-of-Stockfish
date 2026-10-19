@@ -2,6 +2,7 @@ public enum EvalTerm
 {
     MATERIAL("material"), 
     PIECE_SQUARES("piece squares"), 
+    PIECE_MOBILITY("piece mobility"),
     PASSED_PAWNS("passed pawns"), 
     DOUBLED_PAWNS("doubled pawns"), 
     ISOLATED_PAWNS("isolated pawns"), 

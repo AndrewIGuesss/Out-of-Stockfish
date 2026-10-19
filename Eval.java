@@ -12,6 +12,14 @@ public class Eval
     // piece square tables from whites view (row 0 is rank 8), black uses row 7 - row
     
     private static final int[] PASSED_PAWN_BONUS = {0, 10, 15, 25, 40, 60, 90, 0};
+
+    private static final int KNIGHT_MOBILITY_WEIGHT = 4;
+    private static final int BISHOP_MOBILITY_WEIGHT = 5;
+    private static final int ROOK_MOBILITY_WEIGHT_MIDGAME = 2;
+    private static final int ROOK_MOBILITY_WEIGHT_ENDGAME = 4;
+    private static final int QUEEN_MOBILITY_WEIGHT_MIDGAME = 1;
+    private static final int QUEEN_MOBILITY_WEIGHT_ENDGAME = 2;
+
     
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
@@ -131,12 +139,15 @@ public class Eval
 
         int whiteMaterialValue = 0; 
         int blackMaterialValue = 0;
+
         int whitePawnCount = 0;
         int blackPawnCount = 0;
         int whiteBishopCount = 0;
         int blackBishopCount = 0;
+
         int[] whiteKingLoc = board.getWhiteKingLoc();
         int[] blackKingLoc = board.getBlackKingLoc();
+
         int whiteMinorPiecesHome = 0;
         int blackMinorPiecesHome = 0;
         boolean whiteQueenMoved = false;
@@ -221,6 +232,10 @@ public class Eval
                     else if (currentPiece.getPiece() == 'N')
                     {
                         centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * KNIGHT_MOBILITY_WEIGHT;
+                        centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
+                        
                         phase += 1;
 
                              if (((row == 7 && col == 1) || (row == 7 && col == 6)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -229,6 +244,10 @@ public class Eval
                     else if (currentPiece.getPiece() == 'B') 
                     {
                         centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * BISHOP_MOBILITY_WEIGHT;
+                        centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
+                        
                         phase += 1;
 
                              if (((row == 7 && col == 2) || (row == 7 && col == 5)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -269,6 +288,11 @@ public class Eval
                     else if (currentPiece.getPiece() == 'R')
                     {
                         centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
+                        midGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * ROOK_MOBILITY_WEIGHT_MIDGAME * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * ROOK_MOBILITY_WEIGHT_ENDGAME * (currentPiece.isWhite()? 1 : -1);
+
                         phase += 2;
 
                         int forward = currentPiece.isWhite()? -1 : 1;
@@ -297,6 +321,11 @@ public class Eval
                     else if (currentPiece.getPiece() == 'Q')
                     {
                         centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
+                        midGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * QUEEN_MOBILITY_WEIGHT_MIDGAME * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * QUEEN_MOBILITY_WEIGHT_ENDGAME * (currentPiece.isWhite()? 1 : -1);
+                        
                         phase += 4;
 
                              if ((row != 7 || col != 3) && currentPiece.isWhite()) whiteQueenMoved = true;

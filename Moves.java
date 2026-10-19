@@ -2,23 +2,23 @@ import java.util.*;
 
 public class Moves 
 {
-    private static final int[] STRAIGHT_R = {1, -1,  0, 0};
-    private static final int[] STRAIGHT_C = {0,  0, -1, 1};
+    public static final int[] STRAIGHT_R = {1, -1,  0, 0};
+    public static final int[] STRAIGHT_C = {0,  0, -1, 1};
 
-    private static final int[] DIAG_R = {1, -1,  1, -1};
-    private static final int[] DIAG_C = {1, -1, -1,  1};
+    public static final int[] DIAG_R = {1, -1,  1, -1};
+    public static final int[] DIAG_C = {1, -1, -1,  1};
 
-    private static final int[] QUEEN_R = {1, -1,  0, 0, 1, -1,  1, -1};
-    private static final int[] QUEEN_C = {0,  0, -1, 1, 1, -1, -1,  1};
+    public static final int[] QUEEN_R = {1, -1,  0, 0, 1, -1,  1, -1};
+    public static final int[] QUEEN_C = {0,  0, -1, 1, 1, -1, -1,  1};
 
     // single step directions
-    private static final int[] KNIGHT_R = { 1, -1,  2, -2, 2, -2, -1, 1};
-    private static final int[] KNIGHT_C = {-2, -2, -1, -1, 1,  1,  2, 2};
+    public static final int[] KNIGHT_R = { 1, -1,  2, -2, 2, -2, -1, 1};
+    public static final int[] KNIGHT_C = {-2, -2, -1, -1, 1,  1,  2, 2};
 
-    private static final int[] KING_R = {1, -1,  1, -1, 1, -1, 0,  0};
-    private static final int[] KING_C = {1, -1, -1,  1, 0,  0, 1, -1};
+    public static final int[] KING_R = {1, -1,  1, -1, 1, -1, 0,  0};
+    public static final int[] KING_C = {1, -1, -1,  1, 0,  0, 1, -1};
 
-    private static final int[] PAWN_CAPTURE_C = {-1, 1};
+    public static final int[] PAWN_CAPTURE_C = {-1, 1};
 
     public static boolean[][] dirMoveScan(Board board, int[] square, int[] rDir, int[] cDir)
     {   
@@ -404,5 +404,34 @@ public class Moves
             }
         }
         return moves;
+    }
+
+    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, boolean slider)
+    {
+        int mobility = 0;
+        boolean isWhite = board.getPiece(row, col).isWhite();
+
+        int counter = 0;
+        for (int i = 0; i < rDir.length; i++)
+        {
+            counter = 0;
+            while (true)
+            {
+                counter++;
+                if (!board.inBounds(row + (counter * rDir[i]), col + (counter * cDir[i]))) break;
+                Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
+
+                if (scanPiece.isOccupied())
+                {
+                    if (scanPiece.isWhite() != isWhite) mobility++;
+                    break;
+                }
+                else mobility++;
+
+                if (!slider) break;
+            }
+        }
+
+        return mobility;
     }
 }
