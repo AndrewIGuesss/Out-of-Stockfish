@@ -1,12 +1,8 @@
 /*
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
-    King safety upgrade           2-3 hr      +50-100      eval
-    UCI                           3-4 hr      n/a          testing
-    Make/unmake + inc. Zobrist    6-10 hr     +50-80       speed
     Show PV                       45 min      n/a          QOL/debug
     Small eval terms              1 hr        +20-40       eval
-    Futility + reverse futility   1 hr        +20-40       speed
     SEE                           2 hr        +15-30       speed
     Time management               1 hr        +10-30       strength
     Small opening book            1 hr        +10-30       strength
@@ -20,7 +16,7 @@
     Perft command                 15 min      n/a          QOL
     Bench command                 20 min      n/a          QOL
 
-    small eval terms = bishop pair, rooks on open files, mobility
+    small eval terms = bishop pair, rooks on open files
 */
 
 import java.io.IOException;
