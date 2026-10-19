@@ -290,8 +290,8 @@ public class Eval
                         centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
-                        midGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * ROOK_MOBILITY_WEIGHT_MIDGAME * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * ROOK_MOBILITY_WEIGHT_ENDGAME * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
 
                         phase += 2;
 
@@ -323,8 +323,8 @@ public class Eval
                         centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
-                        midGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * QUEEN_MOBILITY_WEIGHT_MIDGAME * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * QUEEN_MOBILITY_WEIGHT_ENDGAME * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         
                         phase += 4;
 
