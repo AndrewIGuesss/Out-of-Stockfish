@@ -14,18 +14,26 @@ public class Bot
 
     private static final int TT_MOVE_SCORE = 5000000;
     private static final int CAPTURE_BASE = 1000000;
+
     private static final int KILLER_1 = 900000;
     private static final int KILLER_2 = 800000;
     private static final int HISTORY_MAX = 799999;
+
     private static final int MAX_PLY = 64;
     private static final int KILLER_SLOTS = 2;
     private static final int SQUARES = 64;
     private static final int QUEEN_VALUE = 900;
 
     private static final int NULL_MOVE_REDUCTION = 2;
+
     private static final int LMR_REDUCTION = 1;
+    
+    private static final int LMP_MAX_DEPTH = 3;
+    private static final int LMP_BASE = 3; 
+    
     private static final int RFP_CENTIPAWNS_PER_DEPTH = 90;
     private static final int RFP_MAX_DEPTH = 6;
+
     private static final int FP_MAX_DEPTH = 3;
     private static final int FP_MARGIN = 125;
 
@@ -370,13 +378,23 @@ public class Bot
             }
             
             validMoves++;
-            
-            
+
+            // can only be true for quiet moves
+            boolean givesCheck = !inCheck && !capture && !promoting && validMoves > 1 && Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn);
+
+            if (beta - alpha == 1 && !inCheck && maxDepth <= LMP_MAX_DEPTH && !capture && !promoting && Math.abs(alpha) < MATE - 1000)
+            {
+                if (validMoves > LMP_BASE + maxDepth * maxDepth && !givesCheck)
+                {
+                    board.unMakeMove(start, end, u);
+                    continue;
+                }
+            }
 
             // futility pruning
             if (beta - alpha == 1 && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
             {
-                if (!Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn) && !promoting && !capture)
+                if (!givesCheck && !promoting && !capture)
                 {
                     if (staticEval + FP_MARGIN * maxDepth <= alpha) 
                     {
@@ -392,7 +410,7 @@ public class Bot
 
             if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !capture)
             {
-                if (!Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn) && !promoting)
+                if (!givesCheck && !promoting)
                 {
                     searched = true;
                     // reduced depth, null window

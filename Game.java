@@ -2,17 +2,11 @@
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
 
-    -- now: quick wins, correctness, tooling --
-
-    -- next: best elo per hour --
-    Late move pruning (LMP)       1 hr        +10-25       strength
     LMR table (log formula)       1-2 hr      +10-30       strength
     Pawn precompute               1-2 hr      +5-15        speed
     Time management               1 hr        +10-30       strength
     SEE                           2 hr        +15-30       strength
     Mobility v2 (pawn attacks)    1 hr        +5-15        eval
-
-    -- after that --
     Threats                       2 hr        +5-15        eval
     Passed pawns v2               2 hr        +5-15        eval
     Outposts                      1-2 hr      +0-10        eval
@@ -26,7 +20,7 @@
     KS attack zone retry          1 hr        +0-10        eval
     Space                         1-2 hr      +0-5         eval
 
-    -- whenever: breaks, no SPRT needed --
+    -- whenever --
     Show PV                       45 min      n/a          QOL/debug
     Test script (copy->SPRT)      1 hr        n/a          QOL
     Bench command                 20 min      n/a          QOL
