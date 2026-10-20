@@ -101,8 +101,11 @@ public class UI
         "reset - resets the board and wipes board data\n" +
         "clear - clears all pieces but the kings off the board\n" +
         "add - adds a user difined piece to the board\n" +
-        "cmds - shows all debug commands\n" +
+        "fen - imports a position from a FEN\n" +
+        "make fen - prints the current position as a FEN\n" +
         "save history - saves the game's history to History.txt\n" +
+        "ff - resigns for the side to move\n" +
+        "cmds - shows all debug commands\n" +
         "\n" +
         "list of all bot commands\n" +
         "---------------------------\n" +
@@ -110,9 +113,56 @@ public class UI
         "bot depth - changes the depth the bot searches at\n" +
         "bot toggle - makes the bot to play for a selected side\n" +
         "bot game - makes the bot play both sides\n" +
-        "bot time limit - changes how long the bot can think per move (in ms)\n" + 
-        "bot roots - shows the evaluation for all of the previous root moves";
+        "bot time limit - changes how long the bot can think per move (in ms)\n" +
+        "bot roots - shows the evaluation for all of the previous root moves\n" +
+        "\n" +
+        "list of all display toggles\n" +
+        "---------------------------\n" +
+        "show - lists every toggle and if it is on or off\n" +
+        "flip - flips the board\n" +
+        "icons - switches between piece icons and characters\n" +
+        "highlight - highlights the previous move\n" +
+        "colors - switches to console safe colors\n" +
+        "notation - switches between standard and expanded notation\n" +
+        "breakdown - shows the eval breakdown\n" +
+        "show bot menu / show debug menu - shows or hides each debug section\n" +
+        "show pv / show time limit / show move time / show self eval / show depth / show nodes - bot section lines\n" +
+        "show eval / show turn / show legal moves / show game length - debug section lines\n" +
+        "show white moves / show black moves / show piece moves - debug section lines";
     }
+
+    public static String toggleList()
+    {
+        return
+        "board / display\n" +
+        "  flip (black on bottom) [" + (Settings.blackOnBottom? "ON" : "OFF") + "]\n" +
+        "  icons [" + (Settings.usePieceIcons? "ON" : "OFF") + "]\n" +
+        "  highlight [" + (Settings.highlightPreviousMove? "ON" : "OFF") + "]\n" +
+        "  colors [" + (Settings.safeColors? "ON" : "OFF") + "]\n" +
+        "  notation [" + (Settings.bigNotation? "ON" : "OFF") + "]\n" +
+        "debug menu\n" +
+        "  toggle (whole debug menu) [" + (Settings.debugMenu? "ON" : "OFF") + "]\n" +
+        "  show bot menu [" + (Settings.showBotDebugMenu? "ON" : "OFF") + "]\n" +
+        "  show debug menu [" + (Settings.showStandardDebugMenu? "ON" : "OFF") + "]\n" +
+        "bot section\n" +
+        "  bot roots [" + (Settings.showBotRootScores? "ON" : "OFF") + "]\n" +
+        "  show pv [" + (Settings.showBotPV? "ON" : "OFF") + "]\n" +
+        "  show time limit [" + (Settings.showBotTimeLimit? "ON" : "OFF") + "]\n" +
+        "  show move time [" + (Settings.showBotMoveTime? "ON" : "OFF") + "]\n" +
+        "  show self eval [" + (Settings.showBotSelfEval? "ON" : "OFF") + "]\n" +
+        "  show depth [" + (Settings.showBotDepthReached? "ON" : "OFF") + "]\n" +
+        "  show nodes [" + (Settings.showBotMovesAnalysed? "ON" : "OFF") + "]\n" +
+        "debug section\n" +
+        "  show eval [" + (Settings.showEval? "ON" : "OFF") + "]\n" +
+        "  breakdown [" + (Settings.showEvalBreakDown? "ON" : "OFF") + "]\n" +
+        "  show turn [" + (Settings.showTurnIndicator? "ON" : "OFF") + "]\n" +
+        "  show legal moves [" + (Settings.showLegalMoves? "ON" : "OFF") + "]\n" +
+        "  show game length [" + (Settings.showGameLength? "ON" : "OFF") + "]\n" +
+        "  show white moves [" + (Settings.showWhiteHasValidMoves? "ON" : "OFF") + "]\n" +
+        "  show black moves [" + (Settings.showBlackHasValidMoves? "ON" : "OFF") + "]\n" +
+        "  show piece moves [" + (Settings.showPieceLegalMoves? "ON" : "OFF") + "]";
+    }
+
     
 
     public static String captureList(List<Piece> captures)
@@ -204,6 +254,7 @@ public class UI
         {
             System.out.println("---- bot ----");
             if (Settings.showBotRootScores) System.out.println((Game.botPlayedLastMove)? "roots: " + Bot.rootScores : "roots: N/A");
+            if (Settings.showBotPV) System.out.println((Game.botPlayedLastMove)? "pv: " + Bot.pv : "pv: N/A");
             if (Settings.showBotTimeLimit) System.out.println("bot time limit: " + Settings.botSearchTimeLimit  + "ms (" + (Settings.botSearchTimeLimit / 1000.0) + "s)");
             if (Settings.showBotMoveTime) System.out.println((Game.botPlayedLastMove)? "bot took: " + Game.botMoveTimeMs + "ms (" + (Game.botMoveTimeMs / 1000.0) + "s)" : "bot took: N/A");
             if (Settings.showBotSelfEval) 

@@ -8,8 +8,6 @@ public class Board
     
     private int[] enPassantSquare; // for en passant captures
 
-    private boolean bigNotation = Settings.bigNotation;
-
     private int moveOffSet = 1;
     private boolean blackStarted = false;
     
@@ -377,7 +375,7 @@ public class Board
         
         if (!test) 
         {
-            history.add((bigNotation)? convertMove(start) + " > " + convertMove(end) : move.toString() ); // standard chess notation and square to square
+            history.add((Settings.bigNotation)? convertMove(start) + " > " + convertMove(end) : move.toString() ); // standard chess notation and square to square
         }
     }
 

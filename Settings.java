@@ -26,6 +26,7 @@ public class Settings
         public static boolean showBotDebugMenu = true;
 
         public static boolean showBotRootScores = false;
+        public static boolean showBotPV = true;
         public static boolean showBotTimeLimit = false;
         public static boolean showBotMoveTime = true;
         public static boolean showBotSelfEval = true;
@@ -33,7 +34,7 @@ public class Settings
         public static boolean showBotMovesAnalysed = true;
 
         // debug menu toggles
-        public static boolean showStandardDebugMenu = true;
+        public static boolean showStandardDebugMenu = false;
 
         public static boolean showEval = false;
         public static boolean showEvalBreakDown = false;

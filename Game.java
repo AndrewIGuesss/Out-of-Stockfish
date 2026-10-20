@@ -472,6 +472,119 @@ public class Game
                         debugMsg = "bots roots [" + (Settings.showBotRootScores? "shown]" : "hidden]");
                         break;
                     }
+                    case "show":
+                    {
+                        debugMsg = UI.toggleList();
+                        break;
+                    }
+                    case "show bot menu":
+                    {
+                        Settings.showBotDebugMenu = !Settings.showBotDebugMenu;
+                        debugMsg = "bot debug menu [" + (Settings.showBotDebugMenu? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show pv":
+                    {
+                        Settings.showBotPV = !Settings.showBotPV;
+                        debugMsg = "bot pv [" + (Settings.showBotPV? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show time limit":
+                    {
+                        Settings.showBotTimeLimit = !Settings.showBotTimeLimit;
+                        debugMsg = "bot time limit [" + (Settings.showBotTimeLimit? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show move time":
+                    {
+                        Settings.showBotMoveTime = !Settings.showBotMoveTime;
+                        debugMsg = "bot move time [" + (Settings.showBotMoveTime? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show self eval":
+                    {
+                        Settings.showBotSelfEval = !Settings.showBotSelfEval;
+                        debugMsg = "bot self eval [" + (Settings.showBotSelfEval? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show depth":
+                    {
+                        Settings.showBotDepthReached = !Settings.showBotDepthReached;
+                        debugMsg = "bot depth reached [" + (Settings.showBotDepthReached? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show nodes":
+                    {
+                        Settings.showBotMovesAnalysed = !Settings.showBotMovesAnalysed;
+                        debugMsg = "bot moves analysed [" + (Settings.showBotMovesAnalysed? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show debug menu":
+                    {
+                        Settings.showStandardDebugMenu = !Settings.showStandardDebugMenu;
+                        debugMsg = "standard debug menu [" + (Settings.showStandardDebugMenu? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show eval":
+                    {
+                        Settings.showEval = !Settings.showEval;
+                        debugMsg = "eval [" + (Settings.showEval? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show turn":
+                    {
+                        Settings.showTurnIndicator = !Settings.showTurnIndicator;
+                        debugMsg = "turn indicator [" + (Settings.showTurnIndicator? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show legal moves":
+                    {
+                        Settings.showLegalMoves = !Settings.showLegalMoves;
+                        debugMsg = "legal move count [" + (Settings.showLegalMoves? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show game length":
+                    {
+                        Settings.showGameLength = !Settings.showGameLength;
+                        debugMsg = "game length [" + (Settings.showGameLength? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show white moves":
+                    {
+                        Settings.showWhiteHasValidMoves = !Settings.showWhiteHasValidMoves;
+                        debugMsg = "white has moves [" + (Settings.showWhiteHasValidMoves? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show black moves":
+                    {
+                        Settings.showBlackHasValidMoves = !Settings.showBlackHasValidMoves;
+                        debugMsg = "black has moves [" + (Settings.showBlackHasValidMoves? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "show piece moves":
+                    {
+                        Settings.showPieceLegalMoves = !Settings.showPieceLegalMoves;
+                        debugMsg = "selected piece legal moves [" + (Settings.showPieceLegalMoves? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "highlight":
+                    {
+                        Settings.highlightPreviousMove = !Settings.highlightPreviousMove;
+                        debugMsg = "highlight previous move [" + (Settings.highlightPreviousMove? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "colors":
+                    {
+                        Settings.safeColors = !Settings.safeColors;
+                        debugMsg = "safe colors [" + (Settings.safeColors? "ON]" : "OFF]");
+                        break;
+                    }
+                    case "notation":
+                    {
+                        Settings.bigNotation = !Settings.bigNotation;
+                        debugMsg = "expanded notation [" + (Settings.bigNotation? "ON]" : "OFF]");
+                        break;
+                    }
                 }
                 if (!debugMsg.equals("")) { clear(); continue; }
             }

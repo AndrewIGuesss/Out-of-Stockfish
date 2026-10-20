@@ -7,6 +7,7 @@ public class UCI
     public static Board uciBoard = null;    
     public static void main(String[] args) 
     {
+        Bot.uciMode = true;
         Scanner reader = new Scanner(System.in);
         while (reader.hasNextLine())
         {

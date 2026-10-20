@@ -6,6 +6,7 @@ import java.util.List;
 public class Bot 
 {
     public static volatile boolean stopThinking = false;
+    public static boolean uciMode = false;
 
     public static final int MATE = 123456789;
     private static final int INFINITY = 1234567890;
@@ -41,6 +42,7 @@ public class Bot
     private static final int TEMPO_BONUS = 15;
     private static final int DELTA_MARGIN = 200; // delta pruning
     private static final int WINDOW = 35;
+    public static String pv;
     public static String rootScores = "";
     public static boolean exactRootScores = false; // true = exact root score (slower)
 
@@ -60,6 +62,73 @@ public class Bot
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
     
+    public static String getPV(Board board, int length, boolean whiteTurn)
+    {
+        List<int[]> pvMoves = new ArrayList<>();
+        List<Undo> undos = new ArrayList<>();
+        List<Long> hashs = new ArrayList<>();
+        StringBuilder pv = new StringBuilder();
+
+        pv: while (pvMoves.size() < length)
+        {
+            long newHash = Zobrist.makeZobristHash(board, whiteTurn);
+            int index = (int)(newHash & (TTEntry.TT_SIZE - 1));
+            TTEntry entry = TTEntry.ttTable[index];
+
+            if (entry == null || entry.key() != newHash) break pv;
+
+            int[] ttMove = entry.bestmove();
+
+            if (ttMove == null) break pv;
+
+            int[] start = new int[]{ttMove[0], ttMove[1]};
+            int[] end = new int[]{ttMove[2], ttMove[3]};
+            
+            List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+            boolean legal = false;
+
+            
+            for (int i = 0; i < moves.size(); i++)
+            {
+                if (Arrays.equals(ttMove, moves.get(i)))
+                {
+                    legal = true;
+                    break;
+                }
+            }
+            if (!legal) break pv;
+
+            String move = Board.convertMove(start) + Board.convertMove(end);
+            if (board.getPiece(start).getPiece() == 'P' && (end[0] == 0 || end[0] == 7)) move += ("q");
+
+            Undo u = board.makeMove(start, end, 'q');
+            if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn))
+            {
+                board.unMakeMove(start, end, u);
+                break pv;
+            }
+            else undos.add(u);
+
+            pv.append(move + " ");
+            pvMoves.add(ttMove);
+
+            if (hashs.contains(newHash)) break pv;
+            hashs.add(newHash);
+            whiteTurn = !whiteTurn;
+        }
+
+
+        for (int i = pvMoves.size() - 1; i >= 0; i--)
+        {
+            int[] move = pvMoves.get(i);
+            int[] start = new int[]{move[0], move[1]};
+            int[] end = new int[]{move[2], move[3]};
+
+            board.unMakeMove(start, end, undos.get(i));
+        }
+        return pv.toString().trim();
+    }
+
     public static boolean isCapture(Board board, int[] move)
     {
         int[] ep = board.getEnPassantSquare();
@@ -579,7 +648,7 @@ public class Bot
                     }
                     
                     if (bestMoveSoFar == null) bestMoveSoFar = move;
-                    
+
                     int score = -negamax(board, depth - 1, !whiteTurn, -beta, -alpha, 1, false);
                     board.unMakeMove(start, end, u);
 
@@ -621,6 +690,19 @@ public class Bot
             
             // depth finished: save results, best move first for next depth
             rootScores = "root scores (depth " + depth + "):\n" + depthScores;
+            
+            int[] pvStart = new int[]{bestMoveSoFar[0], bestMoveSoFar[1]};
+            int[] pvEnd = new int[]{bestMoveSoFar[2], bestMoveSoFar[3]};
+
+            pv = Board.convertMove(pvStart) + Board.convertMove(pvEnd);
+            if (board.getPiece(pvStart).getPiece() == 'P' && (pvEnd[0] == 0 || pvEnd[0] == 7)) pv += "q";
+            
+
+            Undo u = board.makeMove(pvStart, pvEnd, 'Q');
+            pv += " " + getPV(board, depth - 1, !whiteTurn);
+            board.unMakeMove(pvStart, pvEnd, u);
+            if (uciMode) System.out.printf("info depth %d score cp %d nodes %d time %d pv %s%n", depth, bestScoreSoFar, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+
             previousScore = bestScoreSoFar;
             moves.remove(bestMoveSoFar);
             moves.add(0, bestMoveSoFar);
