@@ -28,8 +28,9 @@ public class Bot
 
     private static final int LMR_REDUCTION = 1;
     
-    private static final int LMP_MAX_DEPTH = 3;
-    private static final int LMP_BASE = 3; 
+    private static final int LMP_MAX_DEPTH = 2;
+    private static final int LMP_MULTIPLIER = 4;
+    private static final int LMP_BASE = 12; 
     
     private static final int RFP_CENTIPAWNS_PER_DEPTH = 90;
     private static final int RFP_MAX_DEPTH = 6;
@@ -384,7 +385,7 @@ public class Bot
 
             if (beta - alpha == 1 && !inCheck && maxDepth <= LMP_MAX_DEPTH && !capture && !promoting && Math.abs(alpha) < MATE - 1000)
             {
-                if (validMoves > LMP_BASE + maxDepth * maxDepth && !givesCheck)
+                if (validMoves > LMP_BASE + LMP_MULTIPLIER * maxDepth * maxDepth && !givesCheck)
                 {
                     board.unMakeMove(start, end, u);
                     continue;
