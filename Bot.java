@@ -51,16 +51,30 @@ public class Bot
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
     
+    public static boolean isCapture(Board board, int[] move)
+    {
+        int[] ep = board.getEnPassantSquare();
+        if (board.getPiece(move[2], move[3]).isOccupied()) return true;
+        if (board.getPiece(move[0], move[1]).getPiece() == 'P' && ep != null && ep[0] == move[2] && ep[1] == move[3]) return true;
+        return false;
+    }
+
     public static int orderScore (Board board, int[] move, int ply)
     {
         // MVV-LVA = most valuable victim, least valuable attacker
         int victimValue;
         int attackerValue = board.getPiece(move[0], move[1]).value();
         if (board.getPiece(move[0], move[1]).getPiece() == 'K') attackerValue = 50;
+        
+        boolean isPromotion = (move[2] == 7 || move[2] == 0) && board.getPiece(move[0], move[1]).getPiece() == 'P';
 
-        if (board.getPiece(move[2], move[3]).isOccupied()) 
+        if (isCapture(board, move) || isPromotion) 
         {
             victimValue = board.getPiece(move[2], move[3]).value();
+
+            int[] ep = board.getEnPassantSquare();
+            if (board.getEnPassantSquare() != null && ep[0] == move[2] && ep[1] == move[3]) victimValue = 100;
+            if (isPromotion && board.getPiece(move[0], move[1]).getPiece() == 'P') victimValue += 900;
             return CAPTURE_BASE + victimValue * 10 - attackerValue; 
         }
 
@@ -166,9 +180,13 @@ public class Bot
             
             int[] start = new int[]{capture[0], capture[1]};
             int[] end = new int[]{capture[2], capture[3]};
-
+            
+            int[] ep = board.getEnPassantSquare();
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
-            if (!promoting && standPat + board.getPiece(capture[2], capture[3]).value() + DELTA_MARGIN <= alpha) continue;
+
+            int value = Arrays.equals(end, ep)? 100 : board.getPiece(capture[2], capture[3]).value();
+
+            if (!promoting && standPat + value + DELTA_MARGIN <= alpha) continue;
 
             Undo u = board.makeMove(start, end, 'Q');
             if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn))
@@ -339,7 +357,7 @@ public class Bot
             int[] move = moves.get(i); 
 
             boolean promoting = board.getPiece(move[0], move[1]).getPiece() == 'P' && (move[2] == 7 || move[2] == 0);
-            boolean capture = board.getPiece(move[2], move[3]).isOccupied();
+            boolean capture = isCapture(board, move);
 
             int[] start = new int[]{move[0], move[1]};
             int[] end = new int[]{move[2], move[3]};
@@ -422,7 +440,7 @@ public class Bot
             // beta cutoff: save killer + history for quiet moves
             if (alpha >= beta)
             {
-                if (!capture)
+                if (!capture && !promoting)
                 {
                     if (!Arrays.equals(killerMoves[ply][0], move))
                     {

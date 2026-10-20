@@ -3,9 +3,6 @@
     TASK                          TIME        ELO          TYPE
 
     -- now: quick wins, correctness, tooling --
-    Underpromotions               30 min      n/a          rules
-    Zobrist ep key                30 min      +0-3         strength
-    Qsearch ep + promotions       1 hr        +0-5         strength
 
     -- next: best elo per hour --
     Late move pruning (LMP)       1 hr        +10-25       strength
