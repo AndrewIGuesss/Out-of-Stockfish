@@ -1,22 +1,48 @@
 /*
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
-    Show PV                       45 min      n/a          QOL/debug
-    Small eval terms              1 hr        +20-40       eval
-    SEE                           2 hr        +15-30       speed
-    Time management               1 hr        +10-30       strength
-    Small opening book            1 hr        +10-30       strength
-    Undo / takeback               1-2 hr      n/a          QOL
-    Lazy SMP                      4-6 hr      +40-80       speed
+
+    -- now: quick wins, correctness, tooling --
     Underpromotions               30 min      n/a          rules
+    Zobrist ep key                30 min      +0-3         strength
+    Qsearch ep + promotions       1 hr        +0-5         strength
+
+    -- next: best elo per hour --
+    Late move pruning (LMP)       1 hr        +10-25       strength
+    LMR table (log formula)       1-2 hr      +10-30       strength
+    Pawn precompute               1-2 hr      +5-15        speed
+    Time management               1 hr        +10-30       strength
+    SEE                           2 hr        +15-30       strength
+    Mobility v2 (pawn attacks)    1 hr        +5-15        eval
+
+    -- after that --
+    Threats                       2 hr        +5-15        eval
+    Passed pawns v2               2 hr        +5-15        eval
+    Outposts                      1-2 hr      +0-10        eval
+    Countermove heuristic         1 hr        +0-10        strength
+    Allocation-free movegen       4-8 hr      +10-30       speed
+    Texel tuning                  6-10 hr     +30-80       eval
+    RFP/FP margin tuning          1 hr+SPRTs  +0-15        strength
+
+    -- later / big --
+    Lazy SMP                      4-6 hr      +40-80*      speed
+    KS attack zone retry          1 hr        +0-10        eval
+    Space                         1-2 hr      +0-5         eval
+
+    -- whenever: breaks, no SPRT needed --
+    Show PV                       45 min      n/a          QOL/debug
+    Test script (copy->SPRT)      1 hr        n/a          QOL
+    Bench command                 20 min      n/a          QOL
+    Perft command                 15 min      n/a          QOL
+    Undo / takeback               1-2 hr      n/a          QOL
     Analysis mode                 30 min      n/a          QOL
-    Hint command                  10 min      n/a          QOL
     PGN import                    1-2 hr      n/a          QOL
     Bot stats in PGN setting      30 min      n/a          QOL
-    Perft command                 15 min      n/a          QOL
-    Bench command                 20 min      n/a          QOL
+    Opening book (lichess-bot)    15 min      n/a          QOL
+    UCI options (hash etc.)       1 hr        n/a          QOL
+    README                        1 hr        n/a          QOL
 
-    small eval terms = bishop pair, rooks on open files
+    * lazy SMP only gains on lichess with spare cores, not in SPRTs (concurrency 7 already uses them)
 */
 
 import java.io.IOException;

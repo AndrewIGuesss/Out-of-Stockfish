@@ -7,6 +7,7 @@ public class Zobrist
     public static final long[][] zobristPieceKeys = new long[12][64];
     public static final long zobristWhiteTurn = rng.nextLong();
     public static final long[] zobristCanCastle = new long[4];
+    public static final long[] zobristEnPassantCol = new long[8];
 
     static
     {
@@ -20,6 +21,10 @@ public class Zobrist
         for (int i = 0; i < zobristCanCastle.length; i++)
         {
             zobristCanCastle[i] = rng.nextLong();
+        }
+        for (int i = 0; i < zobristEnPassantCol.length; i++)
+        {
+            zobristEnPassantCol[i] = rng.nextLong();
         }
     }
 
@@ -42,6 +47,9 @@ public class Zobrist
         if (board.whiteCanCastleShort) zobristHash ^=  zobristCanCastle[1];
         if (board.blackCanCastleShort) zobristHash ^= zobristCanCastle[2];
         if (board.blackCanCastleLong) zobristHash ^= zobristCanCastle[3];
+
+        int[] enPassantSquare = board.getEnPassantSquare();
+        if (enPassantSquare != null) zobristHash ^= zobristEnPassantCol[enPassantSquare[1]];
         return zobristHash;
     }
 }
