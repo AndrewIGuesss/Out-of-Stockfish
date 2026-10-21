@@ -28,7 +28,10 @@ public class Bot
     private static final int NULL_MOVE_REDUCTION = 2;
 
     private static final int LMR_REDUCTION = 1;
-    
+    private static int[][] LMR_TABLE = new int[64][64];
+    private static double LMR_BASE = 0.75;
+    private static double LMR_DIVISOR = 2.25;
+
     private static final int LMP_MAX_DEPTH = 2;
     private static final int LMP_MULTIPLIER = 4;
     private static final int LMP_BASE = 12; 
@@ -62,6 +65,18 @@ public class Bot
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
     
+    static 
+    {
+        for (int depth = 1; depth < LMR_TABLE.length; depth++)
+        {
+            for (int moveNumber = 1; moveNumber < LMR_TABLE[depth].length; moveNumber++)
+            {
+                LMR_TABLE[depth][moveNumber] = (int)(LMR_BASE + Math.log(depth) * Math.log(moveNumber) / LMR_DIVISOR);
+            }
+        }
+    }
+
+
     public static String getPV(Board board, int length, boolean whiteTurn)
     {
         List<int[]> pvMoves = new ArrayList<>();
@@ -72,6 +87,8 @@ public class Bot
         pv: while (pvMoves.size() < length)
         {
             long newHash = Zobrist.makeZobristHash(board, whiteTurn);
+            if (Game.repetition.containsKey(newHash) || hashs.contains(newHash)) break pv;
+            hashs.add(newHash);
             int index = (int)(newHash & (TTEntry.TT_SIZE - 1));
             TTEntry entry = TTEntry.ttTable[index];
 
@@ -112,8 +129,6 @@ public class Bot
             pv.append(move + " ");
             pvMoves.add(ttMove);
 
-            if (hashs.contains(newHash)) break pv;
-            hashs.add(newHash);
             whiteTurn = !whiteTurn;
         }
 
@@ -477,14 +492,15 @@ public class Bot
             // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
-
+            int reduction = LMR_TABLE[Math.min(maxDepth, 63)][Math.min(validMoves, 63)];
+            
             if (validMoves > 4 && maxDepth >= 3 && !Arrays.equals(killerMoves[ply][0], move) && !inCheck && !capture)
             {
-                if (!givesCheck && !promoting)
+                if (!givesCheck && !promoting && reduction != 0)
                 {
                     searched = true;
                     // reduced depth, null window
-                    score = -negamax(board, maxDepth - 1 - LMR_REDUCTION, !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
+                    score = -negamax(board, Math.max(maxDepth - 1 - reduction, 1), !whiteTurn, -alpha - 1, -alpha, ply + 1, false);
                     if (score > alpha)
                     {
                         // full depth, null window
