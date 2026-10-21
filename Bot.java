@@ -87,8 +87,11 @@ public class Bot
         pv: while (pvMoves.size() < length)
         {
             long newHash = Zobrist.makeZobristHash(board, whiteTurn);
+            
+            if (board.getTimeSinceCaptureOrPawnPush() >= 100) break pv;
             if (Game.repetition.containsKey(newHash) || hashs.contains(newHash)) break pv;
             hashs.add(newHash);
+
             int index = (int)(newHash & (TTEntry.TT_SIZE - 1));
             TTEntry entry = TTEntry.ttTable[index];
 
