@@ -99,10 +99,9 @@ public class Board
     public List<String> getLegalMoves() { return legalMoves; };
     
     // debug seters
-    public void addPiece(char piece, int[] cords, boolean isWhite) 
-    { playerBoard[cords[0]][cords[1]] = Piece.get(isWhite, piece); }
-    public void addPiece(int[] cords)
-    { playerBoard[cords[0]][cords[1]] = Piece.EMPTY; }
+    public void addPiece(Piece piece, int[] cords) { playerBoard[cords[0]][cords[1]] = piece; }
+    public void addPiece(char piece, int[] cords, boolean isWhite) { playerBoard[cords[0]][cords[1]] = Piece.get(isWhite, piece); }
+    public void addPiece(int[] cords) { playerBoard[cords[0]][cords[1]] = Piece.EMPTY; }
     
     public void difine()
     {

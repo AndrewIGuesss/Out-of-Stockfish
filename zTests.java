@@ -11,6 +11,7 @@ public class zTests
     private static boolean runFen = true;
     private static boolean runMirror = true;
     private static boolean runMakeUnmake = true;
+    private static boolean runSee = true;
 
     public static final String PASS   = "\u001B[1;32mPASS\u001B[0m";
     public static final String PASSED = "\u001B[1;32mPASSED\u001B[0m";
@@ -44,6 +45,11 @@ public class zTests
         {
             String makeUnmakeResult = Arrays.toString(zzMakeUnmake.runMakeUnmake().toArray()).replace("[", "").replace("]", "");
             tests.add(new String[]{"Make/unmake", makeUnmakeResult});
+        }
+        if (runSee || runAll)
+        {
+            String seeResult = Arrays.toString(zzSee.runSee().toArray()).replace("[", "").replace("]", "");
+            tests.add(new String[]{"SEE", seeResult});
         }
         System.out.println("\n\n-----Summary-----");
         if (runBench || runAll) System.out.printf("bench nodes: %s%n", benchNodes);

@@ -253,7 +253,6 @@ public class Bot
                 captureCount++;
             }
         }
-        // captures.sort((a, b) -> Integer.compare(orderScore(board, b, -1), orderScore(board, a, -1)));
         
         // search captures
         for (int i = 0; i < captures.size(); i++)
@@ -281,6 +280,8 @@ public class Bot
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
 
             int value = Arrays.equals(end, ep)? 100 : board.getPiece(capture[2], capture[3]).value();
+
+            if (!promoting && Moves.see(board, capture) < 0) continue;
 
             if (!promoting && standPat + value + DELTA_MARGIN <= alpha) continue;
 
@@ -415,7 +416,6 @@ public class Bot
             scores[i] = orderScore(board, moves.get(i), ply);
         }
 
-        // moves.sort((a, b) -> Integer.compare(orderScore(board, b, ply), orderScore(board, a, ply)));
         
         // try TT move first
         if (ttMove != null)

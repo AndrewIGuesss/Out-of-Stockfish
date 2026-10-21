@@ -434,4 +434,135 @@ public class Moves
 
         return mobility;
     }
+
+    public static int see(Board board, int[] move)
+    {
+        boolean isEnPassant = move[1] != move[3] && board.getPiece(move[0], move[1]).getPiece() == 'P' && board.getPiece(move[2], move[3]) == Piece.EMPTY;
+        int[] gain = new int[32];
+        List<Piece> removedPieces = new ArrayList<>();
+        List<int[]> removedLocations = new ArrayList<>();
+        boolean whiteTurn = board.getPiece(move[0], move[1]).isWhite();
+
+        Piece movingPiece = board.getPiece(move[0], move[1]);
+        Piece pieceOnSquare = movingPiece;
+        
+        Piece epPiece = null;
+        int[] epSquare = null;
+
+        if (isEnPassant) 
+        {
+            gain[0] = 100;
+            epPiece = board.getPiece(move[0], move[3]);
+            epSquare = new int[]{move[0], move[3]};
+            board.addPiece(new int[]{move[0], move[3]});
+        }
+        else 
+        {
+            gain[0] = board.getPiece(move[2], move[3]).value();
+        }
+        board.addPiece(new int[]{move[0], move[1]});
+        
+        while (true) 
+        {
+            int[] attcker = leastValuableAttacker(board, new int[]{move[2], move[3]}, !whiteTurn);
+            if (attcker == null) break;
+
+            removedPieces.add(board.getPiece(attcker));
+            removedLocations.add(attcker);
+            gain[removedPieces.size()] = pieceOnSquare.value() - gain[removedPieces.size() - 1];
+            
+            pieceOnSquare = board.getPiece(attcker);
+            board.addPiece(attcker);
+            whiteTurn = !whiteTurn;
+        }
+
+        for (int i = removedPieces.size() - 1; i >= 0; i--) 
+        {
+            board.addPiece(removedPieces.get(i), removedLocations.get(i));
+            gain[i] = -Math.max(-gain[i], gain[i + 1]);
+        }
+        board.addPiece(movingPiece, new int[]{move[0], move[1]});
+        if (epSquare != null) board.addPiece(epPiece, epSquare);
+
+        return gain[0];
+    }
+
+    public static int[] leastValuableAttacker (Board board, int[] square, boolean isWhite)
+    {
+        // pawns
+        int pawnRow = isWhite? square[0] + 1 : square[0] - 1;
+        for (int i = -1; i <= 1; i += 2)
+        {
+            if (!board.inBounds(pawnRow, square[1] + i)) continue;
+            if (board.getPiece(pawnRow, square[1] + i) == (isWhite? Piece.W_PAWN : Piece.B_PAWN)) return new int[]{pawnRow, square[1] + i};
+        }
+        
+        // knights
+        for (int i = 0; i < KNIGHT_C.length; i++)
+        {
+            int row = KNIGHT_R[i] + square[0];
+            int col = KNIGHT_C[i] + square[1];
+            if (!board.inBounds(row, col)) continue;
+            if (board.getPiece(row, col) == (isWhite? Piece.W_KNIGHT : Piece.B_KNIGHT)) return new int[]{row, col};
+        }
+
+        // bishops
+        int bSlider = 0;
+        for (int i = 0; i < DIAG_C.length; i++)
+        {
+            bSlider = 0;
+            while (true) 
+            {
+                bSlider++;
+                int row = DIAG_R[i] * bSlider + square[0];
+                int col = DIAG_C[i] * bSlider + square[1];
+                if (!board.inBounds(row, col)) break;
+                if (board.getPiece(row, col) == (isWhite? Piece.W_BISHOP : Piece.B_BISHOP)) return new int[]{row, col};
+                if (board.getPiece(row, col).isOccupied()) break;
+            }
+        }
+
+        // rooks
+        int rSlider = 0;
+        for (int i = 0; i < STRAIGHT_C.length; i++)
+        {
+            rSlider = 0;
+            while (true) 
+            {
+                rSlider++;
+                int row = STRAIGHT_R[i] * rSlider + square[0];
+                int col = STRAIGHT_C[i] * rSlider + square[1];
+                if (!board.inBounds(row, col)) break;
+                if (board.getPiece(row, col) == (isWhite? Piece.W_ROOK : Piece.B_ROOK)) return new int[]{row, col};
+                if (board.getPiece(row, col).isOccupied()) break;
+            }
+        }
+
+        // queens
+        int qSlider = 0;
+        for (int i = 0; i < QUEEN_C.length; i++)
+        {
+            qSlider = 0;
+            while (true) 
+            {
+                qSlider++;
+                int row = QUEEN_R[i] * qSlider + square[0];
+                int col = QUEEN_C[i] * qSlider + square[1];
+                if (!board.inBounds(row, col)) break;
+                if (board.getPiece(row, col) == (isWhite? Piece.W_QUEEN : Piece.B_QUEEN)) return new int[]{row, col};
+                if (board.getPiece(row, col).isOccupied()) break;
+            }
+        }
+
+        // kings
+        for (int i = 0; i < KING_C.length; i++)
+        {
+            int row = KING_R[i] + square[0];
+            int col = KING_C[i] + square[1];
+            if (!board.inBounds(row, col)) continue;
+            if (board.getPiece(row, col) == (isWhite? Piece.W_KING : Piece.B_KING)) return new int[]{row, col};
+        }
+
+        return null;
+    }
 }
