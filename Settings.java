@@ -48,4 +48,5 @@ public class Settings
     // bot controls
     public static long botSearchTimeLimit = 5000;
     public static int botMaxSearchDepth = 10;
+    
 }

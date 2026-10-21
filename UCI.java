@@ -145,23 +145,26 @@ public class UCI
                 }
             }
         }
-        if (movetime + wtime + btime == 0) movetime = Integer.MAX_VALUE;
+        long soft = 0;
+        long hard = 0;
+
+        if (movetime + wtime + btime == 0) { soft = Integer.MAX_VALUE; hard = Integer.MAX_VALUE; }
         else if (movetime == 0)
         {
-            if (whiteTurn) 
-            {
-                movetime = (int)((wtime / 30) + (0.75 * winc)) - 50;
-                movetime = Math.min(movetime, wtime - 50);
-            }
-            else 
-            {
-                movetime = (int)((btime / 30) + (0.75 * binc)) - 50;
-                movetime = Math.min(movetime, btime - 50);
-            }
-        }
+            int remaining = whiteTurn? wtime : btime;
 
-        movetime = Math.max(10, movetime);
-        Settings.botSearchTimeLimit = movetime;
+            soft = (long)((remaining / 30) + (0.75 * (whiteTurn? winc : binc)) - 50);
+            soft = Math.min(soft, remaining - 50);
+            soft = Math.max(10, soft);
+
+            hard = Math.min(soft * 3, remaining / 4);
+            hard = Math.max(soft, hard);
+            hard = Math.max(10, hard);
+        }
+        else { soft = movetime; hard = movetime; }
+
+        Settings.botSearchTimeLimit = hard;
+        Bot.softTimeLimit = soft;
 
         if (depth == 0) depth = 30;
         int[] bestMove = Bot.bestMove(uciBoard, depth, whiteTurn);

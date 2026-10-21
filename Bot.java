@@ -27,7 +27,6 @@ public class Bot
 
     private static final int NULL_MOVE_REDUCTION = 2;
 
-    private static final int LMR_REDUCTION = 1;
     private static int[][] LMR_TABLE = new int[64][64];
     private static double LMR_BASE = 0.75;
     private static double LMR_DIVISOR = 2.25;
@@ -53,6 +52,11 @@ public class Bot
     public static int quiescenceMovesAnalysed = 0;
     public static int depthReached = 0;
 
+    public static long softTimeLimit = Long.MAX_VALUE;
+    static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
+    static boolean timeUp = false;
+    static boolean timeCanBeUp = false;
+    
     //   [ply]   [slot 0 newest / 1 older]   -> int[] move
     public static int[][][] killerMoves = new int[MAX_PLY][KILLER_SLOTS][];
     //   [from square 0-63]   [to square 0-63]   -> beta cutoff
@@ -60,10 +64,6 @@ public class Bot
 
     // repetition check
     public static long[] plyPathKeys = new long[MAX_PLY];
-
-    static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
-    static boolean timeUp = false;
-    static boolean timeCanBeUp = false;
     
     static 
     {
@@ -728,6 +728,8 @@ public class Bot
             bestMove = bestMoveSoFar;
             bestScore = bestScoreSoFar;
             depthReached++;
+
+            if (System.currentTimeMillis() - startTime >= softTimeLimit) break;
         }
         
         if (Settings.highlightPreviousMove)
