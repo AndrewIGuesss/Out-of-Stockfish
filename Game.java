@@ -2,10 +2,7 @@
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
 
-    LMR table (log formula)       1-2 hr      +10-30       strength
     Pawn precompute               1-2 hr      +5-15        speed
-    Time management               1 hr        +10-30       strength
-    SEE                           2 hr        +15-30       strength
     Mobility v2 (pawn attacks)    1 hr        +5-15        eval
     Threats                       2 hr        +5-15        eval
     Passed pawns v2               2 hr        +5-15        eval
@@ -21,7 +18,6 @@
     Space                         1-2 hr      +0-5         eval
 
     -- whenever --
-    Show PV                       45 min      n/a          QOL/debug
     Test script (copy->SPRT)      1 hr        n/a          QOL
     Bench command                 20 min      n/a          QOL
     Perft command                 15 min      n/a          QOL

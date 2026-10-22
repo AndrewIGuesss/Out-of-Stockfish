@@ -56,6 +56,8 @@ public class Bot
     static long deadline = System.currentTimeMillis() + Settings.botSearchTimeLimit;
     static boolean timeUp = false;
     static boolean timeCanBeUp = false;
+
+    private static final int BAD_CAPTURE_BASE = -1000000;
     
     //   [ply]   [slot 0 newest / 1 older]   -> int[] move
     public static int[][][] killerMoves = new int[MAX_PLY][KILLER_SLOTS][];
@@ -158,7 +160,7 @@ public class Bot
     public static int orderScore (Board board, int[] move, int ply)
     {
         // MVV-LVA = most valuable victim, least valuable attacker
-        int victimValue;
+        int victimValue = 0;
         int attackerValue = board.getPiece(move[0], move[1]).value();
         if (board.getPiece(move[0], move[1]).getPiece() == 'K') attackerValue = 50;
         
@@ -167,9 +169,11 @@ public class Bot
         if (isCapture(board, move) || isPromotion) 
         {
             victimValue = board.getPiece(move[2], move[3]).value();
-
             int[] ep = board.getEnPassantSquare();
             if (board.getEnPassantSquare() != null && ep[0] == move[2] && ep[1] == move[3]) victimValue = 100;
+
+            if (!isPromotion && Moves.see(board, move) < 0) return BAD_CAPTURE_BASE + victimValue * 10 - attackerValue;
+            
             if (isPromotion && board.getPiece(move[0], move[1]).getPiece() == 'P') victimValue += 900;
             return CAPTURE_BASE + victimValue * 10 - attackerValue; 
         }
@@ -280,8 +284,6 @@ public class Bot
             boolean promoting = board.getPiece(capture[0], capture[1]).getPiece() == 'P' && (capture[2] == 7 || capture[2] == 0);
 
             int value = Arrays.equals(end, ep)? 100 : board.getPiece(capture[2], capture[3]).value();
-
-            if (!promoting && Moves.see(board, capture) < 0) continue;
 
             if (!promoting && standPat + value + DELTA_MARGIN <= alpha) continue;
 
