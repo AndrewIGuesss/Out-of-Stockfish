@@ -12,5 +12,10 @@
 | 7 | Oct 14 | King safety v2 (attack zone, CPW weights N/B 20 R 40 Q 80) | KS v1 | SPRT [0, 10] | 3062 | −5.79 ± 10.72 | rejected |
 | 8 | Oct 15 | make/unmake |KS v1 | SPRT [0,10] | 828 | +37.91 ± 18.60 | accepted |
 | 9 | Oct 19 | Mobility (N 4, B 5, R 2/4, Q 1/2 per safe square, mg/eg) | make/unmake | SPRT [0, 10] | 1080 | +33.56 ± 18.20 | accepted |
+| 10 | Oct 19 | Zobrist en passant key | mobility | SPRT [-5, 0] | 1462 | +10.71 ± 12.45 | stopped early (LLR ~1.1), merged |
+| 11 | Oct 19 | LMP v1 (depth ≤ 3, 3 + d²) | qsearch ep/promo | SPRT [0, 10] | 398 | −24.48 ± 28.11 | stopped (LLR ~−1.2), rejected |
+| 12 | Oct 20 | LMP v2 (depth ≤ 2, 12 + 4d²) | qsearch ep/promo | SPRT [0, 10] | 7442 | +8.03 ± 6.48 | accepted |
 | 13 | Oct 20 | LMR table (0.75 + ln(d)·ln(m)/2.25, clamped to depth ≥ 1) | LMP v2 + PV | SPRT [0, 10] | 3362 | +12.82 ± 9.60 | accepted |
+| 14 | Oct 20 | Time management v1 (soft = rem/30 + 0.75·inc, hard = 3×soft capped at rem/4, finish started depth) | LMR table | SPRT [0, 10] | 280 | +128.38 ± 34.76 | accepted (early stop, likely overestimated) |
 | 15 | Oct 21 | SEE (incl. en passant), qsearch skips captures with SEE < 0 | time mgmt | SPRT [0, 10] | 1222 | +29.35 ± 16.41 | accepted |
+| 16 | Oct 22 | SEE move ordering (SEE < 0 captures after quiets, BAD_CAPTURE_BASE + MVV-LVA; qsearch SEE check folded into ordering) | SEE | SPRT [0, 10] | 1068 | +29.02 ± 15.77 | accepted |
