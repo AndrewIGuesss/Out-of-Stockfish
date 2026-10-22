@@ -1,5 +1,9 @@
 public class zzBench 
 {
+    // set by runBench so the test summary can print them
+    public static long lastTotalTimeMs = 0;
+    public static long lastNps = 0;
+
     public static long runBench()
     {
         int maxDepth = 7; // 7 = quick 8 = more accurate
@@ -21,6 +25,8 @@ public class zzBench
         Settings.botSearchTimeLimit = 99999999;
         Bot.exactRootScores = false;
         long totalNodes = 0;
+        long totalSearchNodes = 0; // every depth of every position, for NPS
+        long totalTimeNanos = 0;
 
         System.out.println("\n\n---Bench test---");
         for (int i = 0; i < testPositions.length; i++)
@@ -30,6 +36,8 @@ public class zzBench
 
             Board testBoard = new Board();
             boolean whiteTurn = testBoard.importFEN(position);
+            long positionNodes = 0;
+            long positionTimeNanos = 0;
             for (int depth = 1; depth <= maxDepth; depth++)
             {
                 long zobristHash = Zobrist.makeZobristHash(testBoard, whiteTurn);
@@ -43,17 +51,34 @@ public class zzBench
 
                 long startTime = System.nanoTime();
                 int[] bestMove = Bot.bestMove(testBoard, depth, whiteTurn);
-                long time = (System.nanoTime() - startTime) / 1000000;
+                long timeNanos = System.nanoTime() - startTime;
+                long time = timeNanos / 1000000;
                 
                 String moveString = Board.convertMove(bestMove) + Board.convertMove(new int[]{bestMove[2], bestMove[3]});
                 double eval = Game.botMoveEval / 100.0;
                 int movesAnalysed = Bot.movesAnalysed;
 
                 if (depth == maxDepth) totalNodes += movesAnalysed;
-                System.out.printf("D:%d M:%-6s E:%6.2f N:%10d T:%d%n", depth, moveString, eval, movesAnalysed, time);
+                positionNodes += movesAnalysed;
+                positionTimeNanos += timeNanos;
+                System.out.printf("D:%d M:%-6s E:%6.2f N:%10d T:%-5d NPS:%d%n", depth, moveString, eval, movesAnalysed, time, nps(movesAnalysed, timeNanos));
             }
+            totalSearchNodes += positionNodes;
+            totalTimeNanos += positionTimeNanos;
+            System.out.printf("position time: %d ms   nodes: %d   NPS: %d%n", positionTimeNanos / 1000000, positionNodes, nps(positionNodes, positionTimeNanos));
         }
+        System.out.println("\n-----------------------------------------");
         System.out.println("total nodes:" + totalNodes);
+        lastTotalTimeMs = totalTimeNanos / 1000000;
+        lastNps = nps(totalSearchNodes, totalTimeNanos);
+        System.out.printf("total time: %d ms   NPS: %d%n", lastTotalTimeMs, lastNps);
         return totalNodes;
+    }
+
+    // nodes per second, nanos avoids divide by 0 on the fast depths
+    private static long nps(long nodes, long timeNanos)
+    {
+        if (timeNanos <= 0) return 0;
+        return nodes * 1000000000L / timeNanos;
     }
 }

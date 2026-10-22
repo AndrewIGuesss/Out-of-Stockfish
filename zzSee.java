@@ -42,11 +42,12 @@ public class zzSee
             if (result != expected || !boardSame)
             {
                 failed.add(testNum);
-                System.out.printf("%s | fen:%s | move:%s | see %d vs expected %d%s%n", zTests.FAIL, fen, uciMove, result, expected, boardSame? "" : " | BOARD CHANGED");
+                String seeText = "see " + result + " (exp " + expected + ")";
+                System.out.printf("%s | move:%-5s | %-20s | fen:%s%s%n", zTests.FAIL, uciMove, seeText, fen, boardSame? "" : " | BOARD CHANGED");
             }
             else
             {
-                System.out.printf("%s | fen:%s | move:%s | see %d%n", zTests.PASS, fen, uciMove, result);
+                System.out.printf("%s | move:%-5s | %-20s | fen:%s%n", zTests.PASS, uciMove, "see " + result, fen);
             }
         }
         return failed;

@@ -53,7 +53,7 @@ public class zTests
             tests.add(new String[]{"SEE", seeResult});
         }
         System.out.println("\n\n-----Summary-----");
-        if (runBench || runAll) System.out.printf("bench nodes: %s%n", benchNodes);
+        if (runBench || runAll) System.out.printf("bench nodes: %s   time: %d ms   NPS: %d%n", benchNodes, zzBench.lastTotalTimeMs, zzBench.lastNps);
         for (String[] test : tests)
         {
             String testMsg = PASSED;

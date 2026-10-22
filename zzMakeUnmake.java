@@ -57,13 +57,14 @@ public class zzMakeUnmake
                 if (!problem.isEmpty())
                 {
                     badMoves++;
-                    System.out.printf("%s | fen:%s | move:%s%s |%s%n", zTests.FAIL, fen, Board.convertMove(start), Board.convertMove(end), problem.toString());
+                    // problems go after the fen bc they can contain a fen themselves
+                    System.out.printf("%s | move:%-4s | fen:%s |%s%n", zTests.FAIL, Board.convertMove(start) + Board.convertMove(end), fen, problem.toString());
                     board.importFEN(fen); // reset so one broken move doesnt cascade into the rest
                 }
             }
 
             if (badMoves > 0) failed.add(fenNum);
-            else System.out.printf("%s | fen:%s | %d moves%n", zTests.PASS, fen, moves.size());
+            else System.out.printf("%s | %3d moves | fen:%s%n", zTests.PASS, moves.size(), fen);
         }
         return failed;
     }
