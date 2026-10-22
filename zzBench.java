@@ -1,5 +1,3 @@
-// 158358
-
 public class zzBench 
 {
     public static long runBench()

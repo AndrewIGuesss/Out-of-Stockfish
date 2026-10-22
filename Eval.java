@@ -28,6 +28,7 @@ public class Eval
     private static final int QUEEN_MOBILITY_WEIGHT_ENDGAME = 2;
 
     private static final int DOUBLED_PAWNS_PENALTY = 20;
+    private static final int ISOLATED_PAWNS_PENALTY = 15;
     
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
@@ -208,64 +209,43 @@ public class Eval
                         if (currentPiece.isWhite()) whitePawnCount++;
                         else blackPawnCount++;
 
-                        int PassedPawnBonus = 0;
+                        int passedPawnBonus = 0;
                         int doubledPawnPenalty = 0;
                         int isolatedPawnPenalty = 0;
 
-                        int adjacentPawnCounter = 0;
-                        int enemyAdjacentPawnCounter = 0;
-
-                        boolean isWhite = currentPiece.isWhite();
-                        int forward = isWhite? -1 : 1;
                         
-                        if (isWhite)
+                        if (currentPiece.isWhite())
                         {
                             int whiteAheadMask = (1 << row) - 1;
+
+                            // doubled
                             int whiteBitDoubledPawns = whiteAheadMask & pawnPrecompWhite[fileIndex(col)];
-                            doubledPawnPenalty += Integer.bitCount(whiteBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+                            doubledPawnPenalty = Integer.bitCount(whiteBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+
+                            // isolated
+                            if ((pawnPrecompWhite[fileIndex(col) + 1] | pawnPrecompWhite[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
+                        
+                            // passed
+                            if ((pawnPrecompBlack[fileIndex(col) - 1] | pawnPrecompBlack[fileIndex(col)] | pawnPrecompBlack[fileIndex(col) + 1] & whiteAheadMask) == 0)
+                            { passedPawnBonus = PASSED_PAWN_BONUS[7 - row]; }
                         }
                         else
                         {
                             int blackAheadMask = ~((1 << row + 1) - 1) & 0xFF;
+                            
+                            // doubled
                             int blackBitDoubledPawns = blackAheadMask & pawnPrecompBlack[fileIndex(col)];
-                            doubledPawnPenalty += Integer.bitCount(blackBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
-                        }
+                            doubledPawnPenalty = Integer.bitCount(blackBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
 
-
-
-
-                            for (int scanRow = row + forward; scanRow >= 0 && scanRow <= 7; scanRow += forward)
-                            {
-                                Piece scanPiece = board.getPiece(scanRow, col);
-                                
-                                if (scanPiece.getPiece() == 'P')
-                                {
-                                    if (scanPiece.isWhite() != currentPiece.isWhite()) enemyAdjacentPawnCounter++; 
-                                }
-                            }
-
+                            // isolated
+                            if ((pawnPrecompBlack[fileIndex(col) + 1] | pawnPrecompBlack[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
                         
-                        for (int isoScanCol = -1; isoScanCol <= 1; isoScanCol += 2)
-                        {
-                            if (!board.inBounds(row, col + isoScanCol)) continue;
-                            for (int isoScanRow = 7; isoScanRow >= 0; isoScanRow--)
-                            {
-                                Piece isoScanPiece = board.getPiece(isoScanRow, col + isoScanCol);
-                                if (isoScanPiece.getPiece() == 'P' && isoScanPiece.isWhite() == currentPiece.isWhite()) adjacentPawnCounter++;
-
-                                if (currentPiece.isWhite())
-                                {
-                                    if (isoScanRow < row && isoScanPiece == Piece.B_PAWN) enemyAdjacentPawnCounter++;
-                                }
-                                else
-                                {
-                                    if (isoScanRow > row && isoScanPiece == Piece.W_PAWN) enemyAdjacentPawnCounter++;
-                                }
-                            }
+                            // passed
+                            if ((pawnPrecompWhite[fileIndex(col) - 1] | pawnPrecompWhite[fileIndex(col)] | pawnPrecompWhite[fileIndex(col) + 1] & blackAheadMask) == 0)
+                            { passedPawnBonus = PASSED_PAWN_BONUS[row]; }
                         }
-                        if (adjacentPawnCounter == 0) isolatedPawnPenalty = 15;
-                        if (enemyAdjacentPawnCounter == 0) PassedPawnBonus = currentPiece.isWhite()? PASSED_PAWN_BONUS[7 - row] : PASSED_PAWN_BONUS[row];
-                        endGameScore += term(PassedPawnBonus, currentPiece.isWhite(), EvalTerm.PASSED_PAWNS.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+
+                        endGameScore += term(passedPawnBonus, currentPiece.isWhite(), EvalTerm.PASSED_PAWNS.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         centipawns += term(-doubledPawnPenalty, currentPiece.isWhite(), EvalTerm.DOUBLED_PAWNS.ordinal(), GamePhase.BOTH);
                         centipawns += term(-isolatedPawnPenalty, currentPiece.isWhite(), EvalTerm.ISOLATED_PAWNS.ordinal(), GamePhase.BOTH);
                     }
