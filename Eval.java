@@ -1,6 +1,13 @@
+import java.util.Arrays;
+
 public class Eval 
 {
     public static int phase = 0;
+
+    // THIS WONT WORK WITH SMP
+    // bit index read from right to left: 7 6 5 4 3 2 1 0
+    private static int[] pawnPrecompBlack = new int[10];
+    private static int[] pawnPrecompWhite = new int[10];
 
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
@@ -20,6 +27,7 @@ public class Eval
     private static final int QUEEN_MOBILITY_WEIGHT_MIDGAME = 1;
     private static final int QUEEN_MOBILITY_WEIGHT_ENDGAME = 2;
 
+    private static final int DOUBLED_PAWNS_PENALTY = 20;
     
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
@@ -117,6 +125,8 @@ public class Eval
         {-30, -20, -10, -10, -10, -10, -20, -30}  // 1
     };
 
+    private static int fileIndex(int col) {return  col + 1;}
+
     private static int term(int value, boolean isWhite, int termIndex, GamePhase phase)
     {
         if (recordBreakDown)
@@ -134,6 +144,20 @@ public class Eval
 
     public static int evalBoard (Board board, boolean breakDown)
     {
+        Arrays.fill(pawnPrecompBlack, 0);
+        Arrays.fill(pawnPrecompWhite, 0);
+
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++) 
+            {
+                Piece scanPiece = board.getPiece(row, col);
+
+                if (scanPiece == Piece.W_PAWN) pawnPrecompWhite[fileIndex(col)] |= (1 << row);
+                else if (scanPiece == Piece.B_PAWN) pawnPrecompBlack[fileIndex(col)] |= (1 << row);
+            }
+        }
+
         int midGameScore = 0;
         int endGameScore = 0;
 
@@ -191,16 +215,32 @@ public class Eval
                         int adjacentPawnCounter = 0;
                         int enemyAdjacentPawnCounter = 0;
 
-                        int forward = currentPiece.isWhite()? -1 : 1;
+                        boolean isWhite = currentPiece.isWhite();
+                        int forward = isWhite? -1 : 1;
                         
+                        if (isWhite)
+                        {
+                            int whiteAheadMask = (1 << row) - 1;
+                            int whiteBitDoubledPawns = whiteAheadMask & pawnPrecompWhite[fileIndex(col)];
+                            doubledPawnPenalty += Integer.bitCount(whiteBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+                        }
+                        else
+                        {
+                            int blackAheadMask = ~((1 << row + 1) - 1) & 0xFF;
+                            int blackBitDoubledPawns = blackAheadMask & pawnPrecompBlack[fileIndex(col)];
+                            doubledPawnPenalty += Integer.bitCount(blackBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+                        }
+
+
+
+
                             for (int scanRow = row + forward; scanRow >= 0 && scanRow <= 7; scanRow += forward)
                             {
                                 Piece scanPiece = board.getPiece(scanRow, col);
                                 
                                 if (scanPiece.getPiece() == 'P')
                                 {
-                                    if (scanPiece.isWhite() == currentPiece.isWhite()) doubledPawnPenalty += 20;
-                                    else enemyAdjacentPawnCounter++; 
+                                    if (scanPiece.isWhite() != currentPiece.isWhite()) enemyAdjacentPawnCounter++; 
                                 }
                             }
 

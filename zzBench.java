@@ -1,4 +1,4 @@
-//gets the amount of nodes generated for each depth of a position
+// 158358
 
 public class zzBench 
 {
