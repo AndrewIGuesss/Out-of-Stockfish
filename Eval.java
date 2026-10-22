@@ -11,13 +11,13 @@ public class Eval
 
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
-
     public static int[][][] evalBreakDown = new int[EvalTerm.SIZE][2][2];
     private static boolean recordBreakDown = false;
 
+
     //indiv piece bonuses
     // piece square tables from whites view (row 0 is rank 8), black uses row 7 - row
-    
+
     private static final int[] PASSED_PAWN_BONUS = {0, 10, 15, 25, 40, 60, 90, 0};
 
     private static final int KNIGHT_MOBILITY_WEIGHT = 4;
@@ -427,31 +427,28 @@ public class Eval
         for (int i = 0; i < 3; i++)
         {
             if (pawnsFound[i]) continue;
-            int thisFilePenalty = -20;
-            int col =  i + (kingLoc[1] - 1);
-            rowScan: for (int row = 0; row < 8; row++)
-            {
-                if (!board.inBounds(row, col)) { thisFilePenalty = 0; break rowScan; }
-                if (board.getPiece(row, col).getPiece() == 'P')
-                {
-                    if (board.getPiece(row, col).isWhite() == isWhite)
-                    {
-                        thisFilePenalty = 0;
-                        break rowScan;
-                    }
-                    else thisFilePenalty = -10;
-                }
-            }
-            openFilePenalty += thisFilePenalty;
-        }
+            int col = i + (kingLoc[1] - 1);
+            if (!board.inBounds(0, col)) continue;
 
-        //
+            if (isWhite)
+            {
+                if (pawnPrecompWhite[fileIndex(col)] != 0) continue;
+                else if (pawnPrecompBlack[fileIndex(col)] != 0) openFilePenalty += -10;
+                else openFilePenalty += -20;
+            }
+            else
+            {
+                if (pawnPrecompBlack[fileIndex(col)] != 0) continue;
+                else if (pawnPrecompWhite[fileIndex(col)] != 0) openFilePenalty += -10;
+                else openFilePenalty += -20;
+            }
+        }
         
         // king location
         int kingLocBonus = 0;
         kingLocBonus += KING_MIDDLEGAME_TABLE[isWhite? kingLoc[0] : 7 - kingLoc[0]][kingLoc[1]];
         
-        //cant castle penalty
+        // cant castle penalty
         int castlingRightsPenalty = 0;
         if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
         else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
