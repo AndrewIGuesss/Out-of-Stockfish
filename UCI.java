@@ -92,7 +92,7 @@ public class UCI
             int[] end = Board.convertMove(tokens[i].substring(2, 4));
             if (tokens[i].length() == 5) promotionPiece = tokens[i].charAt(4);
 
-            uciBoard.applyMove(start, end, false, promotionPiece);
+            uciBoard.applyMove(start, end, true, promotionPiece);
             whiteTurn = !whiteTurn;
 
             zobristHash = Zobrist.makeZobristHash(uciBoard, whiteTurn);

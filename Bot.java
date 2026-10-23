@@ -709,6 +709,8 @@ public class Bot
             }
             if (timeUp) break;
             
+            if (bestMoveSoFar == null) return null;
+
             // depth finished: save results, best move first for next depth
             rootScores = "root scores (depth " + depth + "):\n" + depthScores;
             
