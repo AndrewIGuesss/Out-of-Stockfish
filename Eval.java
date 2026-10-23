@@ -8,6 +8,8 @@ public class Eval
     // bit index read from right to left: 7 6 5 4 3 2 1 0
     private static int[] pawnPrecompBlack = new int[10];
     private static int[] pawnPrecompWhite = new int[10];
+    private static int[] pawnAttackPrecompBlack = new int[10];
+    private static int[] pawnAttackPrecompWhite = new int[10];
 
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
@@ -126,7 +128,7 @@ public class Eval
         {-30, -20, -10, -10, -10, -10, -20, -30}  // 1
     };
 
-    private static int fileIndex(int col) {return  col + 1;}
+    public static int fileIndex(int col) {return  col + 1;}
 
     private static int term(int value, boolean isWhite, int termIndex, GamePhase phase)
     {
@@ -147,6 +149,8 @@ public class Eval
     {
         Arrays.fill(pawnPrecompBlack, 0);
         Arrays.fill(pawnPrecompWhite, 0);
+        Arrays.fill(pawnAttackPrecompBlack, 0);
+        Arrays.fill(pawnAttackPrecompWhite, 0);
 
         for (int row = 0; row < 8; row++)
         {
@@ -154,8 +158,18 @@ public class Eval
             {
                 Piece scanPiece = board.getPiece(row, col);
 
-                if (scanPiece == Piece.W_PAWN) pawnPrecompWhite[fileIndex(col)] |= (1 << row);
-                else if (scanPiece == Piece.B_PAWN) pawnPrecompBlack[fileIndex(col)] |= (1 << row);
+                if (scanPiece == Piece.W_PAWN)
+                {
+                    pawnPrecompWhite[fileIndex(col)] |= (1 << row);
+                    if (board.inBounds(0, col + 1)) pawnAttackPrecompWhite[fileIndex(col) + 1] |= (1 << (row - 1));
+                    if (board.inBounds(0, col - 1)) pawnAttackPrecompWhite[fileIndex(col) - 1] |= (1 << (row - 1));
+                }
+                else if (scanPiece == Piece.B_PAWN) 
+                {
+                    pawnPrecompBlack[fileIndex(col)] |= (1 << row);
+                    if (board.inBounds(0, col + 1)) pawnAttackPrecompBlack[fileIndex(col) + 1] |= (1 << (row + 1));
+                    if (board.inBounds(0, col - 1)) pawnAttackPrecompBlack[fileIndex(col) - 1] |= (1 << (row + 1));
+                }
             }
         }
 
@@ -253,7 +267,8 @@ public class Eval
                     {
                         centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
 
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * KNIGHT_MOBILITY_WEIGHT;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite; 
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, enemyPawnAttack, false) * KNIGHT_MOBILITY_WEIGHT;
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -265,7 +280,8 @@ public class Eval
                     {
                         centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * BISHOP_MOBILITY_WEIGHT;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, enemyPawnAttack, true) * BISHOP_MOBILITY_WEIGHT;
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -309,7 +325,8 @@ public class Eval
                     {
                         centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, enemyPawnAttack, true);
                         midGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
                         endGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
 
@@ -342,7 +359,8 @@ public class Eval
                     {
                         centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, enemyPawnAttack, true);
                         midGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
                         endGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         

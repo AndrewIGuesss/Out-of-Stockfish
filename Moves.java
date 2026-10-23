@@ -406,7 +406,7 @@ public class Moves
         return moves;
     }
 
-    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, boolean slider)
+    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, int[] enemyAttackArray, boolean slider)
     {
         int mobility = 0;
         boolean isWhite = board.getPiece(row, col).isWhite();
@@ -418,15 +418,21 @@ public class Moves
             while (true)
             {
                 counter++;
-                if (!board.inBounds(row + (counter * rDir[i]), col + (counter * cDir[i]))) break;
-                Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
+                int newRow = row + (counter * rDir[i]);
+                int newCol = col + (counter * cDir[i]);
+
+                if (!board.inBounds(newRow, newCol)) break;
+                Piece scanPiece = board.getPiece(newRow, newCol);
 
                 if (scanPiece.isOccupied())
                 {
-                    if (scanPiece.isWhite() != isWhite) mobility++;
+                    if (scanPiece.isWhite() != isWhite)
+                    {
+                        if ((enemyAttackArray[Eval.fileIndex(newCol)] & (1 << newRow)) == 0) mobility++;
+                    }
                     break;
                 }
-                else mobility++;
+                if ((enemyAttackArray[Eval.fileIndex(newCol)] & (1 << newRow)) == 0) mobility++;
 
                 if (!slider) break;
             }
