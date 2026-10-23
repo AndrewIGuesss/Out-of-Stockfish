@@ -2,7 +2,6 @@
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
 
-    Pawn precompute               1-2 hr      +5-15        speed
     Mobility v2 (pawn attacks)    1 hr        +5-15        eval
     Threats                       2 hr        +5-15        eval
     Passed pawns v2               2 hr        +5-15        eval
