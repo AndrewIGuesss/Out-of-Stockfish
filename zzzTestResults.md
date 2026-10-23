@@ -21,3 +21,4 @@
 | 16 | Oct 22 | SEE move ordering (SEE < 0 captures after quiets, BAD_CAPTURE_BASE + MVV-LVA; qsearch SEE check folded into ordering) | SEE | SPRT [0, 10] | 1068 | +29.02 ± 15.77 | accepted |
 | 17 | Oct 22 | Pawn precompute (per-file pawn bitmasks; doubled/isolated/passed + king open files use masks instead of board scans) | SEE ordering | bench only | n/a | n/a | bench identical (158358), ~12% faster (~130k → ~148k NPS) |
 | 18 | Oct 22 | Mobility v2a: safe squares (skip squares attacked by enemy pawns, per-file pawn attack masks) | pawn precompute | SPRT [0, 10] | 1496 | −15.57 ± 14.32 | rejected (H0) |
+| 19 | Oct 23 | Fix passed pawn precedence (ahead mask now applies to all 3 files, was only the right-hand one) | pawn precompute | SPRT [-5, 0] | 11504 | +2.99 ± 5.15 | accepted (H1) |
