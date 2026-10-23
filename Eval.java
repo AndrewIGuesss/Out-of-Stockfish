@@ -20,16 +20,35 @@ public class Eval
 
     private static final int[] PASSED_PAWN_BONUS = {0, 10, 15, 25, 40, 60, 90, 0};
 
-    private static final int KNIGHT_MOBILITY_WEIGHT = 4;
-    private static final int BISHOP_MOBILITY_WEIGHT = 5;
-    private static final int ROOK_MOBILITY_WEIGHT_MIDGAME = 2;
-    private static final int ROOK_MOBILITY_WEIGHT_ENDGAME = 4;
-    private static final int QUEEN_MOBILITY_WEIGHT_MIDGAME = 1;
-    private static final int QUEEN_MOBILITY_WEIGHT_ENDGAME = 2;
-
     private static final int DOUBLED_PAWNS_PENALTY = 20;
     private static final int ISOLATED_PAWNS_PENALTY = 15;
+
+    private static final int[] KNIGHT_MOBILITY = new int[9];
+    private static final int[] BISHOP_MOBILITY = new int[14];
+    private static final int[] ROOK_MOBILITY_MIDGAME = new int[15];
+    private static final int[] ROOK_MOBILITY_ENDGAME = new int[15];
+    private static final int[] QUEEN_MOBILITY_MIDGAME = new int[28];
+    private static final int[] QUEEN_MOBILITY_ENDGAME = new int[28];
     
+    static 
+    {
+        double[] aList = new double[]{25.53, 34.02, 13.84, 27.68, 11.54, 23.08};
+        double[] bList = new double[]{25.09, 34.77, 13.19, 26.37, 17.00, 34.00};
+
+        for (int i = 0; i < QUEEN_MOBILITY_ENDGAME.length; i++)
+        {
+            if (i < 9) KNIGHT_MOBILITY[i] = (int)(aList[0] * Math.log(i + 1) - bList[0]);
+            if (i < 14) BISHOP_MOBILITY[i] = (int)(aList[1] * Math.log(i + 1) - bList[1]);
+            if (i < 15) 
+            {
+                ROOK_MOBILITY_MIDGAME[i] = (int)(aList[2] * Math.log(i + 1) - bList[2]);
+                ROOK_MOBILITY_ENDGAME[i] = (int)(aList[3] * Math.log(i + 1) - bList[3]);
+            }
+            QUEEN_MOBILITY_MIDGAME[i] = (int)(aList[4] * Math.log(i + 1) - bList[4]);
+            QUEEN_MOBILITY_ENDGAME[i] = (int)(aList[5] * Math.log(i + 1) - bList[5]);
+        }
+    }
+
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
         {785, 790, 795, 800, 800, 795, 790, 785}, // 8 pawn counted like a queen for bot calc
@@ -253,7 +272,7 @@ public class Eval
                     {
                         centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
 
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * KNIGHT_MOBILITY_WEIGHT;
+                        int mobility = KNIGHT_MOBILITY[Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false)];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -265,7 +284,7 @@ public class Eval
                     {
                         centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * BISHOP_MOBILITY_WEIGHT;
+                        int mobility = BISHOP_MOBILITY[Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true)];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -310,8 +329,8 @@ public class Eval
                         centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
-                        midGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(ROOK_MOBILITY_MIDGAME[mobility], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(ROOK_MOBILITY_ENDGAME[mobility], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
 
                         phase += 2;
 
@@ -343,8 +362,8 @@ public class Eval
                         centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
-                        midGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(QUEEN_MOBILITY_MIDGAME[mobility], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(QUEEN_MOBILITY_ENDGAME[mobility], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         
                         phase += 4;
 
