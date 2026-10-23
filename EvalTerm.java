@@ -11,7 +11,7 @@ public enum EvalTerm
     EARLY_QUEEN("early queen"), 
     BISHOP_PAIR("bishop pair"), 
     KING_SHIELD("king shield"), 
-    KING_OPEN_FILES("open files near the king"),
+    KING_OPEN_FILES("open king"),
     KING_SQUARE ("king square"), 
     CASTLING_RIGHTS("castling rights"), 
     ENDGAME_KING("endgame king"), 

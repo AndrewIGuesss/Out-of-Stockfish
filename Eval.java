@@ -226,7 +226,7 @@ public class Eval
                             if ((pawnPrecompWhite[fileIndex(col) + 1] | pawnPrecompWhite[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
                         
                             // passed
-                            if ((pawnPrecompBlack[fileIndex(col) - 1] | pawnPrecompBlack[fileIndex(col)] | pawnPrecompBlack[fileIndex(col) + 1] & whiteAheadMask) == 0)
+                            if (((pawnPrecompBlack[fileIndex(col) - 1] | pawnPrecompBlack[fileIndex(col)] | pawnPrecompBlack[fileIndex(col) + 1]) & whiteAheadMask) == 0)
                             { passedPawnBonus = PASSED_PAWN_BONUS[7 - row]; }
                         }
                         else
@@ -241,7 +241,7 @@ public class Eval
                             if ((pawnPrecompBlack[fileIndex(col) + 1] | pawnPrecompBlack[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
                         
                             // passed
-                            if ((pawnPrecompWhite[fileIndex(col) - 1] | pawnPrecompWhite[fileIndex(col)] | pawnPrecompWhite[fileIndex(col) + 1] & blackAheadMask) == 0)
+                            if (((pawnPrecompWhite[fileIndex(col) - 1] | pawnPrecompWhite[fileIndex(col)] | pawnPrecompWhite[fileIndex(col) + 1]) & blackAheadMask) == 0)
                             { passedPawnBonus = PASSED_PAWN_BONUS[row]; }
                         }
 
