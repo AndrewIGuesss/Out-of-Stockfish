@@ -2,6 +2,8 @@ import java.util.Arrays;
 
 public class Eval 
 {
+    public static int[] params = new int[Param.TOTAL_SIZE];
+
     public static int phase = 0;
 
     // THIS WONT WORK WITH SMP
@@ -18,18 +20,6 @@ public class Eval
     //indiv piece bonuses
     // piece square tables from whites view (row 0 is rank 8), black uses row 7 - row
 
-    private static final int[] PASSED_PAWN_BONUS = {0, 10, 15, 25, 40, 60, 90, 0};
-
-    private static final int KNIGHT_MOBILITY_WEIGHT = 4;
-    private static final int BISHOP_MOBILITY_WEIGHT = 5;
-    private static final int ROOK_MOBILITY_WEIGHT_MIDGAME = 2;
-    private static final int ROOK_MOBILITY_WEIGHT_ENDGAME = 4;
-    private static final int QUEEN_MOBILITY_WEIGHT_MIDGAME = 1;
-    private static final int QUEEN_MOBILITY_WEIGHT_ENDGAME = 2;
-
-    private static final int DOUBLED_PAWNS_PENALTY = 20;
-    private static final int ISOLATED_PAWNS_PENALTY = 15;
-    
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
         {785, 790, 795, 800, 800, 795, 790, 785}, // 8 pawn counted like a queen for bot calc
@@ -126,6 +116,72 @@ public class Eval
         {-30, -20, -10, -10, -10, -10, -20, -30}  // 1
     };
 
+    // fill params with the current values, same numbers as the tables and constants above
+    // has to stay below the tables, static blocks run in file order
+    static 
+    {
+        int[] material = {100, 300, 300, 500, 900};
+        for (int i = 0; i < material.length; i++) params[Param.MATERIAL.offset() + i] = material[i];
+
+        // piece square tables
+        copyTable(PAWN_TABLE, Param.PAWN_PST_MG);
+        copyTable(PAWN_ENDGAME_TABLE, Param.PAWN_PST_EG);
+        copyTable(KNIGHT_TABLE, Param.KNIGHT_PST);
+        copyTable(BISHOP_TABLE, Param.BISHOP_PST);
+        copyTable(ROOK_TABLE, Param.ROOK_PST);
+        copyTable(QUEEN_TABLE, Param.QUEEN_PST);
+        copyTable(KING_MIDDLEGAME_TABLE, Param.KING_PST_MG);
+        copyTable(KING_ENDGAME_TABLE, Param.KING_PST_EG);
+
+        // pawn structure
+        int[] passedPawn = {0, 10, 15, 25, 40, 60, 90, 0};
+        for (int i = 0; i < passedPawn.length; i++) params[Param.PASSED_PAWN.offset() + i] = passedPawn[i];
+        params[Param.DOUBLED_PAWN.offset()] = 20;
+        params[Param.ISOLATED_PAWN.offset()] = 15;
+
+        // mobility
+        params[Param.KNIGHT_MOBILITY.offset()] = 4;
+        params[Param.BISHOP_MOBILITY.offset()] = 5;
+        params[Param.ROOK_MOBILITY_MG.offset()] = 2;
+        params[Param.ROOK_MOBILITY_EG.offset()] = 4;
+        params[Param.QUEEN_MOBILITY_MG.offset()] = 1;
+        params[Param.QUEEN_MOBILITY_EG.offset()] = 2;
+
+        // piece lines, order: own piece, enemy king, enemy queen, last slot
+        int[] bishopLines = {10, 20, 10, 8};
+        int[] rookFiles = {20, 20, 10, 10};
+        for (int i = 0; i < 4; i++)
+        {
+            params[Param.BISHOP_LINES.offset() + i] = bishopLines[i];
+            params[Param.ROOK_FILES.offset() + i] = rookFiles[i];
+        }
+
+        // misc
+        params[Param.EARLY_QUEEN.offset()] = -25;
+        params[Param.BISHOP_PAIR.offset()] = 40;
+
+        // king safety
+        params[Param.KING_SHIELD.offset()] = 12;            // edge file 
+        params[Param.KING_SHIELD.offset() + 1] = 12;        // shield pawn
+        params[Param.KING_OPEN_FILE.offset()] = -10;        // half open
+        params[Param.KING_OPEN_FILE.offset() + 1] = -20;    // open
+        params[Param.CASTLING_RIGHTS.offset()] = -30;
+
+        params[Param.MOP_UP.offset()] = 10;     // center distance
+        params[Param.MOP_UP.offset() + 1] = 4;  // king distance
+    }
+
+    private static void copyTable(int[][] table, Param param)
+    {
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                params[param.offset() + row * 8 + col] = table[row][col];
+            }
+        }
+    }
+
     private static int fileIndex(int col) {return  col + 1;}
 
     private static int term(int value, boolean isWhite, int termIndex, GamePhase phase)
@@ -193,10 +249,10 @@ public class Eval
                     // skip king
                     if (currentPiece.getPiece() == 'K') continue;
 
-                    int centipawns = term(currentPiece.value(), currentPiece.isWhite(), EvalTerm.MATERIAL.ordinal(), GamePhase.BOTH);
+                    int centipawns = term(params[Param.MATERIAL.offset() + currentPiece.ordinal() % 6], currentPiece.isWhite(), EvalTerm.MATERIAL.ordinal(), GamePhase.BOTH);
 
-                    if (currentPiece.isWhite()) whiteMaterialValue += centipawns;
-                    else blackMaterialValue += centipawns;
+                    if (currentPiece.isWhite()) whiteMaterialValue += currentPiece.value();
+                    else blackMaterialValue += currentPiece.value();
                     
                     int tableRow = currentPiece.isWhite()? row : 7 - row;
 
@@ -204,8 +260,8 @@ public class Eval
 
                     if (currentPiece.getPiece() == 'P')
                     {
-                        midGameScore += term(PAWN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(PAWN_ENDGAME_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(params[Param.PAWN_PST_MG.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(params[Param.PAWN_PST_EG.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         if (currentPiece.isWhite()) whitePawnCount++;
                         else blackPawnCount++;
 
@@ -220,14 +276,14 @@ public class Eval
 
                             // doubled
                             int whiteBitDoubledPawns = whiteAheadMask & pawnPrecompWhite[fileIndex(col)];
-                            doubledPawnPenalty = Integer.bitCount(whiteBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+                            doubledPawnPenalty = Integer.bitCount(whiteBitDoubledPawns) * params[Param.DOUBLED_PAWN.offset()];
 
                             // isolated
-                            if ((pawnPrecompWhite[fileIndex(col) + 1] | pawnPrecompWhite[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
+                            if ((pawnPrecompWhite[fileIndex(col) + 1] | pawnPrecompWhite[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = params[Param.ISOLATED_PAWN.offset()];
                         
                             // passed
                             if (((pawnPrecompBlack[fileIndex(col) - 1] | pawnPrecompBlack[fileIndex(col)] | pawnPrecompBlack[fileIndex(col) + 1]) & whiteAheadMask) == 0)
-                            { passedPawnBonus = PASSED_PAWN_BONUS[7 - row]; }
+                            { passedPawnBonus = params[Param.PASSED_PAWN.offset() + 7 - row]; }
                         }
                         else
                         {
@@ -235,14 +291,14 @@ public class Eval
                             
                             // doubled
                             int blackBitDoubledPawns = blackAheadMask & pawnPrecompBlack[fileIndex(col)];
-                            doubledPawnPenalty = Integer.bitCount(blackBitDoubledPawns) * DOUBLED_PAWNS_PENALTY;
+                            doubledPawnPenalty = Integer.bitCount(blackBitDoubledPawns) * params[Param.DOUBLED_PAWN.offset()];
 
                             // isolated
-                            if ((pawnPrecompBlack[fileIndex(col) + 1] | pawnPrecompBlack[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = ISOLATED_PAWNS_PENALTY;
+                            if ((pawnPrecompBlack[fileIndex(col) + 1] | pawnPrecompBlack[fileIndex(col) - 1]) == 0) isolatedPawnPenalty = params[Param.ISOLATED_PAWN.offset()];
                         
                             // passed
                             if (((pawnPrecompWhite[fileIndex(col) - 1] | pawnPrecompWhite[fileIndex(col)] | pawnPrecompWhite[fileIndex(col) + 1]) & blackAheadMask) == 0)
-                            { passedPawnBonus = PASSED_PAWN_BONUS[row]; }
+                            { passedPawnBonus = params[Param.PASSED_PAWN.offset() + row]; }
                         }
 
                         endGameScore += term(passedPawnBonus, currentPiece.isWhite(), EvalTerm.PASSED_PAWNS.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
@@ -251,9 +307,9 @@ public class Eval
                     }
                     else if (currentPiece.getPiece() == 'N')
                     {
-                        centipawns += term(KNIGHT_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        centipawns += term(params[Param.KNIGHT_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
 
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * KNIGHT_MOBILITY_WEIGHT;
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * params[Param.KNIGHT_MOBILITY.offset()];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -263,9 +319,9 @@ public class Eval
                     }
                     else if (currentPiece.getPiece() == 'B') 
                     {
-                        centipawns += term(BISHOP_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        centipawns += term(params[Param.BISHOP_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * BISHOP_MOBILITY_WEIGHT;
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * params[Param.BISHOP_MOBILITY.offset()];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         phase += 1;
@@ -295,11 +351,11 @@ public class Eval
                                 if (blockingPieces > 2) break;
                                 if (scanPiece.isWhite() == currPieceIsWhite)
                                 {
-                                    if (blockingPieces == 1) penalty += 10;
+                                    if (blockingPieces == 1) penalty += params[Param.BISHOP_LINES.offset()];
                                 }
-                                else if (scanPiece.getPiece() == 'K') penalty -= (20 / blockingPieces);
-                                else if (scanPiece.getPiece() == 'Q') penalty -= (10 / blockingPieces);
-                                else if (scanPiece.getPiece() == 'P') penalty += (8 / blockingPieces);
+                                else if (scanPiece.getPiece() == 'K') penalty -= (params[Param.BISHOP_LINES.offset() + 1] / blockingPieces);
+                                else if (scanPiece.getPiece() == 'Q') penalty -= (params[Param.BISHOP_LINES.offset() + 2] / blockingPieces);
+                                else if (scanPiece.getPiece() == 'P') penalty += (params[Param.BISHOP_LINES.offset() + 3] / blockingPieces);
                             }
                         }
 
@@ -307,11 +363,11 @@ public class Eval
                     }
                     else if (currentPiece.getPiece() == 'R')
                     {
-                        centipawns += term(ROOK_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        centipawns += term(params[Param.ROOK_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
-                        midGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility * ROOK_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(mobility * params[Param.ROOK_MOBILITY_MG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility * params[Param.ROOK_MOBILITY_EG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
 
                         phase += 2;
 
@@ -330,21 +386,21 @@ public class Eval
 
                             if (scanPiece.isWhite() == currentPiece.isWhite())
                             {
-                                if (blockingPieces == 1) penalty += 20;
+                                if (blockingPieces == 1) penalty += params[Param.ROOK_FILES.offset()];
                             }
-                            else if (scanPiece.getPiece() == 'K') penalty -= (20 / blockingPieces);
-                            else if (scanPiece.getPiece() == 'Q') penalty -= (10 / blockingPieces);
-                            else if (blockingPieces == 1) penalty += 10;
+                            else if (scanPiece.getPiece() == 'K') penalty -= (params[Param.ROOK_FILES.offset() + 1] / blockingPieces);
+                            else if (scanPiece.getPiece() == 'Q') penalty -= (params[Param.ROOK_FILES.offset() + 2] / blockingPieces);
+                            else if (blockingPieces == 1) penalty += params[Param.ROOK_FILES.offset() + 3];
                         }
                     centipawns += term(-penalty, currentPiece.isWhite(), EvalTerm.ROOK_FILES.ordinal(), GamePhase.BOTH);
                     }
                     else if (currentPiece.getPiece() == 'Q')
                     {
-                        centipawns += term(QUEEN_TABLE[tableRow][col], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
+                        centipawns += term(params[Param.QUEEN_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
                         int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
-                        midGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_MIDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
-                        endGameScore += term(mobility * QUEEN_MOBILITY_WEIGHT_ENDGAME, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+                        midGameScore += term(mobility * params[Param.QUEEN_MOBILITY_MG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
+                        endGameScore += term(mobility * params[Param.QUEEN_MOBILITY_EG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         
                         phase += 4;
 
@@ -360,12 +416,12 @@ public class Eval
         }
 
         //early queen agro
-        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) midGameScore += term(-25, true, EvalTerm.EARLY_QUEEN.ordinal(), GamePhase.MID);
-        if (blackQueenMoved && blackMinorPiecesHome >= 2) midGameScore -= term(-25, false, EvalTerm.EARLY_QUEEN.ordinal(), GamePhase.MID);
+        if (whiteQueenMoved && whiteMinorPiecesHome >= 2) midGameScore += term(params[Param.EARLY_QUEEN.offset()], true, EvalTerm.EARLY_QUEEN.ordinal(), GamePhase.MID);
+        if (blackQueenMoved && blackMinorPiecesHome >= 2) midGameScore -= term(params[Param.EARLY_QUEEN.offset()], false, EvalTerm.EARLY_QUEEN.ordinal(), GamePhase.MID);
 
         //bishop pair
-        if (whiteBishopCount >= 2) { int value = term(40, true, EvalTerm.BISHOP_PAIR.ordinal(), GamePhase.BOTH); midGameScore += value; endGameScore += value; }
-        if (blackBishopCount >= 2) { int value = term(40, false, EvalTerm.BISHOP_PAIR.ordinal(), GamePhase.BOTH); midGameScore -= value; endGameScore -= value; }
+        if (whiteBishopCount >= 2) { int value = term(params[Param.BISHOP_PAIR.offset()], true, EvalTerm.BISHOP_PAIR.ordinal(), GamePhase.BOTH); midGameScore += value; endGameScore += value; }
+        if (blackBishopCount >= 2) { int value = term(params[Param.BISHOP_PAIR.offset()], false, EvalTerm.BISHOP_PAIR.ordinal(), GamePhase.BOTH); midGameScore -= value; endGameScore -= value; }
 
         //insuficent material
         if (blackPawnCount == 0 && whitePawnCount == 0)
@@ -381,10 +437,10 @@ public class Eval
 
         //king safety / endgame king
         midGameScore += kingSafety(board, whiteKingLoc, true);
-        endGameScore += term(KING_ENDGAME_TABLE[whiteKingLoc[0]][whiteKingLoc[1]], true, EvalTerm.ENDGAME_KING.ordinal(), GamePhase.END);
+        endGameScore += term(params[Param.KING_PST_EG.offset() + whiteKingLoc[0] * 8 + whiteKingLoc[1]], true, EvalTerm.ENDGAME_KING.ordinal(), GamePhase.END);
 
         midGameScore += kingSafety(board, blackKingLoc, false);
-        endGameScore -= term(KING_ENDGAME_TABLE[7 - blackKingLoc[0]][blackKingLoc[1]], false, EvalTerm.ENDGAME_KING.ordinal(), GamePhase.END);
+        endGameScore -= term(params[Param.KING_PST_EG.offset() + (7 - blackKingLoc[0]) * 8 + blackKingLoc[1]], false, EvalTerm.ENDGAME_KING.ordinal(), GamePhase.END);
         
         // blend middlegame and endgame scores by game phase (24 = all pieces, 0 = no pieces)
         phase = Math.min(phase, 24); // promotions can push phase over 24
@@ -403,7 +459,7 @@ public class Eval
         {
             if (!board.inBounds(kingLoc[0], kingLoc[1] + col))
             {
-                pawnSheildBonus += 12;
+                pawnSheildBonus += params[Param.KING_SHIELD.offset()];
                 continue;
             }
             rowScan: for (int row = 1; row <= 2; row++)
@@ -414,7 +470,7 @@ public class Eval
                     if (scanPiece.getPiece() == 'P' && scanPiece.isWhite() == isWhite)
                     {
                         pawnsFound[col + 1] = true;
-                        pawnSheildBonus += 12 / row;
+                        pawnSheildBonus += params[Param.KING_SHIELD.offset() + 1] / row;
                         break rowScan;
                     }
                 }
@@ -433,25 +489,25 @@ public class Eval
             if (isWhite)
             {
                 if (pawnPrecompWhite[fileIndex(col)] != 0) continue;
-                else if (pawnPrecompBlack[fileIndex(col)] != 0) openFilePenalty += -10;
-                else openFilePenalty += -20;
+                else if (pawnPrecompBlack[fileIndex(col)] != 0) openFilePenalty += params[Param.KING_OPEN_FILE.offset()];
+                else openFilePenalty += params[Param.KING_OPEN_FILE.offset() + 1];
             }
             else
             {
                 if (pawnPrecompBlack[fileIndex(col)] != 0) continue;
-                else if (pawnPrecompWhite[fileIndex(col)] != 0) openFilePenalty += -10;
-                else openFilePenalty += -20;
+                else if (pawnPrecompWhite[fileIndex(col)] != 0) openFilePenalty += params[Param.KING_OPEN_FILE.offset()];
+                else openFilePenalty += params[Param.KING_OPEN_FILE.offset() + 1];
             }
         }
         
         // king location
         int kingLocBonus = 0;
-        kingLocBonus += KING_MIDDLEGAME_TABLE[isWhite? kingLoc[0] : 7 - kingLoc[0]][kingLoc[1]];
+        kingLocBonus += params[Param.KING_PST_MG.offset() + (isWhite? kingLoc[0] : 7 - kingLoc[0]) * 8 + kingLoc[1]];
         
         // cant castle penalty
         int castlingRightsPenalty = 0;
-        if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = -30; } 
-        else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = -30; }
+        if (isWhite) { if (!board.whiteCastled && (!board.whiteCanCastleLong && !board.whiteCanCastleShort)) castlingRightsPenalty = params[Param.CASTLING_RIGHTS.offset()]; } 
+        else { if (!board.blackCastled && (!board.blackCanCastleLong && !board.blackCanCastleShort)) castlingRightsPenalty = params[Param.CASTLING_RIGHTS.offset()]; }
 
         safetyBonus = 
                     term(pawnSheildBonus, isWhite, EvalTerm.KING_SHIELD.ordinal(), GamePhase.MID) + 
@@ -472,7 +528,7 @@ public class Eval
         int kingDistanceCol = Math.abs(winningkingLoc[1] - lossingkingLoc[1]);
         int kingDistance = Math.max(kingDistanceRow, kingDistanceCol);
 
-        int bonus = centerDistance * 10 + (7 - kingDistance) * 4;
+        int bonus = centerDistance * params[Param.MOP_UP.offset()] + (7 - kingDistance) * params[Param.MOP_UP.offset() + 1];
         return bonus * ((whiteWinning)? 1 : -1);
     }
 
