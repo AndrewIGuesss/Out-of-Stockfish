@@ -22,3 +22,4 @@
 | 17 | Oct 22 | Pawn precompute (per-file pawn bitmasks; doubled/isolated/passed + king open files use masks instead of board scans) | SEE ordering | bench only | n/a | n/a | bench identical (158358), ~12% faster (~130k → ~148k NPS) |
 | 18 | Oct 22 | Mobility v2a: safe squares (skip squares attacked by enemy pawns, per-file pawn attack masks) | pawn precompute | SPRT [0, 10] | 1496 | −15.57 ± 14.32 | rejected (H0) |
 | 19 | Oct 23 | Fix passed pawn precedence (ahead mask now applies to all 3 files, was only the right-hand one) | pawn precompute | SPRT [-5, 0] | 11504 | +2.99 ± 5.15 | accepted (H1) |
+| 20 | Oct 23 | Mobility v2b: log-curve mobility tables (a·ln(n+1) − b, fit to v1 at the 25th/75th percentile counts) | passed pawn fix + UCI fixes | SPRT [0, 10] | 3952 | −3.34 ± 8.97 | rejected (H0) |
