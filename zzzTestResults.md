@@ -25,3 +25,4 @@
 | 20 | Oct 23 | Mobility v2b: log-curve mobility tables (a·ln(n+1) − b, fit to v1 at the 25th/75th percentile counts) | passed pawn fix + UCI fixes | SPRT [0, 10] | 3952 | −3.34 ± 8.97 | rejected (H0) |
 | 21 | Oct 27 | Texel tuning (params array refactor + 548 values tuned on 725k quiet-labeled positions, 81 rounds, error 0.0630 → 0.0594) | main | SPRT [0, 10] | 336 | +105.50 ± 33.99 | accepted (early stop, likely overestimated) |
 | 22 | Oct 27 | SEE shortcut (skip see() when the victim is worth ≥ the attacker) + mobility ray lengths (sliders loop a precomputed step count, no inBounds) | Texel tuning | bench only | n/a | n/a | bench identical (172373), no measurable NPS change (~272.7k vs ~272.9k) |
+| 23 | Oct 27 | Mobility safe squares retry (texel-retuned mobility weights, only rook mg changed 3 → 4; tuner error 0.059403 vs main 0.059381) | SEE shortcut + ray lengths | SPRT [0, 10] | 2050 | ≈ −10.5 ± 12.7 | rejected (H0, rebuilt from config.json) |
