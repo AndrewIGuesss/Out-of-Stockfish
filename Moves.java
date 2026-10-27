@@ -415,20 +415,43 @@ public class Moves
         for (int i = 0; i < rDir.length; i++)
         {
             counter = 0;
-            while (true)
+
+            if (!slider)
             {
                 counter++;
-                if (!board.inBounds(row + (counter * rDir[i]), col + (counter * cDir[i]))) break;
+                if (!board.inBounds(row + (counter * rDir[i]), col + (counter * cDir[i]))) continue;
                 Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
 
                 if (scanPiece.isOccupied())
                 {
                     if (scanPiece.isWhite() != isWhite) mobility++;
-                    break;
                 }
                 else mobility++;
+            }
+            else
+            {
+                int maxRow = 7;
+                int maxCol = 7;
 
-                if (!slider) break;
+                if (rDir[i] == 1) maxRow = 7 - row;
+                else if (rDir[i] == -1) maxRow = row;
+
+                if (cDir[i] == 1) maxCol = 7 - col;
+                else if (cDir[i] == -1) maxCol = col;
+
+                int steps = Math.min(maxCol, maxRow);
+
+                for (counter = 1; counter <= steps; counter++)
+                {
+                    Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
+
+                    if (scanPiece.isOccupied())
+                    {
+                        if (scanPiece.isWhite() != isWhite) mobility++;
+                        break;
+                    }
+                    else mobility++;
+                }
             }
         }
 

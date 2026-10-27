@@ -172,7 +172,7 @@ public class Bot
             int[] ep = board.getEnPassantSquare();
             if (board.getEnPassantSquare() != null && ep[0] == move[2] && ep[1] == move[3]) victimValue = 100;
 
-            if (!isPromotion && Moves.see(board, move) < 0) return BAD_CAPTURE_BASE + victimValue * 10 - attackerValue;
+            if (!isPromotion && board.getPiece(move[0], move[1]).value() > victimValue && Moves.see(board, move) < 0) return BAD_CAPTURE_BASE + victimValue * 10 - attackerValue;
             
             if (isPromotion && board.getPiece(move[0], move[1]).getPiece() == 'P') victimValue += 900;
             return CAPTURE_BASE + victimValue * 10 - attackerValue; 
