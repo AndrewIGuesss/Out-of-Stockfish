@@ -406,8 +406,10 @@ public class Moves
         return moves;
     }
 
-    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, boolean slider)
+    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, boolean slider, int[] threatCounter)
     {
+        if (threatCounter != null) Arrays.fill(threatCounter, 0);
+        
         int mobility = 0;
         boolean isWhite = board.getPiece(row, col).isWhite();
 
@@ -424,7 +426,16 @@ public class Moves
 
                 if (scanPiece.isOccupied())
                 {
-                    if (scanPiece.isWhite() != isWhite) mobility++;
+                    if (scanPiece.isWhite() != isWhite) 
+                    {
+                        if (threatCounter != null)
+                        {
+                            char pieceChar = scanPiece.getPiece();
+                            if (pieceChar == 'R') threatCounter[0]++;
+                            else if (pieceChar == 'Q') threatCounter[1]++;
+                        }
+                        mobility++;
+                    }
                 }
                 else mobility++;
             }
@@ -447,7 +458,16 @@ public class Moves
 
                     if (scanPiece.isOccupied())
                     {
-                        if (scanPiece.isWhite() != isWhite) mobility++;
+                        if (scanPiece.isWhite() != isWhite)
+                        {
+                            if (threatCounter != null)
+                            {
+                                char pieceChar = scanPiece.getPiece();
+                                if (pieceChar == 'R') threatCounter[0]++;
+                                else if (pieceChar == 'Q') threatCounter[1]++;
+                            }
+                            mobility++;
+                        }
                         break;
                     }
                     else mobility++;

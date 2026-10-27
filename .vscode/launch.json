@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Game",
+            "request": "launch",
+            "mainClass": "Game",
+            "projectName": "Out of Stock(fish) chess engine_33fe8f04"
+        },
+        {
+            "type": "java",
+            "name": "zTests",
+            "request": "launch",
+            "mainClass": "zTests",
+            "projectName": "Out of Stock(fish) chess engine_33fe8f04"
+        },
+        {
+            "type": "java",
+            "name": "zTuner",
+            "request": "launch",
+            "mainClass": "zTuner",
+            "vmArgs": "-Xmx2g",
+            "args": "C:\\Users\\andre\\OneDrive\\Desktop\\programs\\mine\\engine-testing\\texel\\quiet-labeled.epd"
+        }
+    ]
+}

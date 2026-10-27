@@ -10,12 +10,18 @@ public class Eval
     // bit index read from right to left: 7 6 5 4 3 2 1 0
     private static int[] pawnPrecompBlack = new int[10];
     private static int[] pawnPrecompWhite = new int[10];
+    // rows attacked by each color's pawns, per file (same padding / bit layout as above)
+    private static int[] pawnAttackPrecompBlack = new int[10];
+    private static int[] pawnAttackPrecompWhite = new int[10];
 
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
     public static int[][][] evalBreakDown = new int[EvalTerm.SIZE][2][2];
     private static boolean recordBreakDown = false;
 
+    // threat non pawn count
+    // index 0 - hits rook / index 1 - hits queen
+    public static int[] threats = {0, 0};
 
     //indiv piece bonuses
     // piece square tables from whites view (row 0 is rank 8), black uses row 7 - row
@@ -167,6 +173,18 @@ public class Eval
         params[Param.KING_OPEN_FILE.offset() + 1] = -40;    // open
         params[Param.CASTLING_RIGHTS.offset()] = -35;
 
+        // threats
+        int[] pawnThreat = {28, 38, 21, 35};    // N B R Q
+        int[] minorThreat = {20, 11};           // R Q
+        int rookThreat = 17;                    // Q
+
+        params[Param.THREAT_BY_ROOK.offset()] = rookThreat;
+        for (int i = 0; i < pawnThreat.length; i++)
+        {
+            params[Param.THREAT_BY_PAWN.offset() + i] = pawnThreat[i];
+            if (i < 2) params[Param.THREAT_BY_MINOR.offset() + i] = minorThreat[i];
+        }
+
         params[Param.MOP_UP.offset()] = 10;     // center distance
         params[Param.MOP_UP.offset() + 1] = 4;  // king distance
     }
@@ -203,6 +221,8 @@ public class Eval
     {
         Arrays.fill(pawnPrecompBlack, 0);
         Arrays.fill(pawnPrecompWhite, 0);
+        Arrays.fill(pawnAttackPrecompBlack, 0);
+        Arrays.fill(pawnAttackPrecompWhite, 0);
 
         for (int row = 0; row < 8; row++)
         {
@@ -210,8 +230,18 @@ public class Eval
             {
                 Piece scanPiece = board.getPiece(row, col);
 
-                if (scanPiece == Piece.W_PAWN) pawnPrecompWhite[fileIndex(col)] |= (1 << row);
-                else if (scanPiece == Piece.B_PAWN) pawnPrecompBlack[fileIndex(col)] |= (1 << row);
+                if (scanPiece == Piece.W_PAWN)
+                {
+                    pawnPrecompWhite[fileIndex(col)] |= (1 << row);
+                    if (board.inBounds(0, col + 1)) pawnAttackPrecompWhite[fileIndex(col) + 1] |= (1 << (row - 1));
+                    if (board.inBounds(0, col - 1)) pawnAttackPrecompWhite[fileIndex(col) - 1] |= (1 << (row - 1));
+                }
+                else if (scanPiece == Piece.B_PAWN) 
+                {
+                    pawnPrecompBlack[fileIndex(col)] |= (1 << row);
+                    if (board.inBounds(0, col + 1)) pawnAttackPrecompBlack[fileIndex(col) + 1] |= (1 << (row + 1));
+                    if (board.inBounds(0, col - 1)) pawnAttackPrecompBlack[fileIndex(col) - 1] |= (1 << (row + 1));
+                }
             }
         }
 
@@ -309,9 +339,16 @@ public class Eval
                     {
                         centipawns += term(params[Param.KNIGHT_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
 
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false) * params[Param.KNIGHT_MOBILITY.offset()];
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false, threats) * params[Param.KNIGHT_MOBILITY.offset()];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
+                        int threatened = 0;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        if ((enemyPawnAttack[fileIndex(col)] & (1 << row)) != 0) threatened -= params[Param.THREAT_BY_PAWN.offset()];
+                        threatened += threats[0] * params[Param.THREAT_BY_MINOR.offset()];
+                        threatened += threats[1] * params[Param.THREAT_BY_MINOR.offset() + 1];
+                        centipawns += term(threatened, currentPiece.isWhite(), EvalTerm.PIECE_THREATS.ordinal(), GamePhase.BOTH);
+
                         phase += 1;
 
                              if (((row == 7 && col == 1) || (row == 7 && col == 6)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -321,9 +358,15 @@ public class Eval
                     {
                         centipawns += term(params[Param.BISHOP_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true) * params[Param.BISHOP_MOBILITY.offset()];
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true, threats) * params[Param.BISHOP_MOBILITY.offset()];
                         centipawns += term(mobility, currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
+                        int threatened = 0;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        if ((enemyPawnAttack[fileIndex(col)] & (1 << row)) != 0) threatened -= params[Param.THREAT_BY_PAWN.offset() + 1];
+                        threatened += threats[0] * params[Param.THREAT_BY_MINOR.offset()];
+                        threatened += threats[1] * params[Param.THREAT_BY_MINOR.offset() + 1];
+                        centipawns += term(threatened, currentPiece.isWhite(), EvalTerm.PIECE_THREATS.ordinal(), GamePhase.BOTH);
                         phase += 1;
 
                              if (((row == 7 && col == 2) || (row == 7 && col == 5)) && currentPiece.isWhite()) whiteMinorPiecesHome++;
@@ -365,9 +408,15 @@ public class Eval
                     {
                         centipawns += term(params[Param.ROOK_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true);
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true, threats);
                         midGameScore += term(mobility * params[Param.ROOK_MOBILITY_MG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
                         endGameScore += term(mobility * params[Param.ROOK_MOBILITY_EG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
+
+                        int threatened = 0;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        if ((enemyPawnAttack[fileIndex(col)] & (1 << row)) != 0) threatened -= params[Param.THREAT_BY_PAWN.offset() + 2];
+                        threatened += threats[1] * params[Param.THREAT_BY_ROOK.offset()];
+                        centipawns += term(threatened, currentPiece.isWhite(), EvalTerm.PIECE_THREATS.ordinal(), GamePhase.BOTH);
 
                         phase += 2;
 
@@ -398,10 +447,15 @@ public class Eval
                     {
                         centipawns += term(params[Param.QUEEN_PST.offset() + (tableRow * 8 + col)], currentPiece.isWhite(), EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true);
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true, null);
                         midGameScore += term(mobility * params[Param.QUEEN_MOBILITY_MG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * (currentPiece.isWhite()? 1 : -1);
                         endGameScore += term(mobility * params[Param.QUEEN_MOBILITY_EG.offset()], currentPiece.isWhite(), EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * (currentPiece.isWhite()? 1 : -1);
                         
+                        int threatened = 0;
+                        int[] enemyPawnAttack = currentPiece.isWhite()? pawnAttackPrecompBlack : pawnAttackPrecompWhite;
+                        if ((enemyPawnAttack[fileIndex(col)] & (1 << row)) != 0) threatened -= params[Param.THREAT_BY_PAWN.offset() + 3];
+                        centipawns += term(threatened, currentPiece.isWhite(), EvalTerm.PIECE_THREATS.ordinal(), GamePhase.BOTH);
+
                         phase += 4;
 
                              if ((row != 7 || col != 3) && currentPiece.isWhite()) whiteQueenMoved = true;

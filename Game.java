@@ -2,13 +2,11 @@
     --- TO DO ---
     TASK                          TIME        ELO          TYPE
 
-    Mobility v2 (pawn attacks)    1 hr        +5-15        eval
     Threats                       2 hr        +5-15        eval
     Passed pawns v2               2 hr        +5-15        eval
     Outposts                      1-2 hr      +0-10        eval
     Countermove heuristic         1 hr        +0-10        strength
     Allocation-free movegen       4-8 hr      +10-30       speed
-    Texel tuning                  6-10 hr     +30-80       eval
     RFP/FP margin tuning          1 hr+SPRTs  +0-15        strength
 
     -- later / big --
