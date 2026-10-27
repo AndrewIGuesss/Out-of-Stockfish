@@ -406,7 +406,7 @@ public class Moves
         return moves;
     }
 
-    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, boolean slider)
+    public static int mobilityCount(Board board, int row, int col, int[] rDir, int[] cDir, int[] enemyAttackArray, boolean slider)
     {
         int mobility = 0;
         boolean isWhite = board.getPiece(row, col).isWhite();
@@ -419,14 +419,19 @@ public class Moves
             if (!slider)
             {
                 counter++;
-                if (!board.inBounds(row + (counter * rDir[i]), col + (counter * cDir[i]))) continue;
-                Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
+                int newRow = row + (counter * rDir[i]);
+                int newCol = col + (counter * cDir[i]);
+                if (!board.inBounds(newRow, newCol)) continue;
+                Piece scanPiece = board.getPiece(newRow, newCol);
+
+                // squares attacked by enemy pawns dont count
+                boolean safe = (enemyAttackArray[Eval.fileIndex(newCol)] & (1 << newRow)) == 0;
 
                 if (scanPiece.isOccupied())
                 {
-                    if (scanPiece.isWhite() != isWhite) mobility++;
+                    if (scanPiece.isWhite() != isWhite && safe) mobility++;
                 }
-                else mobility++;
+                else if (safe) mobility++;
             }
             else
             {
@@ -443,14 +448,19 @@ public class Moves
 
                 for (counter = 1; counter <= steps; counter++)
                 {
-                    Piece scanPiece = board.getPiece(row + (counter * rDir[i]), col + (counter * cDir[i]));
+                    int newRow = row + (counter * rDir[i]);
+                    int newCol = col + (counter * cDir[i]);
+                    Piece scanPiece = board.getPiece(newRow, newCol);
+
+                    // squares attacked by enemy pawns dont count, but they dont block the ray either
+                    boolean safe = (enemyAttackArray[Eval.fileIndex(newCol)] & (1 << newRow)) == 0;
 
                     if (scanPiece.isOccupied())
                     {
-                        if (scanPiece.isWhite() != isWhite) mobility++;
+                        if (scanPiece.isWhite() != isWhite && safe) mobility++;
                         break;
                     }
-                    else mobility++;
+                    else if (safe) mobility++;
                 }
             }
         }
