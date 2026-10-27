@@ -145,7 +145,7 @@ public class Eval
         // mobility
         params[Param.KNIGHT_MOBILITY.offset()] = 2;
         params[Param.BISHOP_MOBILITY.offset()] = 4;
-        params[Param.ROOK_MOBILITY_MG.offset()] = 3;
+        params[Param.ROOK_MOBILITY_MG.offset()] = 4;
         params[Param.ROOK_MOBILITY_EG.offset()] = 4;
         params[Param.QUEEN_MOBILITY_MG.offset()] = 1;
         params[Param.QUEEN_MOBILITY_EG.offset()] = 10;
