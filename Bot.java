@@ -68,6 +68,7 @@ public class Bot
 
     // repetition check
     public static long[] plyPathKeys = new long[MAX_PLY];
+    public static long[] posKeys;
     
     static 
     {
@@ -164,21 +165,23 @@ public class Bot
         int endRow = (move % 100) / 8;
         int endCol = (move % 100) % 8;
 
+        Piece attacker = board.getPiece(startRow, startCol);
+
         int victimValue = 0;
-        int attackerValue = board.getPiece(startRow, startCol).value();
-        if (board.getPiece(startRow, startCol).getPiece() == 'K') attackerValue = 50;
+        int attackerValue = attacker.value();
+        if (attacker.getPiece() == 'K') attackerValue = 50;
         
-        boolean isPromotion = (endRow == 7 || endRow == 0) && board.getPiece(startRow, startCol).getPiece() == 'P';
+        boolean isPromotion = (endRow == 7 || endRow == 0) && attacker.getPiece() == 'P';
 
         if (isCapture(board, move) || isPromotion) 
         {
             victimValue = board.getPiece(endRow, endCol).value();
             int[] ep = board.getEnPassantSquare();
-            if (board.getEnPassantSquare() != null && ep[0] == endRow && ep[1] == endCol) victimValue = 100;
+            if (ep != null && ep[0] == endRow && ep[1] == endCol) victimValue = 100;
 
-            if (!isPromotion && board.getPiece(startRow, startCol).value() > victimValue && Moves.see(board, move) < 0) return BAD_CAPTURE_BASE + victimValue * 10 - attackerValue;
+            if (!isPromotion && attacker.value() > victimValue && Moves.see(board, move) < 0) return BAD_CAPTURE_BASE + victimValue * 10 - attackerValue;
             
-            if (isPromotion && board.getPiece(startRow, startCol).getPiece() == 'P') victimValue += 900;
+            if (isPromotion) victimValue += 900;
             return CAPTURE_BASE + victimValue * 10 - attackerValue; 
         }
 
@@ -186,7 +189,7 @@ public class Bot
 
         if (killerMoves[ply][0] == move) return KILLER_1;
         else if (killerMoves[ply][1] == move) return KILLER_2;
-        else return Math.min(historyTable[startRow * 8 + startCol][endRow * 8 + endCol], HISTORY_MAX);
+        else return Math.min(historyTable[move / 100][move % 100], HISTORY_MAX);
     }
 
     public static boolean hasPromotingPawn(Board board, boolean isWhite)
@@ -240,10 +243,7 @@ public class Bot
         alpha = Math.max(alpha, standPat);
         int best = standPat;
 
-        if (!hasPromotingPawn(board, whiteTurn))
-        {
-            if (standPat + QUEEN_VALUE + DELTA_MARGIN <= alpha) return best;
-        }
+        if (standPat + QUEEN_VALUE + DELTA_MARGIN <= alpha && !hasPromotingPawn(board, whiteTurn)) return best;
         
         if (ply >= MOVE_BUFFER_PLY) return best;
 
@@ -338,8 +338,11 @@ public class Bot
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)
         {
-            if (Game.repetition.containsKey(currKey)) return 0;
-            for (int i = 0; i <= ply - 1; i++)
+            for (int i = 0; i > posKeys.length; i++)
+            {
+                if (posKeys[i] == currKey) return 0;
+            }
+            for (int i = 0; i < ply; i++)
             {
                 if (plyPathKeys[i] == currKey) return 0;
             }
@@ -480,12 +483,11 @@ public class Bot
             
             validMoves++;
 
-            // can only be true for quiet moves
-            boolean givesCheck = !inCheck && !capture && !promoting && validMoves > 1 && Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn);
+            boolean quiet = !inCheck && !capture && !promoting && validMoves > 1;
 
-            if (beta - alpha == 1 && !inCheck && maxDepth <= LMP_MAX_DEPTH && !capture && !promoting && Math.abs(alpha) < MATE - 1000)
+            if (beta - alpha == 1 && maxDepth <= LMP_MAX_DEPTH && quiet && Math.abs(alpha) < MATE - 1000)
             {
-                if (validMoves > LMP_BASE + LMP_MULTIPLIER * maxDepth * maxDepth && !givesCheck)
+                if (validMoves > LMP_BASE + LMP_MULTIPLIER * maxDepth * maxDepth && !Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn))
                 {
                     board.unMakeMove(start, end, u);
                     continue;
@@ -495,9 +497,9 @@ public class Bot
             // futility pruning
             if (beta - alpha == 1 && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
             {
-                if (!givesCheck && !promoting && !capture)
+                if (!capture && !promoting && staticEval + FP_MARGIN * maxDepth <= alpha)
                 {
-                    if (staticEval + FP_MARGIN * maxDepth <= alpha) 
+                    if (!Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn)) 
                     {
                         board.unMakeMove(start, end, u);
                         continue;
@@ -512,7 +514,7 @@ public class Bot
             
             if (validMoves > 4 && maxDepth >= 3 && killerMoves[ply][0] != move && !inCheck && !capture)
             {
-                if (!givesCheck && !promoting && reduction != 0)
+                if (!promoting && reduction != 0 && !Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn))
                 {
                     searched = true;
                     // reduced depth, null window
@@ -615,6 +617,14 @@ public class Bot
 
         maxDepth = Math.min(maxDepth, MAX_PLY - MAX_DEPTH_EXTENTION - 1);
         historyTable = new int[SQUARES][SQUARES];
+
+        posKeys = new long[Game.repetition.size()];
+        int counter = 0;
+        for (long key : Game.repetition.keySet())
+        {
+            posKeys[counter] = key;
+            counter++;
+        }
 
         // stats
         depthReached = 0;

@@ -246,7 +246,7 @@ public class Board
         
         Piece temp = playerBoard[start[0]][start[1]];
 
-        if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
+        if (getPiece(end).isOccupied() || temp.getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
         else timeSinceCaptureOrPawnPush++;
 
         if (temp.getPiece() == 'K') 
@@ -392,7 +392,7 @@ public class Board
         
         Piece temp = playerBoard[start[0]][start[1]];
 
-        if (getPiece(end).isOccupied() || getPiece(start).getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
+        if (getPiece(end).isOccupied() || temp.getPiece() == 'P') timeSinceCaptureOrPawnPush = 0;
         else timeSinceCaptureOrPawnPush++;
 
         if (temp.getPiece() == 'K') 
@@ -420,14 +420,19 @@ public class Board
             else blackCastled = true;
         }
 
-        if (start[0] == 7 && start[1] == 4 || end[0] == 7 && end[1] == 4) { whiteCanCastleLong = false; whiteCanCastleShort = false; }
-        if (start[0] == 7 && start[1] == 0 || end[0] == 7 && end[1] == 0) whiteCanCastleLong = false;
-        if (start[0] == 7 && start[1] == 7 || end[0] == 7 && end[1] == 7) whiteCanCastleShort = false;
+        if (whiteCanCastleLong || whiteCanCastleShort)
+        {
+            if (start[0] == 7 && start[1] == 4 || end[0] == 7 && end[1] == 4) { whiteCanCastleLong = false; whiteCanCastleShort = false; }
+            if (start[0] == 7 && start[1] == 0 || end[0] == 7 && end[1] == 0) whiteCanCastleLong = false;
+            if (start[0] == 7 && start[1] == 7 || end[0] == 7 && end[1] == 7) whiteCanCastleShort = false;
+        }
 
-        if (start[0] == 0 && start[1] == 4 || end[0] == 0 && end[1] == 4) { blackCanCastleLong = false; blackCanCastleShort = false; }
-        if (start[0] == 0 && start[1] == 0 || end[0] == 0 && end[1] == 0) blackCanCastleLong = false;
-        if (start[0] == 0 && start[1] == 7 || end[0] == 0 && end[1] == 7) blackCanCastleShort = false;
-        
+        if (blackCanCastleLong || blackCanCastleShort)
+        {
+            if (start[0] == 0 && start[1] == 4 || end[0] == 0 && end[1] == 4) { blackCanCastleLong = false; blackCanCastleShort = false; }
+            if (start[0] == 0 && start[1] == 0 || end[0] == 0 && end[1] == 0) blackCanCastleLong = false;
+            if (start[0] == 0 && start[1] == 7 || end[0] == 0 && end[1] == 7) blackCanCastleShort = false;
+        }
 
         // en passant
         if ((enPassantSquare != null && end[0] == enPassantSquare[0] && end[1] == enPassantSquare[1] && temp.getPiece() == 'P'))
@@ -436,13 +441,13 @@ public class Board
             {
                 playerBoard[end[0] + 1][end[1]] = Piece.EMPTY; // removes pawn before square
                 lastPosition.capture = Piece.B_PAWN;
-                lastPosition.captureLoc = new int[]{end[0] + 1, end[1]};
+                lastPosition.captureLoc = Moves.SQUARES[Moves.coords(end[0] + 1, end[1])];
             }
             else
             {
                 playerBoard[end[0] - 1][end[1]] = Piece.EMPTY; // removes pawn before square
                 lastPosition.capture = Piece.W_PAWN;
-                lastPosition.captureLoc = new int[]{end[0] - 1, end[1]};
+                lastPosition.captureLoc = Moves.SQUARES[Moves.coords(end[0] - 1, end[1])];
             }
         }
 

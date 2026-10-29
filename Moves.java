@@ -62,9 +62,10 @@ public class Moves
                 
                 if (board.inBounds(newRow, newCol))
                 {
-                    if (board.getPiece(newRow, newCol).isOccupied())
+                    Piece target = board.getPiece(newRow, newCol);
+                    if (target.isOccupied())
                     {
-                        if (board.getPiece(newRow, newCol).isWhite() != isWhite) moves[count++] = coords(row, col, newRow, newCol);
+                        if (target.isWhite() != isWhite) moves[count++] = coords(row, col, newRow, newCol);
                         break;
                     }
                     else moves[count++] = coords(row, col, newRow, newCol);
@@ -89,9 +90,10 @@ public class Moves
                 
             if (board.inBounds(row, col))
             {
-                if (board.getPiece(row, col).isOccupied())
+                Piece target = board.getPiece(row, col);
+                if (target.isOccupied())
                 {
-                    return board.getPiece(row, col);
+                    return target;
                 }
             }
             else break;
@@ -121,18 +123,19 @@ public class Moves
         int startRow = pawn.isWhite()? 6 : 1;
     
         int newRow = row + dir;
-        int newCol = col;
         
-        if (board.inBounds(row + dir, col) && !board.getPiece(newRow, newCol).isOccupied())
+        if (board.inBounds(newRow, col) && !board.getPiece(newRow, col).isOccupied())
         {
-            moves[count++] = coords(row, col, newRow, newCol);
+            moves[count++] = coords(row, col, newRow, col);
             
             newRow = row + (2 * dir);
             
-            if (row == startRow && !board.getPiece(newRow, newCol).isOccupied()) moves[count++] = coords(row, col, newRow, newCol);
+            if (row == startRow && !board.getPiece(newRow, col).isOccupied()) moves[count++] = coords(row, col, newRow, col);
         }
         
         // captures
+        int newCol;
+        int[] ep = board.getEnPassantSquare();
         for (int diagonal : PAWN_CAPTURE_C)
         {
             if (board.inBounds(row + dir, col + diagonal))
@@ -146,7 +149,6 @@ public class Moves
                 if (target.isOccupied() && target.isWhite() != pawn.isWhite()) moves[count++] = coords(row, col, newRow, newCol);
                 
                 // en passant
-                int[] ep = board.getEnPassantSquare();
                 if (ep != null && ep[0] == newRow && ep[1] == newCol) moves[count++] = coords(row, col, newRow, newCol);
             }   
         }   
@@ -207,56 +209,52 @@ public class Moves
         }
         
         // castling 
-        
-        if (!inCheck(board, SQUARES[coords(row, col)], king.isWhite()))
+        if (king.isWhite())
         {
-            if (king.isWhite())
+            if (board.whiteCanCastleShort)
             {
-                if (board.whiteCanCastleShort)
+                // peice in the way check
+                if (!board.getPiece(7, 5).isOccupied() && !board.getPiece(7, 6).isOccupied() && !inCheck(board, SQUARES[coords(7, 4)], true))
                 {
-                    // peice in the way check
-                    if (!board.getPiece(7, 5).isOccupied() && !board.getPiece(7, 6).isOccupied())
+                    if (!inCheck(board, SQUARES[coords(7, 5)], true) && !inCheck(board, SQUARES[coords(7, 6)], true))
                     {
-                        if (!inCheck(board, SQUARES[coords(7, 5)], true) && !inCheck(board, SQUARES[coords(7, 6)], true))
-                        {
-                            if (board.getPiece(7, 4).getPiece() == 'K' && board.getPiece(7, 7).getPiece() == 'R') moves[count++] = coords(row, col, 7, 6);
-                        }
-                    }
-                }
-                if(board.whiteCanCastleLong)
-                {
-                    // peice in the way check
-                    if (!board.getPiece(7, 1).isOccupied() && !board.getPiece(7, 2).isOccupied() && !board.getPiece(7, 3).isOccupied())
-                    {
-                        if (!inCheck(board, SQUARES[coords(7, 2)], true) && !inCheck(board, SQUARES[coords(7, 3)], true))
-                        {
-                            if (board.getPiece(7, 4).getPiece() == 'K' && board.getPiece(7, 0).getPiece() == 'R') moves[count++] = coords(row, col, 7, 2);
-                        }
+                        if (board.getPiece(7, 4).getPiece() == 'K' && board.getPiece(7, 7).getPiece() == 'R') moves[count++] = coords(row, col, 7, 6);
                     }
                 }
             }
-            else
+            if(board.whiteCanCastleLong)
             {
-                if (board.blackCanCastleShort)
+                // peice in the way check
+                if (!board.getPiece(7, 1).isOccupied() && !board.getPiece(7, 2).isOccupied() && !board.getPiece(7, 3).isOccupied() && !inCheck(board, SQUARES[coords(7, 4)], true))
                 {
-                    // peice in the way check
-                    if (!board.getPiece(0, 5).isOccupied() && !board.getPiece(0, 6).isOccupied())
+                    if (!inCheck(board, SQUARES[coords(7, 2)], true) && !inCheck(board, SQUARES[coords(7, 3)], true))
                     {
-                        if (!inCheck(board, SQUARES[coords(0, 5)], false) && !inCheck(board, SQUARES[coords(0, 6)], false))
-                        {
-                            if (board.getPiece(0, 4).getPiece() == 'K' && board.getPiece(0, 7).getPiece() == 'R') moves[count++] = coords(row, col, 0, 6);
-                        }
+                        if (board.getPiece(7, 4).getPiece() == 'K' && board.getPiece(7, 0).getPiece() == 'R') moves[count++] = coords(row, col, 7, 2);
                     }
                 }
-                if (board.blackCanCastleLong)
+            }
+        }
+        else
+        {
+            if (board.blackCanCastleShort)
+            {
+                // peice in the way check
+                if (!board.getPiece(0, 5).isOccupied() && !board.getPiece(0, 6).isOccupied() && !inCheck(board, SQUARES[coords(0, 4)], false))
                 {
-                    // peice in the way check
-                    if (!board.getPiece(0, 1).isOccupied() && !board.getPiece(0, 2).isOccupied() && !board.getPiece(0, 3).isOccupied())
+                    if (!inCheck(board, SQUARES[coords(0, 5)], false) && !inCheck(board, SQUARES[coords(0, 6)], false))
                     {
-                        if (!inCheck(board, SQUARES[coords(0, 2)], false) && !inCheck(board, SQUARES[coords(0, 3)], false))
-                        {
-                            if (board.getPiece(0, 4).getPiece() == 'K' && board.getPiece(0, 0).getPiece() == 'R') moves[count++] = coords(row, col, 0, 2);
-                        }
+                        if (board.getPiece(0, 4).getPiece() == 'K' && board.getPiece(0, 7).getPiece() == 'R') moves[count++] = coords(row, col, 0, 6);
+                    }
+                }
+            }
+            if (board.blackCanCastleLong)
+            {
+                // peice in the way check
+                if (!board.getPiece(0, 1).isOccupied() && !board.getPiece(0, 2).isOccupied() && !board.getPiece(0, 3).isOccupied() && !inCheck(board, SQUARES[coords(0, 4)], false))
+                {
+                    if (!inCheck(board, SQUARES[coords(0, 2)], false) && !inCheck(board, SQUARES[coords(0, 3)], false))
+                    {
+                        if (board.getPiece(0, 4).getPiece() == 'K' && board.getPiece(0, 0).getPiece() == 'R') moves[count++] = coords(row, col, 0, 2);
                     }
                 }
             }
@@ -486,14 +484,14 @@ public class Moves
         int endRow = endSquare(move) / 8;
         int endCol = endSquare(move) % 8;
 
-        boolean isEnPassant = startCol != endCol && board.getPiece(startRow, startCol).getPiece() == 'P' && board.getPiece(endRow, endCol) == Piece.EMPTY;
-        int[] gain = seeGain;
-        int removedCount = 0;
-        boolean whiteTurn = board.getPiece(startRow, startCol).isWhite();
-
         Piece movingPiece = board.getPiece(startRow, startCol);
         Piece pieceOnSquare = movingPiece;
         
+        boolean whiteTurn = movingPiece.isWhite();
+        boolean isEnPassant = startCol != endCol && movingPiece.getPiece() == 'P' && board.getPiece(endRow, endCol) == Piece.EMPTY;
+        int[] gain = seeGain;
+        int removedCount = 0;
+
         Piece epPiece = null;
         int[] epSquare = null;
 
@@ -506,19 +504,20 @@ public class Moves
         }
         else gain[0] = board.getPiece(endRow, endCol).value();
 
-        board.addPiece(SQUARES[coords(startRow, startCol)]);
+        board.addPiece(SQUARES[move / 100]);
         
         while (true) 
         {
             int attacker = leastValuableAttacker(board, endRow, endCol, !whiteTurn);
             if (attacker == -1) break;
 
-            seeRemovedPieces[removedCount] = board.getPiece(SQUARES[attacker]);
+            Piece seePiece = board.getPiece(SQUARES[attacker]);
+            seeRemovedPieces[removedCount] = seePiece;
             seeRemovedSquares[removedCount] = attacker;
             removedCount++;
             gain[removedCount] = pieceOnSquare.value() - gain[removedCount - 1];
             
-            pieceOnSquare = board.getPiece(SQUARES[attacker]);
+            pieceOnSquare = seePiece;
             board.addPiece(SQUARES[attacker]);
             whiteTurn = !whiteTurn;
         }
@@ -528,7 +527,7 @@ public class Moves
             board.addPiece(seeRemovedPieces[i], SQUARES[seeRemovedSquares[i]]);
             gain[i] = -Math.max(-gain[i], gain[i + 1]);
         }
-        board.addPiece(movingPiece, SQUARES[coords(startRow, startCol)]);
+        board.addPiece(movingPiece, SQUARES[move / 100]);
         if (epSquare != null) board.addPiece(epPiece, epSquare);
 
         return gain[0];
