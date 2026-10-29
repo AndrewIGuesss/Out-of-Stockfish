@@ -1,4 +1,4 @@
-public record TTEntry(long key, int depth, int score, int flag, int[] bestmove) 
+public record TTEntry(long key, int depth, int score, int flag, int bestmove) 
 {
     public static final int EXACT = 1;
     public static final int LOWER = 2;

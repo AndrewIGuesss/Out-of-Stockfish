@@ -175,52 +175,54 @@ public class Board
     }
     
     //main validater
-    public boolean[][] validMoves(int[] square, boolean test)
+    public List<Integer> validMoves(int[] square, boolean test)
     {
-        boolean[][] moves = preValidMoves(square, test);
+        List<Integer> allMoves = preValidMoves(square, test);
         boolean white = getPiece(square).isWhite();
     
-        boolean[][] legal = new boolean[8][8]; 
+        List<Integer> validMoves = new ArrayList<>(); 
     
-        for (int row = 0; row < 8; row++) // pin check
+        for (Integer move : allMoves)
         {
-            for (int col = 0; col < 8; col++)
-            {
-                if (moves[row][col])
-                {
-                    Undo u = this.makeMove(square, new int[]{row, col}, 'Q');
-                    boolean inCheck = Moves.inCheck(this, getKingLoc(white), white);
-                    this.unMakeMove(square, new int[]{row, col}, u);
+            Undo u = this.makeMove(square, Moves.coordsEnd(move), 'Q');
+            boolean inCheck = Moves.inCheck(this, getKingLoc(white), white);
+            this.unMakeMove(square, Moves.coordsEnd(move), u);
 
-                    if (!inCheck) legal[row][col] = true;
-                }
-            }
+            if (!inCheck) validMoves.add(move);
         }
     
         // debug
-        if (!Settings.debugMenu || test) return legal;
+        if (!Settings.debugMenu || test) return validMoves;
         legalMoves = new ArrayList<>();
         for (int row = 0; row < 8; row++)
         {   for (int col = 0; col < 8; col++)
             {  
-                if (legal[row][col]) legalMoves.add(convertMove(new int[]{row,col}));
+                if (validMoves.contains(Moves.coords(square[0], square[1], row, col))) legalMoves.add(convertMove(new int[]{row,col}));
             }
         }
-        return legal;
+        return validMoves;
     }
     
-    // gives all moves before checking if piece is pinned
-    public boolean[][] preValidMoves(int[] square, boolean test)
+    // legal moves as boolean[][]
+    public boolean[][] validMovesGrid(int[] square, boolean test)
     {
-        char pieceType = getPiece(square).getPiece();
-        boolean[][] preValidMoves = new boolean[8][8];
-        
-        if (pieceType == 'P') preValidMoves = Moves.pawnMoves(this, square);
-        if (pieceType == 'R') preValidMoves = Moves.rookMoves(this, square);
-        if (pieceType == 'N') preValidMoves = Moves.knightMoves(this, square);
-        if (pieceType == 'B') preValidMoves = Moves.bishopMoves(this, square);
-        if (pieceType == 'Q') preValidMoves = Moves.queenMoves(this, square);
-        if (pieceType == 'K') preValidMoves = Moves.kingMoves(this, square);
+        boolean[][] grid = new boolean[8][8];
+        for (int move : validMoves(square, test))
+        {
+            int[] end = Moves.coordsEnd(move);
+            grid[end[0]][end[1]] = true;
+        }
+        return grid;
+    }
+
+    // gives all moves before checking if piece is pinned
+    public List<Integer> preValidMoves(int[] square, boolean test)
+    {
+        int[] moves = new int[Moves.MAX_MOVES];
+        int count = Moves.pieceMoves(this, square[0], square[1], moves, 0);
+
+        List<Integer> preValidMoves = new ArrayList<>();
+        for (int i = 0; i < count; i++) preValidMoves.add(moves[i]);
         
         // debug
         if (!Settings.debugMenu || test) return preValidMoves;
@@ -228,7 +230,7 @@ public class Board
         for (int row = 0; row < 8; row++)
         {   for (int col = 0; col < 8; col++)
             {  
-                if (preValidMoves[row][col]) fakeMoves.add(convertMove(new int[]{row,col}));
+                if (preValidMoves.contains(Moves.coords(square[0], square[1], row, col))) fakeMoves.add(convertMove(new int[]{row,col}));
             }
         }
         return preValidMoves;
@@ -261,15 +263,16 @@ public class Board
             boolean disambiguateRow = false;
 
             List<int[]> rivals = new ArrayList<int[]>();
-            List<int[]> pMoves = Moves.pseudoMoves(this, temp.isWhite());
-            for (int[] pMove : pMoves)
+            List<Integer> pMoves = Moves.pseudoMoves(this, temp.isWhite());
+            for (Integer pMoveInt : pMoves)
             {
+                int[] pMove = Moves.coordsStartEnd(pMoveInt);
                 if ((pMove[2] == end[0] && pMove[3] == end[1]) && (pMove[0] != start[0] || pMove[1] != start[1]))
                 {
                     if (temp.getPiece() == getPiece(pMove[0], pMove[1]).getPiece())
                     {
-                        boolean[][] pValidMoves = validMoves(new int[]{pMove[0], pMove[1]}, true);
-                        if (pValidMoves[pMove[2]][pMove[3]]) rivals.add(pMove);
+                        List<Integer> pValidMoves = validMoves(new int[]{pMove[0], pMove[1]}, true);
+                        if (pValidMoves.contains(pMoveInt)) rivals.add(pMove);
                     }
                 }
             }
@@ -394,8 +397,8 @@ public class Board
 
         if (temp.getPiece() == 'K') 
         {
-            if (temp.isWhite()) whiteKingLoc = new int[]{end[0], end[1]};
-            else blackKingLoc = new int[]{end[0], end[1]};
+            if (temp.isWhite()) whiteKingLoc = Moves.SQUARES[Moves.coords(end[0], end[1])];
+            else blackKingLoc = Moves.SQUARES[Moves.coords(end[0], end[1])];
         }
 
         playerBoard[start[0]][start[1]] = Piece.EMPTY; //clears the space
@@ -448,7 +451,7 @@ public class Board
         int doubleMove = end[0] - start[0]; // double moved pawn
         if (temp.getPiece() == 'P' && (doubleMove == -2 || doubleMove == 2)) // double moved pawn check
         {
-            enPassantSquare = new int[]{(start[0] + end[0]) / 2, start[1]}; // sets square behind pawn to en passant square
+            enPassantSquare = Moves.SQUARES[Moves.coords((start[0] + end[0]) / 2, start[1])]; // sets square behind pawn to en passant square (shared array)
         }
         else enPassantSquare = null; // clear square every non double pawn move
         
@@ -543,8 +546,8 @@ public class Board
         Piece target = getPiece(end);
         if (target.isOccupied() && target.isWhite() == p.isWhite()) return "Space is occupied";
         
-        boolean[][] pieceMoves = preValidMoves(start, true);
-        if (!pieceMoves[end[0]][end[1]]) return "Piece cant travel there";
+        List<Integer> pieceMoves = preValidMoves(start, true);
+        if (!pieceMoves.contains(Moves.coords(start[0], start[1], end[0], end[1]))) return "Piece cant travel there";
         
         Undo u = this.makeMove(start, end, 'Q');
         boolean inCheck = Moves.inCheck(this, getKingLoc(p.isWhite()), p.isWhite());

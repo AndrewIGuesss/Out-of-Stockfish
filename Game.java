@@ -593,7 +593,7 @@ public class Game
             if (piece != null && board.getPiece(piece).isOccupied() && board.getPiece(piece).isWhite() == whiteTurn)
             {
                 clear();
-                validMoves = board.validMoves(piece, false);
+                validMoves = board.validMovesGrid(piece, false);
                 UI.printBoard(board, validMoves, null);
                 System.out.print("chose your destination: ");
 
@@ -615,8 +615,9 @@ public class Game
                 int matches = 0;
                 boolean exactMatch = false;
 
-                for (int[] move : Moves.allMoves(board, whiteTurn))
+                for (int moveInt : Moves.allMoves(board, whiteTurn))
                 {
+                    int[] move = Moves.coordsStartEnd(moveInt); // {startRow, startCol, endRow, endCol}
                     boolean isPromotion = board.getPiece(move[0], move[1]).getPiece() == 'P' && move[2] == promotionRow;
                     int tries = (isPromotion && hasPromotion)? 4 : 1;
 

@@ -36,10 +36,11 @@ public class zzMakeUnmake
             boolean beforeWhiteCastled = board.whiteCastled;
             boolean beforeBlackCastled = board.blackCastled;
 
-            List<int[]> moves = Moves.pseudoMoves(board, whiteTurn);
+            List<Integer> moves = Moves.pseudoMoves(board, whiteTurn);
             int badMoves = 0;
-            for (int[] move : moves)
+            for (int moveInt : moves)
             {
+                int[] move = Moves.coordsStartEnd(moveInt); // {startRow, startCol, endRow, endCol}
                 int[] start = new int[]{move[0], move[1]};
                 int[] end = new int[]{move[2], move[3]};
 

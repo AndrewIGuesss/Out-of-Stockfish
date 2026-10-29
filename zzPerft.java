@@ -44,9 +44,10 @@ public class zzPerft
         if (depth == 0) return 1;
 
         long totalMoves = 0;
-        List<int[]> moves = Moves.allMoves(board, isWhite);
-        for (int[] move : moves)
+        List<Integer> moves = Moves.allMoves(board, isWhite);
+        for (int moveInt : moves)
         {
+            int[] move = Moves.coordsStartEnd(moveInt); // {startRow, startCol, endRow, endCol}
             Board copy = new Board(board);
             copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
             
