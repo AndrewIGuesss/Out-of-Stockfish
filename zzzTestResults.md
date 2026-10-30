@@ -28,3 +28,4 @@
 | 23 | Oct 27 | Mobility safe squares retry (texel-retuned mobility weights, only rook mg changed 3 → 4; tuner error 0.059403 vs main 0.059381) | SEE shortcut + ray lengths | SPRT [0, 10] | 2050 | ≈ −10.5 ± 12.7 | rejected (H0, rebuilt from config.json) |
 | 24 | Oct 28 | Threats (pawn attacks on N/B/R/Q, minor attacks on R/Q, rook attacks on Q; counted in mobilityCount; texel-tuned, error 0.059381 → 0.059165) | safe squares retry rejected | SPRT [0, 10] | 1854 | ≈ +20.3 ± 13.1 | accepted (H1, rebuilt from config.json) |
 | 25 | 2026-10-28 | Allocation-free movegen (int moves, per-ply buffers, sort removed) | main e414944 (threats) | speed | 270 | +141.11 ± 37.18 | H1 (LLR 2.96, [0, 10], early stop) |
+| 26 | 2026-10-29 | Hot-path cleanup + PV-node fix (LMP/FP/RFP use entry window), UCI mate scores, SAN matching fix | main (moves-remake merged) | correctness + speed | 2730 | +18.85 ± 10.36 | H1 (LLR 2.96, [-5, 0]) |
