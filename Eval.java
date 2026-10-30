@@ -28,7 +28,7 @@ public class Eval
 
     private static final int[][] PAWN_TABLE = {
         //a    b    c    d    e    f    g    h
-        {785, 790, 795, 800, 800, 795, 790, 785}, // 8 pawn counted like a queen for bot calc
+        {785, 790, 795, 800, 800, 795, 790, 785}, // 8
         { 97, 118,  86, 111, 105, 119,  30,  10}, // 7
         { -1,   8,  35,  33,  68,  87,  33,  -9}, // 6
         {-14,  12,   9,  26,  26,  17,  10, -24}, // 5
@@ -40,7 +40,7 @@ public class Eval
 
     private static final int[][] PAWN_ENDGAME_TABLE = {
         //a    b    c    d    e    f    g    h
-        {800, 800, 800, 800, 800, 800, 800, 800}, // 8 pawn counted like a queen for bot calc
+        {800, 800, 800, 800, 800, 800, 800, 800}, // 8
         {126, 115,  85,  59,  66,  60, 105, 136}, // 7
         { 62,  55,  26,  -6, -24,  -5,  27,  43}, // 6
         { 36,  19,   9, -11,  -7,   1,  13,  19}, // 5

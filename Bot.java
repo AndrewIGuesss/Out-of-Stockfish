@@ -21,14 +21,16 @@ public class Bot
 
     private static final int MAX_PLY = 64;
     private static final int KILLER_SLOTS = 2;
-    private static final int SQUARES = 64;
-    private static final int QUEEN_VALUE = 900;
+    private static final int NUM_SQUARES = 64;
+    private static final int QUEEN_VALUE = Piece.W_QUEEN.value();
 
     private static final int NULL_MOVE_REDUCTION = 2;
 
-    private static int[][] LMR_TABLE = new int[64][64];
-    private static double LMR_BASE = 0.75;
-    private static double LMR_DIVISOR = 2.25;
+    private static final double LMR_BASE = 0.75;
+    private static final double LMR_DIVISOR = 2.25;
+    private static final int LMR_MAX_DEPTH = 64;
+    private static final int LMR_MAX_MOVE_NUM = 64;
+    private static int[][] LMR_TABLE = new int[LMR_MAX_DEPTH][LMR_MAX_MOVE_NUM];
 
     private static final int LMP_MAX_DEPTH = 2;
     private static final int LMP_MULTIPLIER = 4;
@@ -64,7 +66,7 @@ public class Bot
     private static final int[][] moveBuffer = new int[MOVE_BUFFER_PLY][Moves.MAX_MOVES];
     private static final int[][] scoreBuffer = new int[MOVE_BUFFER_PLY][Moves.MAX_MOVES];
     //   [from square 0-63]   [to square 0-63]   -> beta cutoff
-    public static int[][] historyTable = new int[SQUARES][SQUARES];
+    public static int[][] historyTable = new int[NUM_SQUARES][NUM_SQUARES];
 
     // repetition check
     public static long[] plyPathKeys = new long[MAX_PLY];
@@ -87,24 +89,24 @@ public class Bot
         List<Integer> pvMoves = new ArrayList<>();
         List<Undo> undos = new ArrayList<>();
         List<Long> hashs = new ArrayList<>();
-        StringBuilder pv = new StringBuilder();
+        StringBuilder pvSB = new StringBuilder();
 
-        pv: while (pvMoves.size() < length)
+        pvLoop: while (pvMoves.size() < length)
         {
             long newHash = Zobrist.makeZobristHash(board, whiteTurn);
             
-            if (board.getTimeSinceCaptureOrPawnPush() >= 100) break pv;
-            if (Game.repetition.containsKey(newHash) || hashs.contains(newHash)) break pv;
+            if (board.getTimeSinceCaptureOrPawnPush() >= 100) break pvLoop;
+            if (Game.repetition.containsKey(newHash) || hashs.contains(newHash)) break pvLoop;
             hashs.add(newHash);
 
             int index = (int)(newHash & (TTEntry.TT_SIZE - 1));
             TTEntry entry = TTEntry.ttTable[index];
 
-            if (entry == null || entry.key() != newHash) break pv;
+            if (entry == null || entry.key() != newHash) break pvLoop;
 
             int ttMove = entry.bestmove();
 
-            if (ttMove == 0) break pv;
+            if (ttMove == 0) break pvLoop;
             
             List<Integer> moves = Moves.pseudoMoves(board, whiteTurn);
             boolean legal = false;
@@ -120,7 +122,7 @@ public class Bot
                     break;
                 }
             }
-            if (!legal) break pv;
+            if (!legal) break pvLoop;
 
             String move = Board.convertMove(start) + Board.convertMove(end);
             if (board.getPiece(start).getPiece() == 'P' && (end[0] == 0 || end[0] == 7)) move += ("q");
@@ -129,11 +131,11 @@ public class Bot
             if (Moves.inCheck(board, board.getKingLoc(whiteTurn), whiteTurn))
             {
                 board.unMakeMove(start, end, u);
-                break pv;
+                break pvLoop;
             }
             else undos.add(u);
 
-            pv.append(move + " ");
+            pvSB.append(move + " ");
             pvMoves.add(ttMove);
 
             whiteTurn = !whiteTurn;
@@ -144,7 +146,7 @@ public class Bot
         {
             board.unMakeMove(Moves.coordsStart(pvMoves.get(i)), Moves.coordsEnd(pvMoves.get(i)), undos.get(i));
         }
-        return pv.toString().trim();
+        return pvSB.toString().trim();
     }
 
     public static boolean isCapture(Board board, int move)
@@ -209,11 +211,6 @@ public class Bot
             }
         }
         return false;
-    }
-
-    public static void clearHistory()
-    {
-        historyTable = new int[SQUARES][SQUARES];
     }
 
 
@@ -511,7 +508,7 @@ public class Bot
             // LMR (late move reductions)
             boolean searched = false;
             int score = 0;
-            int reduction = LMR_TABLE[Math.min(maxDepth, 63)][Math.min(validMoves, 63)];
+            int reduction = LMR_TABLE[Math.min(maxDepth, LMR_MAX_DEPTH - 1)][Math.min(validMoves, LMR_MAX_MOVE_NUM - 1)];
             
             if (validMoves > 4 && maxDepth >= 3 && killerMoves[ply][0] != move && !inCheck && !capture)
             {
@@ -617,7 +614,13 @@ public class Bot
         killerMoves = new int[MAX_PLY][KILLER_SLOTS];
 
         maxDepth = Math.min(maxDepth, MAX_PLY - MAX_DEPTH_EXTENTION - 1);
-        historyTable = new int[SQUARES][SQUARES];
+        for (int i = 0; i < historyTable.length; i++)
+        {
+            for (int j = 0; j < historyTable[i].length; j++)
+            {
+                historyTable[i][j] = 0;
+            }
+        }
 
         posKeys = new long[Game.repetition.size()];
         int counter = 0;
@@ -633,7 +636,7 @@ public class Bot
         movesAnalysed = 0;
         quiescenceMovesAnalysed = 0;
 
-        double startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
         // root move generation + ordering
         int[] moves = new int[Moves.MAX_MOVES];
@@ -771,11 +774,11 @@ public class Bot
                 {
                     int movesTillMate = (Bot.MATE - Math.abs(bestScoreSoFar) + 1) / 2;
                     String mateMsg = "mate " + (bestScoreSoFar > 0? movesTillMate : -movesTillMate);
-                    System.out.printf("info depth %d score %s nodes %d time %d pv %s%n", depth, mateMsg, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+                    System.out.printf("info depth %d score %s nodes %d time %d pv %s%n", depth, mateMsg, movesAnalysed, System.currentTimeMillis() - startTime, pv);
                 }
                 else
                 {
-                    System.out.printf("info depth %d score cp %d nodes %d time %d pv %s%n", depth, bestScoreSoFar, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+                    System.out.printf("info depth %d score cp %d nodes %d time %d pv %s%n", depth, bestScoreSoFar, movesAnalysed, System.currentTimeMillis() - startTime, pv);
                 }
             }
 

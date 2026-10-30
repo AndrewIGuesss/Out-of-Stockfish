@@ -69,8 +69,7 @@ public class Board
         whiteCaptured = new ArrayList<>();
         blackCaptured = new ArrayList<>();
         history = new ArrayList<>();
-        if (board.enPassantSquare != null) enPassantSquare = board.getEnPassantSquare();
-        else enPassantSquare = null;
+        enPassantSquare = board.getEnPassantSquare();
     }
     
     // geters
@@ -101,7 +100,6 @@ public class Board
     // debug seters
     public void addPiece(Piece piece, int[] cords) { playerBoard[cords[0]][cords[1]] = piece; }
     public void addPiece(char piece, int[] cords, boolean isWhite) { playerBoard[cords[0]][cords[1]] = Piece.get(isWhite, piece); }
-    public void addPiece(int[] cords) { playerBoard[cords[0]][cords[1]] = Piece.EMPTY; }
     
     public void difine()
     {
@@ -170,8 +168,7 @@ public class Board
     public boolean isWhiteTurn()
     {
         int historySize = history.size() + (blackStarted? 1 : 0);
-        if (historySize % 2 == 0) return true;
-        else return false;
+        return historySize % 2 == 0;
     }
     
     //main validater
@@ -537,16 +534,13 @@ public class Board
     {
         boolean whiteTurn = isWhiteTurn();
 
-        Piece p;
-        try { p = getPiece(end); }
-        catch (NullPointerException | ArrayIndexOutOfBoundsException e) { return "Space is out of bounds"; }
-        try 
-        {
-            p = getPiece(start);
-            if (!p.isOccupied()) return "No piece selected";
-            if (p.isWhite() != whiteTurn) return "Wrong color piece";
-        }
-        catch (NullPointerException | ArrayIndexOutOfBoundsException e) { return "Space is out of bounds"; }
+        if (start == null || end == null) return "Space is out of bounds";
+        if (!inBounds(start[0], start[1])) return "Space is out of bounds";
+        if (!inBounds(end[0], end[1])) return "Space is out of bounds";
+
+        Piece p = getPiece(start);
+        if (!p.isOccupied()) return "No piece selected";
+        if (p.isWhite() != whiteTurn) return "Wrong color piece";
         
         Piece target = getPiece(end);
         if (target.isOccupied() && target.isWhite() == p.isWhite()) return "Space is occupied";
@@ -599,8 +593,8 @@ public class Board
         {
             for (int col = 0; col < 8; col++)
             {
-                int currValue = getPiece(row, col).value();
-                if (currValue > 100 && currValue < 1000 && getPiece(row, col).isWhite() == isWhite) return true;
+                char currPiece = getPiece(row, col).getPiece();
+                if (currPiece != ' ' && currPiece != 'P' && currPiece != 'K' && getPiece(row, col).isWhite() == isWhite) return true;
             }
         }
         return false;
@@ -674,7 +668,7 @@ public class Board
         {
             for (int j = 0; j < 8; j++)
             {
-                addPiece(new int[]{i, j});
+                addPiece(Piece.EMPTY, Moves.SQUARES[Moves.coords(i, j)]);
             }
         }
 
@@ -688,14 +682,13 @@ public class Board
             }
             else 
             {
-                addPiece(Character.toUpperCase(currChar), new int[]{row, col}, Character.isUpperCase(currChar));
+                addPiece(Character.toUpperCase(currChar), Moves.SQUARES[Moves.coords(row, col)], Character.isUpperCase(currChar));
                 col++;
             }
         }
 
         // Side to move
-        if (splitFEN[1].equals("w")) whiteTurn = true;
-        else whiteTurn = false;
+        whiteTurn = splitFEN[1].equals("w");
         if (!whiteTurn) blackStarted = true;
 
         // Castling rights

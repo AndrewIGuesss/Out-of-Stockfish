@@ -14,11 +14,11 @@ public enum Piece
     B_QUEEN(false, 'Q', 900),
     B_KING(false, 'K', 1000),
 
-    EMPTY(false, ' ', -1);
+    EMPTY(false, ' ', 0);
     
-    private boolean white;
-    private char piece;
-    private int value;
+    private final boolean white;
+    private final char piece;
+    private final int value;
     
     Piece(boolean white, char piece, int value)
     {

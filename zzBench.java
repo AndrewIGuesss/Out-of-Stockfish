@@ -46,8 +46,7 @@ public class zzBench
                 
                 Game.repetition.merge(zobristHash, 1, Integer::sum);
 
-                TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                Bot.clearHistory();
+                TTEntry.clear();
 
                 long startTime = System.nanoTime();
                 int[] bestMove = Bot.bestMove(testBoard, depth, whiteTurn);

@@ -500,11 +500,11 @@ public class Moves
             gain[0] = 100;
             epPiece = board.getPiece(startRow, endCol);
             epSquare = SQUARES[coords(startRow, endCol)];
-            board.addPiece(epSquare);
+            board.addPiece(Piece.EMPTY, epSquare);
         }
         else gain[0] = board.getPiece(endRow, endCol).value();
 
-        board.addPiece(SQUARES[move / 100]);
+        board.addPiece(Piece.EMPTY, SQUARES[move / 100]);
         
         while (true) 
         {
@@ -518,7 +518,7 @@ public class Moves
             gain[removedCount] = pieceOnSquare.value() - gain[removedCount - 1];
             
             pieceOnSquare = seePiece;
-            board.addPiece(SQUARES[attacker]);
+            board.addPiece(Piece.EMPTY, SQUARES[attacker]);
             whiteTurn = !whiteTurn;
         }
 

@@ -199,7 +199,8 @@ public class UI
         }
         else System.out.println("Good luck!\n");
         // black captures
-        System.out.println("Black: " + (board.getBoardValue() < 0? "+" + Math.abs(board.getBoardValue()) : "") + " " + captureList(board.getCaptures(false)));
+        int boardVal = board.getBoardValue();
+        System.out.println("Black: " + (boardVal < 0? "+" + Math.abs(boardVal) : "") + " " + captureList(board.getCaptures(false)));
         
         
         int firstRow = 0;
@@ -228,11 +229,12 @@ public class UI
                 if (validMoves != null && validMoves[row][col]) bg = (col + row) % 2 == 0? LIGHT_MOVE_SQ : DARK_MOVE_SQ;
                 if (checkSquare != null && checkSquare[0] == row && checkSquare[1] == col) bg = RED_BG;
     
-                if (board.getBoard()[row][col].isOccupied())
+                Piece scanPiece = board.getBoard()[row][col];
+                if (scanPiece.isOccupied())
                 {
-                    String color = board.getBoard()[row][col].isWhite()? WHITE : BLACK;
-                    if (Settings.usePieceIcons) System.out.print(RESET + BOLD + color + bg + " " + board.getBoard()[row][col].toIcon() + "  ");
-                    else System.out.print(RESET + BOLD + color + bg + " " + board.getBoard()[row][col].getPiece() + " ");
+                    String color = scanPiece.isWhite()? WHITE : BLACK;
+                    if (Settings.usePieceIcons) System.out.print(RESET + BOLD + color + bg + " " + scanPiece.toIcon() + "  ");
+                    else System.out.print(RESET + BOLD + color + bg + " " + scanPiece.getPiece() + " ");
                 }
                 else
                 {
@@ -244,7 +246,7 @@ public class UI
         }
         
         // white captures
-        System.out.println("White: " + (board.getBoardValue() > 0? "+" + board.getBoardValue() : "") + " " + captureList(board.getCaptures(true)));
+        System.out.println("White: " + (boardVal > 0? "+" + boardVal : "") + " " + captureList(board.getCaptures(true)));
         
         System.out.println();
 

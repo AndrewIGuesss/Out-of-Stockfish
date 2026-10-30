@@ -4,13 +4,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class zTuner 
 {
     private static List<Board> boards = new ArrayList<>();
-    private static List<Double> results = new ArrayList<>();
+    private static double[] results;
     private static String savePath; // tuned.txt next to the dataset
     public static void main(String[] args) throws IOException
     {
@@ -32,11 +35,20 @@ public class zTuner
             improved = false;
             for (Param p : Param.values())
             {
-
                 if (p.isTunable())
                 {
                     for (int i = 0; i < p.size(); i++)
                     {
+                        if (p == Param.PAWN_PST_EG || p == Param.PAWN_PST_MG)
+                        {
+                            if (i < 8 || i >= 56) continue;
+                        }
+
+                        if (p == Param.PASSED_PAWN)
+                        {
+                            if (i == 0 || i == 7) continue;
+                        }
+
                         Eval.params[p.offset() + i] += 1;
                         double newError = error(k);
                         if (newError < bestError) 
@@ -101,40 +113,48 @@ public class zTuner
         System.out.println("saved to " + path);
     }
 
-    private static void load(String path) throws IOException
+        private static void load(String path) throws IOException
     {
         int lines = 0;
         int win = 0;
         int loss = 0;
         int draw = 0;
 
+        // find the size for array bc its cheaper than a list
+        try (Stream<String> fileLines = Files.lines(Paths.get(path)))
+        {
+            results = new double[(int) fileLines.count()];
+        }
+
         try (BufferedReader reader = new BufferedReader(new FileReader(path)))
         {
             String line;
             while ((line = reader.readLine()) != null)
             {
+                if (!(line.contains("1-0") || line.contains("1/2-1/2") || line.contains("0-1"))) continue;
+
                 String fen = line.substring(0, line.indexOf(" c9 "));
                 Board b = new Board();
                 b.importFEN(fen);
                 boards.add(b);
 
-                lines++;
                 if (line.contains("1-0")) 
                 {
                     win++;
-                    results.add(1.0);
+                    results[lines] = 1.0;
                 }
-                if (line.contains("0-1")) 
+                else if (line.contains("0-1")) 
                 {
                     loss++;
-                    results.add(0.0);
+                    results[lines] = 0.0;
                 }
-                if (line.contains("1/2-1/2")) 
+                else
                 {
                     draw++;
-                    results.add(0.5);
+                    results[lines] = 0.5;
                 }
-
+                
+                lines++;
             }
             System.out.printf("%d lines | wins: %d | losses: %d | draws: %d%n", lines, win, loss, draw);
         }
@@ -147,7 +167,7 @@ public class zTuner
         {
             int eval = Eval.evalBoard(boards.get(i), false);
             double predicted = 1.0 / (1.0 + Math.pow(10, -k * eval / 400.0));
-            double diff = results.get(i) - predicted;
+            double diff = results[i] - predicted;
             errorTotal += diff * diff;
         }
         return errorTotal / boards.size();

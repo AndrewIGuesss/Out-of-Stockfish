@@ -107,7 +107,7 @@ public class Game
         }
         
         // pre game color screen
-        while (true && !Settings.quickStart)
+        while (!Settings.quickStart)
         {
             if (error) { System.out.println("Invalid input"); error = false; }
             else clear();
@@ -115,13 +115,13 @@ public class Game
             UI.preGameColor();
             
             String input = reader.nextLine().toLowerCase();
-            if (input.equals("color")) Settings.safeColors =! Settings.safeColors;
+            if (input.equals("color")) Settings.safeColors = !Settings.safeColors;
             else if (input.equals("")) break;
             else error = true;
         }
         
         // pre game notation
-        while (true && !Settings.quickStart)
+        while (!Settings.quickStart)
         {
             if (error) { System.out.println("Invalid input"); error = false; }
             else clear();
@@ -129,7 +129,7 @@ public class Game
             UI.preGameNotation();
             
             String input = reader.nextLine().toLowerCase();
-            if (input.equals("expand")) Settings.bigNotation =! Settings.bigNotation;
+            if (input.equals("expand")) Settings.bigNotation = !Settings.bigNotation;
             else if (input.equals("")) break;
             else error = true;
         }
@@ -293,7 +293,7 @@ public class Game
                             
                             if (input.equals("")) 
                             {
-                                board.addPiece(customLoc);
+                                board.addPiece(Piece.EMPTY, customLoc);
                                 afterAMove("add", board);
                             }
                             else // piece path
@@ -350,7 +350,7 @@ public class Game
                         {
                             for (int j = 0; j < 8; j++)
                             {
-                                if (board.getPiece(i, j).getPiece() != 'K')board.addPiece(new int[]{i, j});
+                                if (board.getPiece(i, j).getPiece() != 'K') board.addPiece(Piece.EMPTY, Moves.SQUARES[Moves.coords(i, j)]);
                             }
                         }
 
@@ -624,7 +624,7 @@ public class Game
                     for (int i = 0; i < tries; i++)
                     {
                         Board copyBoard = new Board(board); // fresh copy every try
-                        copyBoard.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, false, promotionPieceList[i]);
+                        copyBoard.applyMove(Moves.coordsStart(moveInt), Moves.coordsEnd(moveInt), false, promotionPieceList[i]);
                         String sanMove = copyBoard.getHistory().get(0).replaceAll("[+#!?x]", "");
                         if (isPromotion && !hasPromotion) sanMove = sanMove.substring(0, sanMove.indexOf("=")); // e8 asks later
 
@@ -638,8 +638,8 @@ public class Game
                         if (exact && !exactMatch) matches = 1;
                         exactMatch = exact;
 
-                        piece = new int[]{move[0], move[1]};
-                        loc = new int[]{move[2], move[3]};
+                        piece = Moves.coordsStart(moveInt);
+                        loc = Moves.coordsEnd(moveInt);
                         promotionPiece = (isPromotion && hasPromotion)? promotionPieceList[i] : 'z';
                     }
                 }
@@ -768,8 +768,7 @@ public class Game
             {
                 importedFEN = "";
                 previousMove = null;
-                TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                Bot.clearHistory();
+                TTEntry.clear();
                 repetition.clear();
                 setUp = false;
                 break;
@@ -777,8 +776,7 @@ public class Game
             case "fen":
             {
                 previousMove = null;
-                TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
-                Bot.clearHistory();
+                TTEntry.clear();
                 board.updateCastlingRights();
                 repetition.clear();
                 Game.board = board;
@@ -806,7 +804,7 @@ public class Game
         try
         {
             int[] botMove = Bot.bestMove(board, Settings.botMaxSearchDepth, whiteTurn);
-            if (botMove != null) board.applyMove(new int[]{botMove[0], botMove[1]}, new int[]{botMove[2], botMove[3]}, false, 'q');
+            if (botMove != null) board.applyMove(Moves.SQUARES[Moves.coords(botMove[0], botMove[1])], Moves.SQUARES[Moves.coords(botMove[2], botMove[3])], false, 'q');
             else return false;
         }
         finally

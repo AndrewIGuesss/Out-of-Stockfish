@@ -15,7 +15,7 @@ public enum Param
     KING_PST_EG(64, true),
 
     // pawn structure
-    PASSED_PAWN(8, true),   // {0, 3, 8, 29, 60, 124, 126, 0} (end)
+    PASSED_PAWN(8, true),   // {0, 3, 8, 29, 60, 124, 126, 0}
     DOUBLED_PAWN(1, true),  // 10
     ISOLATED_PAWN(1, true), // 11
 

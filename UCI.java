@@ -32,9 +32,8 @@ public class UCI
                 }
                 case "ucinewgame":
                 {
-                    TTEntry.ttTable = new TTEntry[TTEntry.TT_SIZE];
+                    TTEntry.clear();
                     Game.repetition.clear();
-                    Bot.clearHistory();
                     break;
                 }
                 case "quit":

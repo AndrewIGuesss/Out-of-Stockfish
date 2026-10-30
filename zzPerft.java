@@ -49,7 +49,7 @@ public class zzPerft
         {
             int[] move = Moves.coordsStartEnd(moveInt); // {startRow, startCol, endRow, endCol}
             Board copy = new Board(board);
-            copy.applyMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, true, 'Q');
+            copy.makeMove(new int[]{move[0], move[1]}, new int[]{move[2], move[3]}, 'Q');
             
             totalMoves += perft(copy, depth - 1, !isWhite);
         }
