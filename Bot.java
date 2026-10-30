@@ -328,6 +328,7 @@ public class Bot
         // transposition table save (remember this position's result)
         int originalAlpha = alpha;
         int bestMoveHere = Moves.NO_MOVE;
+        boolean pvNode = beta - alpha != 1;
 
         // 50 move rule
         if (board.getTimeSinceCaptureOrPawnPush() >= 100) return 0;
@@ -338,7 +339,7 @@ public class Bot
         long currKey = Zobrist.makeZobristHash(board, whiteTurn);
         if (ply > 0)
         {
-            for (int i = 0; i > posKeys.length; i++)
+            for (int i = 0; i < posKeys.length; i++)
             {
                 if (posKeys[i] == currKey) return 0;
             }
@@ -396,9 +397,9 @@ public class Bot
 
         int staticEval = -1;
 
-        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && beta - alpha == 1) staticEval = Eval.evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
+        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && !pvNode) staticEval = Eval.evalBoard(board, false) * (whiteTurn? 1 : -1) + TEMPO_BONUS;
         // reverse futility pruning (RFP)
-        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && ply > 0 && beta - alpha == 1 && Math.abs(beta) < MATE - 1000)
+        if (!inCheck && maxDepth <= RFP_MAX_DEPTH && ply > 0 && !pvNode && Math.abs(beta) < MATE - 1000)
         {
             if (staticEval - RFP_CENTIPAWNS_PER_DEPTH * maxDepth >= beta) return staticEval;
         }
@@ -485,7 +486,7 @@ public class Bot
 
             boolean quiet = !inCheck && !capture && !promoting && validMoves > 1;
 
-            if (beta - alpha == 1 && maxDepth <= LMP_MAX_DEPTH && quiet && Math.abs(alpha) < MATE - 1000)
+            if (!pvNode && maxDepth <= LMP_MAX_DEPTH && quiet && Math.abs(alpha) < MATE - 1000)
             {
                 if (validMoves > LMP_BASE + LMP_MULTIPLIER * maxDepth * maxDepth && !Moves.inCheck(board, board.getKingLoc(!whiteTurn), !whiteTurn))
                 {
@@ -495,7 +496,7 @@ public class Bot
             }
 
             // futility pruning
-            if (beta - alpha == 1 && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
+            if (!pvNode && maxDepth <= FP_MAX_DEPTH && !inCheck && Math.abs(alpha) < MATE - 1000 && validMoves > 1)
             {
                 if (!capture && !promoting && staticEval + FP_MARGIN * maxDepth <= alpha)
                 {
@@ -764,7 +765,19 @@ public class Bot
             Undo u = board.makeMove(pvStart, pvEnd, 'Q');
             pv += " " + getPV(board, depth - 1, !whiteTurn);
             board.unMakeMove(pvStart, pvEnd, u);
-            if (uciMode) System.out.printf("info depth %d score cp %d nodes %d time %d pv %s%n", depth, bestScoreSoFar, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+            if (uciMode)
+            {
+                if (Math.abs(bestScoreSoFar) > Bot.MATE - 1000)
+                {
+                    int movesTillMate = (Bot.MATE - Math.abs(bestScoreSoFar) + 1) / 2;
+                    String mateMsg = "mate " + (bestScoreSoFar > 0? movesTillMate : -movesTillMate);
+                    System.out.printf("info depth %d score %s nodes %d time %d pv %s%n", depth, mateMsg, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+                }
+                else
+                {
+                    System.out.printf("info depth %d score cp %d nodes %d time %d pv %s%n", depth, bestScoreSoFar, movesAnalysed, (long)(System.currentTimeMillis() - startTime), pv);
+                }
+            }
 
             previousScore = bestScoreSoFar;
 

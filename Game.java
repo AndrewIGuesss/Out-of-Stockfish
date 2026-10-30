@@ -633,6 +633,7 @@ public class Game
                         // exact case vs ignore case 
                         boolean exact = cleanInput.equals(sanMove);
                         if (exactMatch && !exact) continue;
+                        matches++;
                         
                         if (exact && !exactMatch) matches = 1;
                         exactMatch = exact;

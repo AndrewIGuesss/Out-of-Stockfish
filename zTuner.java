@@ -157,12 +157,12 @@ public class zTuner
     {
         double lowest = Double.MAX_VALUE;
         double k = 0.0;
-        for (double i = 0.5; i <= 2; i += 0.1)
+        for (double i = 5; i <= 20; i += 1)
         {
-            double error = error(i);
+            double error = error(i / 10);
             if (error < lowest) 
             {
-                k = i;
+                k = i / 10;
                 lowest = error;
             }
         }
