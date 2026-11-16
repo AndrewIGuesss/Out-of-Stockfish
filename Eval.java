@@ -15,7 +15,7 @@ public class Eval
     private static int[] pawnAttackPrecompWhite = new int[10];
 
     // piece precomp
-    public static long piecePrecomp;
+    //public static long piecePrecomp;
 
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
@@ -236,7 +236,7 @@ public class Eval
         Arrays.fill(pawnPrecompWhite, 0);
         Arrays.fill(pawnAttackPrecompBlack, 0);
         Arrays.fill(pawnAttackPrecompWhite, 0);
-        piecePrecomp = 0;
+        //piecePrecomp = 0;
 
         for (int row = 0; row < 8; row++)
         {
@@ -244,10 +244,10 @@ public class Eval
             {
                 Piece scanPiece = board.getPiece(row, col);
 
-                if (scanPiece.isOccupied())
+                /*if (scanPiece.isOccupied())
                 {
                     piecePrecomp |= 1L << Moves.coords(row, col);
-                }
+                } */
                 if (scanPiece == Piece.W_PAWN)
                 {
                     pawnPrecompWhite[fileIndex(col)] |= (1 << row);
