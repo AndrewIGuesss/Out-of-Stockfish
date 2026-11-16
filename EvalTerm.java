@@ -9,6 +9,8 @@ public enum EvalTerm
     ISOLATED_PAWNS("isolated pawns"), 
     BISHOP_LINES("bishop lines"), 
     ROOK_FILES("rook files"), 
+    ROOK_OPEN_FILE("rook open file"),
+    ROOK_ON_SEVENTH("rook on seventh"),
     EARLY_QUEEN("early queen"), 
     BISHOP_PAIR("bishop pair"), 
     KING_SHIELD("king shield"), 

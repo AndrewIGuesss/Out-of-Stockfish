@@ -34,12 +34,12 @@ public class Settings
         public static boolean showBotMovesAnalysed = true;
 
         // debug menu toggles
-        public static boolean showStandardDebugMenu = false;
+        public static boolean showStandardDebugMenu = true;
 
         public static boolean showEval = false;
         public static boolean showEvalBreakDown = false;
         public static boolean showTurnIndicator = false;
-        public static boolean showLegalMoves = true;
+        public static boolean showLegalMoves = false;
         public static boolean showGameLength = true;
         public static boolean showBlackHasValidMoves = false;
         public static boolean showWhiteHasValidMoves = false;

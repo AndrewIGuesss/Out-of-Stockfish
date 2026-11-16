@@ -14,6 +14,9 @@ public class Eval
     private static int[] pawnAttackPrecompBlack = new int[10];
     private static int[] pawnAttackPrecompWhite = new int[10];
 
+    // piece precomp
+    public static long piecePrecomp;
+
     // eval breakdown
     // evalBreakDown    [eval term index (.ordinal)]    [0 - white / 1 - black]    [0 - mid game / 1 - end game]
     public static int[][][] evalBreakDown = new int[EvalTerm.SIZE][2][2];
@@ -76,14 +79,14 @@ public class Eval
 
     private static final int[][] ROOK_TABLE = {
         //a    b    c    d    e    f    g    h
-        { 15,  14,  16,  18,  19,  14,  13,  12}, // 8
-        { 15,  16,  21,  21,  15,  19,  14,  16}, // 7
-        {  7,  11,   8,  11,   5,   8,  10,   3}, // 6
-        {  3,   2,  12,   6,   6,  12,   0,   3}, // 5
-        { -3,   3,   7,   4,   3,   0,   2,  -8}, // 4
-        { -9,   0,   0,   1,   2,   1,   0, -12}, // 3
-        {-12,   1,   2,   7,   5,   7,  -1, -25}, // 2
-        { -1,   5,  12,  12,  12,  11,  -6,  -5}  // 1
+        { 16,  15,  16,  18,  19,  16,  15,  15}, // 8
+        {  7,   8,  10,  10,   5,  14,  10,  11}, // 7
+        {  7,  11,   8,   9,   5,  10,  12,   5}, // 6
+        {  3,   2,  11,   6,   6,  14,   2,   5}, // 5
+        { -3,   4,   6,   3,   3,   2,   5,  -6}, // 4
+        { -7,   0,  -1,   0,   1,   2,   2, -10}, // 3
+        {-11,   1,   0,   5,   3,   7,  -1, -23}, // 2
+        {  0,   4,   8,   8,   8,  11,  -6,  -3}  // 1
     };
 
     private static final int[][] QUEEN_TABLE = {
@@ -148,8 +151,8 @@ public class Eval
         // mobility
         params[Param.KNIGHT_MOBILITY.offset()] = 2;
         params[Param.BISHOP_MOBILITY.offset()] = 4;
-        params[Param.ROOK_MOBILITY_MG.offset()] = 3;
-        params[Param.ROOK_MOBILITY_EG.offset()] = 4;
+        params[Param.ROOK_MOBILITY_MG.offset()] = 2;
+        params[Param.ROOK_MOBILITY_EG.offset()] = 3;
         params[Param.QUEEN_MOBILITY_MG.offset()] = 1;
         params[Param.QUEEN_MOBILITY_EG.offset()] = 10;
 
@@ -161,6 +164,16 @@ public class Eval
             params[Param.BISHOP_LINES.offset() + i] = bishopLines[i];
             params[Param.ROOK_FILES.offset() + i] = rookFiles[i];
         }
+
+        // rook open files, order: open, semi-open
+        params[Param.ROOK_OPEN_FILE.offset()] = 13;
+        params[Param.ROOK_OPEN_FILE.offset() + 1] = 11;
+
+        // rook on seventh
+        params[Param.ROOK_7TH_PAWN.offset()] = -13;
+        params[Param.ROOK_7TH_PAWN.offset() + 1] = 11;
+        params[Param.ROOK_7TH_KING.offset()] = 16;
+        params[Param.ROOK_7TH_KING.offset() + 1] = 16;
 
         // misc
         params[Param.EARLY_QUEEN.offset()] = -11;
@@ -223,6 +236,7 @@ public class Eval
         Arrays.fill(pawnPrecompWhite, 0);
         Arrays.fill(pawnAttackPrecompBlack, 0);
         Arrays.fill(pawnAttackPrecompWhite, 0);
+        piecePrecomp = 0;
 
         for (int row = 0; row < 8; row++)
         {
@@ -230,6 +244,10 @@ public class Eval
             {
                 Piece scanPiece = board.getPiece(row, col);
 
+                if (scanPiece.isOccupied())
+                {
+                    piecePrecomp |= 1L << Moves.coords(row, col);
+                }
                 if (scanPiece == Piece.W_PAWN)
                 {
                     pawnPrecompWhite[fileIndex(col)] |= (1 << row);
@@ -242,6 +260,7 @@ public class Eval
                     pawnAttackPrecompBlack[fileIndex(col) + 1] |= (1 << (row + 1));
                     pawnAttackPrecompBlack[fileIndex(col) - 1] |= (1 << (row + 1));
                 }
+                
             }
         }
 
@@ -340,7 +359,7 @@ public class Eval
                     {
                         centipawns += term(params[Param.KNIGHT_PST.offset() + (Moves.coords(tableRow, col))], isWhite, EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
 
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, false, threats) * params[Param.KNIGHT_MOBILITY.offset()];
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.KNIGHT_R, Moves.KNIGHT_C, Piece.EMPTY, false, threats) * params[Param.KNIGHT_MOBILITY.offset()];
                         centipawns += term(mobility, isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         int threatened = 0;
@@ -359,7 +378,7 @@ public class Eval
                     {
                         centipawns += term(params[Param.BISHOP_PST.offset() + (Moves.coords(tableRow, col))], isWhite, EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, true, threats) * params[Param.BISHOP_MOBILITY.offset()];
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.DIAG_R, Moves.DIAG_C, Piece.EMPTY, true, threats) * params[Param.BISHOP_MOBILITY.offset()];
                         centipawns += term(mobility, isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.BOTH);
                         
                         int threatened = 0;
@@ -407,7 +426,7 @@ public class Eval
                     {
                         centipawns += term(params[Param.ROOK_PST.offset() + (Moves.coords(tableRow, col))], isWhite, EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, true, threats);
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.STRAIGHT_R, Moves.STRAIGHT_C, isWhite? Piece.W_ROOK : Piece.B_ROOK, true, threats);
                         midGameScore += term(mobility * params[Param.ROOK_MOBILITY_MG.offset()], isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * sideMulti;
                         endGameScore += term(mobility * params[Param.ROOK_MOBILITY_EG.offset()], isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * sideMulti;
 
@@ -416,6 +435,44 @@ public class Eval
                         if ((enemyPawnAttack[fileIndex(col)] & (1 << row)) != 0) threatened -= params[Param.THREAT_BY_PAWN.offset() + 2];
                         threatened += threats[1] * params[Param.THREAT_BY_ROOK.offset()];
                         centipawns += term(threatened, isWhite, EvalTerm.PIECE_THREATS.ordinal(), GamePhase.BOTH);
+
+                        // seventh rank bouns
+                        if ((isWhite && row == 1) || (!isWhite && row == 6))
+                        {
+                            int pawnsOn7th = 0;
+                            for (int i = 0; i < 8; i++)
+                            {
+                                if (isWhite)
+                                {
+                                    if ((pawnPrecompBlack[fileIndex(i)] & (1 << 1)) != 0) pawnsOn7th++;
+                                }
+                                else
+                                {
+                                    if ((pawnPrecompWhite[fileIndex(i)] & (1 << 6)) != 0) pawnsOn7th++;
+                                }
+                            }
+
+                            if (pawnsOn7th > 0)
+                            {
+                                midGameScore += term(params[Param.ROOK_7TH_PAWN.offset()] * pawnsOn7th, isWhite, EvalTerm.ROOK_ON_SEVENTH.ordinal(), GamePhase.MID) * sideMulti;
+                                endGameScore += term(params[Param.ROOK_7TH_PAWN.offset() + 1] * pawnsOn7th, isWhite, EvalTerm.ROOK_ON_SEVENTH.ordinal(), GamePhase.END) * sideMulti;
+                            }
+                            
+                            if (isWhite? blackKingLoc[0] == 0 : whiteKingLoc[0] == 7)
+                            {
+                                midGameScore += term(params[Param.ROOK_7TH_KING.offset()], isWhite, EvalTerm.ROOK_ON_SEVENTH.ordinal(), GamePhase.MID) * sideMulti;
+                                endGameScore += term(params[Param.ROOK_7TH_KING.offset() + 1], isWhite, EvalTerm.ROOK_ON_SEVENTH.ordinal(), GamePhase.END) * sideMulti;
+                            }   
+                        }
+
+                        // open file
+                        int ownPawnFile = isWhite? pawnPrecompWhite[fileIndex(col)] : pawnPrecompBlack[fileIndex(col)];
+                        int enemyPawnFile = isWhite? pawnPrecompBlack[fileIndex(col)] : pawnPrecompWhite[fileIndex(col)];
+                        if (ownPawnFile == 0)
+                        {
+                            int fileBonus = (enemyPawnFile == 0)? params[Param.ROOK_OPEN_FILE.offset()] : params[Param.ROOK_OPEN_FILE.offset() + 1];
+                            centipawns += term(fileBonus, isWhite, EvalTerm.ROOK_OPEN_FILE.ordinal(), GamePhase.BOTH);
+                        }
 
                         phase += 2;
 
@@ -446,7 +503,7 @@ public class Eval
                     {
                         centipawns += term(params[Param.QUEEN_PST.offset() + (Moves.coords(tableRow, col))], isWhite, EvalTerm.PIECE_SQUARES.ordinal(), GamePhase.BOTH);
                         
-                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, true, null);
+                        int mobility = Moves.mobilityCount(board, row, col, Moves.QUEEN_R, Moves.QUEEN_C, Piece.EMPTY, true, null);
                         midGameScore += term(mobility * params[Param.QUEEN_MOBILITY_MG.offset()], isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.MID) * sideMulti;
                         endGameScore += term(mobility * params[Param.QUEEN_MOBILITY_EG.offset()], isWhite, EvalTerm.PIECE_MOBILITY.ordinal(), GamePhase.END) * sideMulti;
                         
